@@ -3,6 +3,7 @@ use std::collections::hash_map::HashMap;
 
 pub type ID = usize;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {
     Docking, Docked, Undocked, Undocking  
 }
@@ -13,11 +14,13 @@ pub trait Entity {
     fn hp(&self) -> i32;
 }
 
+#[derive(Debug)]
 pub struct Player {
     pub id: ID,
     pub ships: Vec<ID>,
 }
 
+#[derive(Debug)]
 pub struct Ship {
     pub id: ID,
     pub x: f32,
@@ -35,6 +38,7 @@ impl Entity for Ship {
     fn rad(&self) -> f32 { self.rad }
 }
 
+#[derive(Debug)]
 pub struct Planet {
     pub id: ID,
     pub x: f32,
@@ -53,6 +57,7 @@ impl Entity for Planet {
     fn rad(&self) -> f32 { self.rad }
 }
 
+#[derive(Debug)]
 pub struct Map {
     pub players: Vec<Player>,
     pub planets: Vec<Planet>,
