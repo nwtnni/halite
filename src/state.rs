@@ -1,13 +1,21 @@
+use fnv::{FnvBuildHasher};
+use std::collections::hash_map::HashMap;
+
+pub type ID = usize;
+
+pub enum Status {
+    Docking, Docked, Undocked, Undocking  
+}
+
 pub trait Entity {
     fn pos(&self) -> (f32, f32);
     fn rad(&self) -> f32;
     fn hp(&self) -> i32;
 }
 
-type ID = usize;
-
-pub enum Status {
-    Docking, Docked, Undocked, Undocking  
+pub struct Player {
+    pub id: ID,
+    pub ships: Vec<ID>,
 }
 
 pub struct Ship {
@@ -36,11 +44,17 @@ pub struct Planet {
     pub spots: i32,
     pub spawn: i32,
     pub owner: Option<ID>,
-    pub ships: i32,
+    pub ships: Vec<usize>,
 }
 
 impl Entity for Planet {
     fn hp(&self) -> i32 { self.hp }
     fn pos(&self) -> (f32, f32) { (self.x, self.y) }
     fn rad(&self) -> f32 { self.rad }
+}
+
+pub struct Map {
+    pub players: Vec<Player>,
+    pub planets: Vec<Planet>,
+    pub ships: HashMap<ID, Ship, FnvBuildHasher>,
 }

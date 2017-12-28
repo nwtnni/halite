@@ -1,4 +1,5 @@
 #![feature(nll)]
-#![feature(try_from)]
-pub mod interface;
-pub mod entity;
+extern crate fnv;
+pub mod parse;
+pub mod state;
+pub mod constants;
