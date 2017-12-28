@@ -124,7 +124,7 @@ mod tests {
         assert_eq!(Status::take(&mut stream), Status::Undocked);
         assert_eq!(stream.len(), 0);
     }
-    
+
     #[test]
     fn test_ship_take() {
         let string = String::from("3 188.0907 107.6403 255 0.0000 0.0000 1 7 5 0");
@@ -134,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_planet_take() {
-   		let string = String::from("7  184.5627 114.5568 1373 5.3870 2 0  775 1 1 2 5 3");
+        let string = String::from("7 184.5627 114.5568 1373 5.3870 2 0 775 1 1 2 5 3");
         let mut stream = string.split_whitespace().rev().collect::<Vec<_>>();
         Planet::take(&mut stream);
     }
