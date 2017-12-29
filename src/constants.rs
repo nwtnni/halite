@@ -4,6 +4,9 @@ pub const BOT_NAME: &str = "Testing";
 // Ship radius
 pub const SHIP_RADIUS: f32 = 0.5;
 
+// Max thrust
+pub const SHIP_SPEED: f32 = 7.0;
+
 // Weapon AoE
 pub const WEAPON_RADIUS: f32 = 5.0; 
 
@@ -26,5 +29,12 @@ pub const PRODUCTIVITY: i32 = 6;
 // Implementation-Specific
 // 
 
+// HashGrid bin sizes
 pub const X_GRID_SCALE: f32 = 32.0;
 pub const Y_GRID_SCALE: f32 = 32.0;
+
+// Angle to turn in degrees if failed to navigate
+pub const DELTA_THETA: f32 = 5.0;
+
+// How many times to re-attempt navigation
+pub const CORRECTIONS: i32 = 10;

@@ -5,3 +5,4 @@ pub mod parse;
 pub mod state;
 pub mod collision;
 pub mod constants;
+pub mod navigate;

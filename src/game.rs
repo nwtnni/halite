@@ -9,6 +9,32 @@ pub enum Command {
     Thrust(usize, i32, i32),
 }
 
+pub struct CommandQueue {
+    commands: String,
+}
+
+impl CommandQueue {
+    pub fn new() -> Self {
+        CommandQueue { commands: String::new() }
+    }
+
+    pub fn push(&mut self, command: &Command) {
+        use self::Command::*;
+        let string = match *command {
+            Dock(ship, planet) => format!("d {} {}\n", ship, planet),
+            Undock(ship) => format!("u {}\n", ship),
+            Thrust(ship, m, a) => format!("t {} {} {}\n", ship, m, a),
+        };
+        self.commands.push_str(&string);
+    }
+
+    pub fn flush(&mut self) {
+        print!("{}", self.commands);
+        stdout().flush().unwrap();
+        self.commands.clear();
+    }
+}
+
 pub struct Game {
     pub id: ID,
     pub width: f32,
@@ -16,6 +42,7 @@ pub struct Game {
     pub map: Map,
     commands: String,
 }
+
 
 impl Game {
     pub fn new() -> Self {
@@ -42,21 +69,5 @@ impl Game {
 
     pub fn send_ready() {
         println!("{}", BOT_NAME);
-    }
-
-    pub fn push_queue(&mut self, command: &Command) {
-        use self::Command::*;
-        let string = match *command {
-            Dock(ship, planet) => format!("d {} {}\n", ship, planet),
-            Undock(ship) => format!("u {}\n", ship),
-            Thrust(ship, m, a) => format!("t {} {} {}\n", ship, m, a),
-        };
-        self.commands.push_str(&string);
-    }
-
-    pub fn flush_queue(&mut self) {
-        print!("{}", self.commands);
-        stdout().flush().unwrap();
-        self.commands.clear();
     }
 }

@@ -17,6 +17,13 @@ pub enum Entity {
     Point(Location),
 }
 
+pub fn within(a: Point, ar: f32, b: Point, br: f32, r: f32) -> bool {
+    let (x1, y1) = a;
+    let (x2, y2) = b;
+    let d = (y2 - y1).hypot(x2 - x1);
+    d < ar + br + r
+}
+
 impl Entity {
     pub fn pos(&self) -> (f32, f32) {
         use self::Entity::*;
@@ -28,16 +35,16 @@ impl Entity {
         match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.rad, }
     }
 
-    pub fn sq_distance_to(&self, other: &Self) -> f32 {
-        let (x1, y1) = self.pos();
-        let (x2, y2) = other.pos();
-        (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1)
+    pub fn intersects(&self, other: &Self) -> bool {
+        within(self.pos(), self.rad(), other.pos(), other.rad(), 0.0)
     }
 
-    pub fn intersects(&self, other: &Self) -> bool {
-        let rad1 = self.rad();
-        let rad2 = other.rad();
-        self.sq_distance_to(other) <= (rad1 + rad2)*(rad1 + rad2)
+    pub fn intersects_line(&self, (x1, y1): Point, (x2, y2): Point) -> bool {
+        let (x, y) = self.pos();
+        let d = (x1 - x)*(y2 - y) - (x2 - x)*(y1 - y);
+        let dr = (y2 - y1).hypot(x2 - x1);
+        let r = self.rad();
+        d*d <= dr*dr*r*r
     }
 }
 
@@ -94,7 +101,7 @@ impl HashGrid {
             .and_modify(|e| e.push(entity))
             .or_insert(vec!(entity));
     }
-    
+
     pub fn near<T: ToEntity>(&self, e: &T) -> Vec<Entity> {
         let entity = e.to_entity();
         let (x, y) = self.to_cell(entity.pos());
@@ -111,6 +118,11 @@ impl HashGrid {
     pub fn collides<T: ToEntity>(&self, e: &T) -> bool {
         let entity = e.to_entity();
         self.near(e).iter().any(|other| entity.intersects(other))
+    }
+
+    pub fn collides_toward<T: ToEntity>(&self, e: &T, end: Point) -> bool {
+        let start = e.to_entity().pos();
+        self.near(e).iter().any(|other| other.intersects_line(start, end))
     }
 }
 
