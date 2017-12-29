@@ -1,7 +1,7 @@
 use fnv::{FnvBuildHasher, FnvHashMap};
 use std::collections::hash_map::HashMap;
 use state::*;
-use constants::{X_GRID_SCALE, Y_GRID_SCALE};
+use constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Location {
@@ -43,7 +43,7 @@ impl Entity {
         let (x, y) = self.pos();
         let d = (x1 - x)*(y2 - y) - (x2 - x)*(y1 - y);
         let dr = (y2 - y1).hypot(x2 - x1);
-        let r = self.rad();
+        let r = self.rad() + SHIP_RADIUS;
         d*d <= dr*dr*r*r
     }
 }
@@ -75,7 +75,7 @@ const AROUND: [Cell; 9] = [
     (0,0), (0, 1), (1, -1), (1, 0), (1, 1)
 ];
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct HashGrid {
     scale: (f32, f32),
     grid: HashMap<Cell, Vec<Entity>, FnvBuildHasher>,
@@ -102,6 +102,14 @@ impl HashGrid {
             .or_insert(vec!(entity));
     }
 
+    pub fn remove(&mut self, e: Point) {
+        let cell = self.to_cell(e);
+        self.grid.entry(cell)
+            .and_modify(|bucket| {
+                bucket.retain(|other| other.pos() != e);
+            });
+    }
+
     pub fn near<T: ToEntity>(&self, e: &T) -> Vec<Entity> {
         let entity = e.to_entity();
         let (x, y) = self.to_cell(entity.pos());
@@ -117,12 +125,18 @@ impl HashGrid {
 
     pub fn collides<T: ToEntity>(&self, e: &T) -> bool {
         let entity = e.to_entity();
-        self.near(e).iter().any(|other| entity.intersects(other))
+        self.near(e)
+            .iter()
+            .any(|other| entity.pos() != other.pos()
+                 && entity.intersects(other))
     }
 
     pub fn collides_toward<T: ToEntity>(&self, e: &T, end: Point) -> bool {
         let start = e.to_entity().pos();
-        self.near(e).iter().any(|other| other.intersects_line(start, end))
+        self.near(e)
+            .iter()
+            .any(|other| start != other.pos()
+                 && other.intersects_line(start, end))
     }
 }
 

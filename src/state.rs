@@ -1,7 +1,3 @@
-use fnv::{FnvBuildHasher};
-use std::collections::hash_map::HashMap;
-use collision::HashGrid;
-
 pub type ID = usize;
 
 pub type Point = (f32, f32);
@@ -40,12 +36,4 @@ pub struct Planet {
     pub spawn: i32,
     pub owner: Option<ID>,
     pub ships: Vec<usize>,
-}
-
-#[derive(Debug)]
-pub struct Map {
-    pub players: Vec<Player>,
-    pub planets: Vec<Planet>,
-    pub ships: HashMap<ID, Ship, FnvBuildHasher>,
-    pub grid: HashGrid,
 }

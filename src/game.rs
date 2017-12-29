@@ -1,6 +1,9 @@
-use std::io::{stdin};
+use fnv::FnvBuildHasher;
+use std::io::stdin;
+use std::collections::HashMap;
 use state::*;
 use parse::*;
+use collision::HashGrid;
 use constants::BOT_NAME;
 
 pub enum Command {
@@ -34,13 +37,16 @@ impl CommandQueue {
     }
 }
 
+#[derive(Debug)]
 pub struct Game {
     pub id: ID,
     pub width: f32,
     pub height: f32,
-    pub map: Map,
+    pub players: Vec<Player>,
+    pub planets: HashMap<ID, Planet, FnvBuildHasher>,
+    pub ships: HashMap<ID, Ship, FnvBuildHasher>,
+    pub grid: HashGrid,
 }
-
 
 impl Game {
     pub fn new() -> Self {
@@ -49,19 +55,22 @@ impl Game {
         stdin().read_line(&mut buffer).unwrap();
         stdin().read_line(&mut buffer).unwrap();
         let mut stream: Vec<_> = buffer.split_whitespace().rev().collect();
-        Game {
-            id: usize::take(&mut stream),
-            width: f32::take(&mut stream),
-            height: f32::take(&mut stream),
-            map: Map::take(&mut stream),
-        }
+        let id = usize::take(&mut stream);
+        let width = f32::take(&mut stream);
+        let height = f32::take(&mut stream);
+        let (players, planets, ships, grid) = take(&mut stream);
+        Game { id, width, height, players, planets, ships, grid }
     }
 
     pub fn update(&mut self) {
         let mut buffer = String::new();
         stdin().read_line(&mut buffer).unwrap();
         let mut stream: Vec<_> = buffer.split_whitespace().rev().collect();
-        self.map = Map::take(&mut stream);
+        let (players, planets, ships, grid) = take(&mut stream);
+        self.players = players;
+        self.planets = planets;
+        self.ships = ships;
+        self.grid = grid;
     }
 
     pub fn send_ready() {

@@ -1,5 +1,6 @@
 use std::str::FromStr;
-use fnv::FnvHashMap;
+use std::collections::hash_map::HashMap;
+use fnv::{FnvBuildHasher, FnvHashMap};
 use state::*;
 use collision::HashGrid;
 use constants::SHIP_RADIUS;
@@ -88,10 +89,12 @@ impl FromStream for Planet {
     }
 }
 
-impl FromStream for Map {
-    fn take(stream: &mut Vec<&str>) -> Self {
+pub fn take(stream: &mut Vec<&str>) -> (
+        Vec<Player>, HashMap<ID, Planet, FnvBuildHasher>,
+        HashMap<ID, Ship, FnvBuildHasher>, HashGrid
+    ) {
         let mut players = Vec::new();
-        let mut planets = Vec::new();
+        let mut planets = FnvHashMap::default();
         let mut ships = FnvHashMap::default();
         let mut grid = HashGrid::new();
 
@@ -111,10 +114,9 @@ impl FromStream for Map {
         for _ in 0..(i32::take(stream)) {
             let planet = Planet::take(stream);
             grid.insert(&planet);
-            planets.push(planet);
+            planets.insert(planet.id, planet);
         }
-        Map {players, planets, ships, grid}
-    }
+        (players, planets, ships, grid)
 }
 
 mod tests {
