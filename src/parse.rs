@@ -165,6 +165,6 @@ mod tests {
         7  184.5627 114.5568 1373 5.3870 2 0  775 1 1 2 5 3 \
         8  171.7497  18.2646 1986 7.7885 3 0 1121 0 0 0");
         let mut stream = string.split_whitespace().rev().collect::<Vec<_>>();
-        println!("{:#?}", Map::take(&mut stream));
+        Map::take(&mut stream);
     }
 }

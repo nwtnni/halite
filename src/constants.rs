@@ -26,5 +26,5 @@ pub const PRODUCTIVITY: i32 = 6;
 // Implementation-Specific
 // 
 
-pub const X_GRID_SCALE: f32 = 15.0;
-pub const Y_GRID_SCALE: f32 = 10.0;
+pub const X_GRID_SCALE: f32 = 32.0;
+pub const Y_GRID_SCALE: f32 = 32.0;

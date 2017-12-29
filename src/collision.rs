@@ -5,7 +5,6 @@ use constants::{X_GRID_SCALE, Y_GRID_SCALE};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Location {
-    pub id: ID,
     pub x: f32,
     pub y: f32,
     pub rad: f32,
@@ -19,11 +18,6 @@ pub enum Entity {
 }
 
 impl Entity {
-    pub fn id(&self) -> ID {
-        use self::Entity::*;
-        match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.id, }
-    }
-
     pub fn pos(&self) -> (f32, f32) {
         use self::Entity::*;
         match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => (l.x, l.y) }
@@ -41,9 +35,9 @@ impl Entity {
     }
 
     pub fn intersects(&self, other: &Self) -> bool {
-        let rad1 = self.rad(); 
+        let rad1 = self.rad();
         let rad2 = other.rad();
-        self.sq_distance_to(other) < rad1 + rad2
+        self.sq_distance_to(other) <= (rad1 + rad2)*(rad1 + rad2)
     }
 }
 
@@ -53,13 +47,13 @@ pub trait ToEntity {
 
 impl ToEntity for Ship {
     fn to_entity(&self) -> Entity {
-        Entity::Ship(Location {id: self.id, x: self.x, y: self.y, rad: self.rad})
+        Entity::Ship(Location {x: self.x, y: self.y, rad: self.rad})
     }
 }
 
 impl ToEntity for Planet {
     fn to_entity(&self) -> Entity {
-        Entity::Planet(Location {id: self.id, x: self.x, y: self.y, rad: self.rad})
+        Entity::Planet(Location {x: self.x, y: self.y, rad: self.rad})
     }
 }
 
@@ -100,19 +94,55 @@ impl HashGrid {
             .and_modify(|e| e.push(entity))
             .or_insert(vec!(entity));
     }
-
-    pub fn collides<T: ToEntity>(&self, e: &T) -> bool {
+    
+    pub fn near<T: ToEntity>(&self, e: &T) -> Vec<Entity> {
         let entity = e.to_entity();
         let (x, y) = self.to_cell(entity.pos());
         let mut near = Vec::new();
-
         for &(xo, yo) in &AROUND {
             match self.grid.get(&(x + xo, y + yo)) {
                 Some(bucket) => near.extend(bucket.iter()),
                 None => continue,
             }
         }
+        near
+    }
 
-        near.iter().any(|other| entity.intersects(other))
+    pub fn collides<T: ToEntity>(&self, e: &T) -> bool {
+        let entity = e.to_entity();
+        self.near(e).iter().any(|other| entity.intersects(other))
+    }
+}
+
+mod tests {
+    #![cfg(test)]
+    use super::*;
+
+    #[test]
+    fn test_insert() {
+        let mut grid = HashGrid::new();
+        grid.insert(&Location {x: 12.0, y: 12.0, rad: 12.0});
+    }
+
+    #[test]
+    fn test_largest_planet() {
+        let mut grid = HashGrid::new();
+        let p1 = Location {x: 12.0, y: 12.0, rad: 16.0};
+        let p2 = Location {x: 44.0, y: 12.0, rad: 16.0};
+        let p3 = Location {x: 44.001, y: 12.0, rad: 16.0};
+        grid.insert(&p1);
+        assert_eq!(grid.collides(&p2), true);
+        assert_eq!(grid.collides(&p3), false);
+    }
+
+    #[test]
+    fn test_ship() {
+        let mut grid = HashGrid::new();
+        let s1 = Location {x: 383.5, y: 255.5, rad: 0.5};
+        let s2 = Location {x: 383.5, y: 254.5, rad: 0.5};
+        let s3 = Location {x: 383.5, y: 254.4999, rad: 0.5};
+        grid.insert(&s1);
+        assert_eq!(grid.collides(&s2), true);
+        assert_eq!(grid.collides(&s3), false);
     }
 }
