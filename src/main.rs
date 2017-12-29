@@ -6,11 +6,13 @@ use halite::state::*;
 use halite::strategy::*;
 use halite::navigate::*;
 
-fn closest_planet<'a, 'b>(
+fn closest_planet<'a, 'b, 'c>(
     ship: &'a Ship, 
-    planets: &'b FnvHashMap<ID, Planet>
+    planets: &'b FnvHashMap<ID, Planet>,
+    strategy: &'c Strategies,
 ) -> Option<&'b Planet> {
     planets.values()
+        .filter(|planet| planet.spots > strategy.docking_at(planet.id))
         .filter(|planet| planet.spots > planet.ships.len() as i32)
         .min_by_key(|planet| {
             let x = planet.x - ship.x;
@@ -33,7 +35,7 @@ fn main() {
 
             match strategy.get(ship.id) {
                 None => {
-                    let closest = closest_planet(ship, &game.planets).unwrap();
+                    let closest = closest_planet(ship, &game.planets, &strategy).unwrap();
                     if can_dock(ship, closest) {
                         queue.push(&dock(ship, closest));
                     } else {
