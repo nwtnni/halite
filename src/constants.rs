@@ -21,3 +21,10 @@ pub const DOCK_TURNS: i32 = 5;
 
 // Productivity per ship
 pub const PRODUCTIVITY: i32 = 6;
+
+//
+// Implementation-Specific
+// 
+
+pub const X_GRID_SCALE: f32 = 15.0;
+pub const Y_GRID_SCALE: f32 = 10.0;
