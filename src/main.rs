@@ -8,10 +8,13 @@ fn main() {
     Game::send_ready();
 
     loop {
+        game.update();
         for ship_id in &game.map.players[game.id].ships {
             let ship = &game.map.ships[ship_id];
             if Game::is_docked(ship) { continue; }
             let closest = game.map.planets.iter()
+                .filter(|planet| planet.owner == None )
+                .filter(|planet| planet.spots > planet.ships.len() as i32)
                 .min_by_key(|planet| {
                     let x = planet.x - ship.x; 
                     let y = planet.y - ship.y;
@@ -25,6 +28,5 @@ fn main() {
             }
         }
         queue.flush();
-        game.update();
     }
 }
