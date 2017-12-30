@@ -1,5 +1,4 @@
-use fnv::{FnvBuildHasher, FnvHashMap};
-use std::collections::hash_map::HashMap;
+use fnv::FnvHashMap;
 use state::*;
 use constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS};
 
@@ -78,7 +77,7 @@ const AROUND: [Cell; 9] = [
 #[derive(Debug, Default)]
 pub struct HashGrid {
     scale: (f32, f32),
-    grid: HashMap<Cell, Vec<Entity>, FnvBuildHasher>,
+    grid: FnvHashMap<Cell, Vec<Entity>>,
 }
 
 impl HashGrid {

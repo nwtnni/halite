@@ -1,6 +1,5 @@
-use state::{ID};
-use fnv::{FnvBuildHasher, FnvHashMap};
-use std::collections::hash_map::HashMap;
+use state::ID;
+use fnv::FnvHashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Strategy {
@@ -9,7 +8,7 @@ pub enum Strategy {
 
 #[derive(Default)]
 pub struct Strategies {
-    ships: HashMap<ID, Strategy, FnvBuildHasher>,
+    ships: FnvHashMap<ID, Strategy>,
 }
 
 impl Strategies {

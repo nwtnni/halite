@@ -1,7 +1,38 @@
-use state::{Point, Planet, Ship, Status};
-use constants::{SHIP_RADIUS, DOCK_RADIUS, SHIP_SPEED, CORRECTIONS, DELTA_THETA};
+use state::*;
 use collision::*;
-use game::Command;
+use constants::{SHIP_RADIUS, DOCK_RADIUS, SHIP_SPEED, CORRECTIONS, DELTA_THETA};
+
+pub enum Command {
+    Dock(usize, usize),
+    Undock(usize),
+    Thrust(usize, i32, i32),
+}
+
+#[derive(Default, Debug)]
+pub struct Queue {
+    commands: String,
+}
+
+impl Queue {
+    pub fn new() -> Self {
+        Queue { commands: String::new() }
+    }
+
+    pub fn push(&mut self, command: &Command) {
+        use self::Command::*;
+        let string = match *command {
+            Dock(ship, planet) => format!("d {} {} ", ship, planet),
+            Undock(ship) => format!("u {} ", ship),
+            Thrust(ship, m, a) => format!("t {} {} {} ", ship, m, a),
+        };
+        self.commands.push_str(&string);
+    }
+
+    pub fn flush(&mut self) {
+        println!("{}", self.commands);
+        self.commands.clear();
+    }
+}
 
 pub fn can_dock(ship: &Ship, planet: &Planet) -> bool {
     if within((ship.x, ship.y), ship.rad,

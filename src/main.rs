@@ -1,13 +1,12 @@
 extern crate halite;
 extern crate fnv;
 use fnv::FnvHashMap;
-use halite::game::*;
 use halite::state::*;
+use halite::commander::*;
 use halite::strategy::*;
-use halite::navigate::*;
 
 fn closest_planet<'a, 'b, 'c>(
-    ship: &'a Ship, 
+    ship: &'a Ship,
     planets: &'b FnvHashMap<ID, Planet>,
     strategy: &'c Strategies,
 ) -> Option<&'b Planet> {
@@ -23,9 +22,9 @@ fn closest_planet<'a, 'b, 'c>(
 
 fn main() {
     let mut game = Game::new();
-    let mut queue = CommandQueue::new();
+    let mut queue = Queue::new();
     let mut strategy = Strategies::new();
-    Game::send_ready();
+    Game::send_ready("TestBot");
 
     loop {
         game.update();

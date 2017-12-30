@@ -1,5 +1,9 @@
-pub type ID = usize;
+use fnv::FnvHashMap;
+use std::io::stdin;
+use parse::*;
+use collision::*;
 
+pub type ID = usize;
 pub type Point = (f32, f32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -36,4 +40,45 @@ pub struct Planet {
     pub spawn: i32,
     pub owner: Option<ID>,
     pub ships: Vec<usize>,
+}
+
+#[derive(Debug)]
+pub struct Game {
+    pub id: ID,
+    pub width: f32,
+    pub height: f32,
+    pub players: Vec<Player>,
+    pub planets: FnvHashMap<ID, Planet>,
+    pub ships: FnvHashMap<ID, Ship>,
+    pub grid: HashGrid,
+}
+
+impl Game {
+    pub fn new() -> Self {
+        let mut buffer = String::new();
+        stdin().read_line(&mut buffer).unwrap();
+        stdin().read_line(&mut buffer).unwrap();
+        stdin().read_line(&mut buffer).unwrap();
+        let mut stream: Vec<_> = buffer.split_whitespace().rev().collect();
+        let id = usize::take(&mut stream);
+        let width = f32::take(&mut stream);
+        let height = f32::take(&mut stream);
+        let (players, planets, ships, grid) = take(&mut stream);
+        Game { id, width, height, players, planets, ships, grid }
+    }
+
+    pub fn update(&mut self) {
+        let mut buffer = String::new();
+        stdin().read_line(&mut buffer).unwrap();
+        let mut stream: Vec<_> = buffer.split_whitespace().rev().collect();
+        let (players, planets, ships, grid) = take(&mut stream);
+        self.players = players;
+        self.planets = planets;
+        self.ships = ships;
+        self.grid = grid;
+    }
+
+    pub fn send_ready(name: &str) {
+        println!("{}", name);
+    }
 }
