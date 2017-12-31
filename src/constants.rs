@@ -19,7 +19,7 @@ pub const WEAPON_DAMAGE: i32 = 64;
 pub const EXPLODE_RADIUS: f32 = 10.0;
 
 // Maximum distance to dock
-pub const DOCK_RADIUS: f32 = 4.0;
+pub const DOCK_RADIUS: f32 = 4.00;
 
 // Turns required to dock
 pub const DOCK_TURNS: i32 = 5;
@@ -36,7 +36,7 @@ pub const X_GRID_SCALE: f32 = 32.0;
 pub const Y_GRID_SCALE: f32 = 32.0;
 
 // Angle to turn in degrees if failed to navigate
-pub const DELTA_THETA: f32 = PI / 50.0;
+pub const DELTA_THETA: f32 = PI / 10.0;
 
 // How many times to re-attempt navigation
-pub const CORRECTIONS: i32 = 200;
+pub const CORRECTIONS: i32 = 20;

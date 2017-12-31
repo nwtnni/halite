@@ -20,7 +20,7 @@ pub fn within(a: Point, ar: f32, b: Point, br: f32, r: f32) -> bool {
     let (x1, y1) = a;
     let (x2, y2) = b;
     let d = (y2 - y1).hypot(x2 - x1);
-    d < ar + br + r
+    d <= ar + br + r
 }
 
 impl Entity {
@@ -38,13 +38,22 @@ impl Entity {
         within(self.pos(), self.rad(), other.pos(), other.rad(), 0.0)
     }
 
+    // From https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
     pub fn intersects_line(&self, (x1, y1): Point, (x2, y2): Point) -> bool {
         let (x, y) = self.pos();
-        let d = (x1 - x)*(y2 - y) - (x2 - x)*(y1 - y);
-        let dr = (y2 - y1).hypot(x2 - x1);
         let r = self.rad() + SHIP_RADIUS;
-        d*d <= dr*dr*r*r
+        let (dx, dy) = (x2 - x1, y2 - y1);
+        let a = dx*dx + dy*dy;
+        let b = 2.0 * ((x1 - x)*dx + (y1 - y)*dy);
+        let c = (x1 - x)*(x1 - x) + (y1 - y)*(y1 - y) - r*r;
+        let d = b*b - 4.0*a*c;
+        if d < 0.0 { return false }
+
+        let d = d.sqrt();
+        let (t1, t2) = ((-b - d)/(2.0*a), (-b + d)/(2.0*a));
+        (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0) || (t1 <= 0.0 && t2 >= 1.0)
     }
+
 }
 
 pub trait ToEntity {
@@ -169,5 +178,27 @@ mod tests {
         grid.insert(&s1);
         assert_eq!(grid.collides(&s2), true);
         assert_eq!(grid.collides(&s3), false);
+    }
+
+    #[test]
+    fn test_circle() {
+        let circle = Entity::Point(Location { x: 0.0, y: 0.0, rad: 5.0 });
+        assert!(circle.intersects_line((-5.0, 5.0), (5.0, 5.0)));
+        assert!(circle.intersects_line((-5.0, 5.0), (0.0, 5.0)));
+        assert!(circle.intersects_line((0.0, 5.0), (5.0, 5.0)));
+    }
+
+    #[test]
+    fn test_offset_circle() {
+        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 5.0 });
+        assert!(circle.intersects_line((-10.0, 1.0), (10.0, 10.0)));
+        assert!(circle.intersects_line((0.0, 0.0), (0.0, 10.0)));
+        assert!(circle.intersects_line((0.0, 0.0), (10.0, 0.0)));
+    }
+
+    #[test]
+    fn test_no_collision() {
+        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 0.0 });
+        assert!(!circle.intersects_line((0.0, 0.0), (1.0, 1.0)));
     }
 }

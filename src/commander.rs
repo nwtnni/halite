@@ -70,15 +70,16 @@ pub fn navigate<T: ToEntity>(grid: &mut HashGrid, ship: &Ship, target: &T) -> Co
     let mut angle = f32::atan2(yt - ship.y, xt - ship.x);
     let mut n = CORRECTIONS;
 
+    let (xf, yf) = match target {
+        Entity::Ship(_) => offset(SHIP_RADIUS, (xt, yt), angle),
+        Entity::Planet(_) => {
+            offset(DOCK_RADIUS + target.rad() - 1.0, (xt, yt), angle)
+        },
+        Entity::Point(_) => (xt, yt),
+    };
+    let thrust = thrust((yf - ship.y).hypot(xf - ship.x));
+
     loop {
-        let (xf, yf) = match target {
-            Entity::Ship(_) => offset(SHIP_RADIUS, (xt, yt), angle),
-            Entity::Planet(_) => {
-                offset(DOCK_RADIUS + target.rad(), (xt, yt), angle)
-            },
-            Entity::Point(_) => (xt, yt),
-        };
-        let thrust = thrust((yf - ship.y).hypot(xf - ship.x));
         let (xf, yf) = (ship.x + thrust * angle.cos(),
                         ship.y + thrust * angle.sin());
         if grid.collides_toward(ship, (xf, yf)) && n > 0 {
