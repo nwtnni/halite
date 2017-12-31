@@ -84,14 +84,14 @@ const AROUND: [Cell; 9] = [
 ];
 
 #[derive(Debug, Default)]
-pub struct HashGrid {
+pub struct Grid {
     scale: (f32, f32),
     grid: FnvHashMap<Cell, Vec<Entity>>,
 }
 
-impl HashGrid {
+impl Grid {
     pub fn new() -> Self {
-        HashGrid {
+        Grid {
             scale: (X_GRID_SCALE, Y_GRID_SCALE),
             grid: FnvHashMap::default(),
         }
@@ -154,13 +154,13 @@ mod tests {
 
     #[test]
     fn test_insert() {
-        let mut grid = HashGrid::new();
+        let mut grid = Grid::new();
         grid.insert(&Location {x: 12.0, y: 12.0, rad: 12.0});
     }
 
     #[test]
     fn test_largest_planet() {
-        let mut grid = HashGrid::new();
+        let mut grid = Grid::new();
         let p1 = Location {x: 12.0, y: 12.0, rad: 16.0};
         let p2 = Location {x: 44.0, y: 12.0, rad: 16.0};
         let p3 = Location {x: 44.001, y: 12.0, rad: 16.0};
@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_ship() {
-        let mut grid = HashGrid::new();
+        let mut grid = Grid::new();
         let s1 = Location {x: 383.5, y: 255.5, rad: 0.5};
         let s2 = Location {x: 383.5, y: 254.5, rad: 0.5};
         let s3 = Location {x: 383.5, y: 254.4999, rad: 0.5};

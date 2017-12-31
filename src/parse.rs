@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::collections::hash_map::HashMap;
 use fnv::{FnvBuildHasher, FnvHashMap};
 use state::*;
-use collision::HashGrid;
+use collision::Grid;
 use constants::SHIP_RADIUS;
 
 pub trait FromStream {
@@ -91,12 +91,12 @@ impl FromStream for Planet {
 
 pub fn take(stream: &mut Vec<&str>) -> (
         Vec<Player>, HashMap<ID, Planet, FnvBuildHasher>,
-        HashMap<ID, Ship, FnvBuildHasher>, HashGrid
+        HashMap<ID, Ship, FnvBuildHasher>, Grid
     ) {
         let mut players = Vec::new();
         let mut planets = FnvHashMap::default();
         let mut ships = FnvHashMap::default();
-        let mut grid = HashGrid::new();
+        let mut grid = Grid::new();
 
         for _ in 0..(i32::take(stream)) {
             let id = usize::take(stream);

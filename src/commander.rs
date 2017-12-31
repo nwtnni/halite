@@ -43,8 +43,14 @@ pub fn can_dock(ship: &Ship, planet: &Planet) -> bool {
     }
 }
 
+pub fn is_enemy(id: ID, planet: &Planet) -> bool {
+    if let Some(owner) = planet.owner {
+        return owner == id;
+    } else { false }
+}
+
 pub fn is_docked(ship: &Ship) -> bool {
-    ship.status == Status::Docked
+    ship.status == Status::Docked || ship.status == Status::Docking
 }
 
 pub fn dock(ship: &Ship, planet: &Planet) -> Command {
@@ -64,7 +70,7 @@ fn offset(offset: f32, (x, y): Point, angle: f32) -> Point {
     (x - (offset * angle.cos()), y - (offset * angle.sin()))
 }
 
-pub fn navigate<T: ToEntity>(grid: &mut HashGrid, ship: &Ship, target: &T) -> Command {
+pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Command {
     let target = target.to_entity();
     let (xt, yt) = target.pos();
     let mut angle = f32::atan2(yt - ship.y, xt - ship.x);

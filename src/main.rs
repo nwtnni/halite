@@ -1,24 +1,9 @@
 extern crate halite;
 extern crate fnv;
-use fnv::FnvHashMap;
 use halite::state::*;
+use halite::collision::Grid;
 use halite::commander::*;
 use halite::strategy::*;
-
-fn closest_planet<'a, 'b, 'c>(
-    ship: &'a Ship,
-    planets: &'b FnvHashMap<ID, Planet>,
-    strategy: &'c Strategies,
-) -> Option<&'b Planet> {
-    planets.values()
-        .filter(|planet| planet.spots > strategy.docking_at(planet.id))
-        .filter(|planet| planet.spots > planet.ships.len() as i32)
-        .min_by_key(|planet| {
-            let x = planet.x - ship.x;
-            let y = planet.y - ship.y;
-            (x*x + y*y) as i32
-        })
-}
 
 fn main() {
     let mut game = Game::new();
@@ -34,24 +19,46 @@ fn main() {
 
             match strategy.get(ship.id) {
                 None => {
-                    let closest = closest_planet(ship, &game.planets, &strategy).unwrap();
-                    if can_dock(ship, closest) {
-                        queue.push(&dock(ship, closest));
-                    } else {
-                        strategy.set(ship.id, Strategy::Dock(closest.id));
-                        queue.push(&navigate(&mut game.grid, ship, closest));
-                    }
-                }
+                    do_none(ship, &game.planets, &mut strategy,
+                            &mut game.grid, &mut queue)
+                },
                 Some(Strategy::Dock(id)) => {
-                    let planet = &game.planets[&id];
-                    if can_dock(ship, planet) {
-                        queue.push(&dock(ship, planet));
-                    } else {
-                        queue.push(&navigate(&mut game.grid, ship, planet));
-                    }
-                }
+                    do_dock(ship, id, &game.planets,
+                            &mut game.grid, &mut queue)
+                },
+                Some(Strategy::Attack(_id)) => {},
+                Some(Strategy::Follow(_id)) => {},
             }
         }
         queue.flush();
+    }
+}
+
+fn do_none(ship: &Ship,
+           planets: &Planets,
+           strategy: &mut Strategies,
+           grid: &mut Grid,
+           queue: &mut Queue) 
+{
+    let closest = closest_planet(ship, &planets, &strategy).unwrap();
+    if can_dock(ship, closest) {
+        queue.push(&dock(ship, closest));
+    } else {
+        strategy.set(ship.id, Strategy::Dock(closest.id));
+        queue.push(&navigate(grid, ship, closest));
+    }
+}
+
+fn do_dock(ship: &Ship,
+           id: ID,
+           planets: &Planets,
+           grid: &mut Grid,
+           queue: &mut Queue) 
+{
+    let planet = &planets[&id];
+    if can_dock(ship, planet) {
+        queue.push(&dock(ship, planet));
+    } else {
+        queue.push(&navigate(grid, ship, planet));
     }
 }

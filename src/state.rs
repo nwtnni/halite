@@ -5,6 +5,8 @@ use collision::*;
 
 pub type ID = usize;
 pub type Point = (f32, f32);
+pub type Planets = FnvHashMap<ID, Planet>;
+pub type Ships = FnvHashMap<ID, Ship>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {
@@ -48,9 +50,9 @@ pub struct Game {
     pub width: f32,
     pub height: f32,
     pub players: Vec<Player>,
-    pub planets: FnvHashMap<ID, Planet>,
-    pub ships: FnvHashMap<ID, Ship>,
-    pub grid: HashGrid,
+    pub planets: Planets,
+    pub ships: Ships,
+    pub grid: Grid,
 }
 
 impl Game {

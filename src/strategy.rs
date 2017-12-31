@@ -1,8 +1,10 @@
-use state::ID;
+use state::*;
 use fnv::FnvHashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Strategy {
+    Attack(ID),
+    Follow(ID),
     Dock(ID),
 }
 
@@ -22,7 +24,8 @@ impl Strategies {
 
     pub fn docking_at(&self, planet: ID) -> i32 {
         self.ships.values()
-            .filter(|&&Strategy::Dock(id)| id == planet )
+            .filter_map(|s| if let &Strategy::Dock(id) = s { Some(id) } else { None })
+            .filter(|&id| id == planet )
             .count() as i32
     }
 
@@ -33,4 +36,18 @@ impl Strategies {
     pub fn clear(&mut self, ship: ID) {
         self.ships.remove(&ship);
     }
+}
+
+pub fn closest_planet<'a, 'b, 'c>(
+    ship: &'a Ship,
+    planets: &'b Planets,
+    strategy: &'c Strategies) -> Option<&'b Planet> 
+{
+    planets.values()
+        .filter(|planet| planet.spots > strategy.docking_at(planet.id))
+        .min_by_key(|planet| {
+            let x = planet.x - ship.x;
+            let y = planet.y - ship.y;
+            (x*x + y*y) as i32
+        })
 }
