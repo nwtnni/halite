@@ -34,25 +34,6 @@ impl Queue {
     }
 }
 
-pub fn can_dock(ship: &Ship, planet: &Planet) -> bool {
-    if within((ship.x, ship.y), ship.rad,
-            (planet.x, planet.y), planet.rad, DOCK_RADIUS) {
-        planet.spots > (planet.ships.len() as i32)
-    } else {
-        false
-    }
-}
-
-pub fn is_enemy(id: ID, planet: &Planet) -> bool {
-    if let Some(owner) = planet.owner {
-        return owner != id;
-    } else { false }
-}
-
-pub fn is_docked(ship: &Ship) -> bool {
-    ship.status == Status::Docked || ship.status == Status::Docking
-}
-
 pub fn dock(ship: &Ship, planet: &Planet) -> Command {
     Command::Dock(ship.id, planet.id)
 }
@@ -61,7 +42,7 @@ pub fn undock(ship: &Ship) -> Command {
     Command::Undock(ship.id)
 }
 
-fn thrust(distance: f32) -> f32 {
+pub fn thrust(distance: f32) -> f32 {
     if distance > SHIP_SPEED { SHIP_SPEED }
     else { distance }
 }

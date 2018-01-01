@@ -5,4 +5,4 @@ pub mod state;
 pub mod strategy;
 pub mod collision;
 pub mod constants;
-pub mod commander;
+pub mod command;

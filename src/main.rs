@@ -3,7 +3,7 @@ extern crate fnv;
 use halite::state::*;
 use halite::collision::{Grid, within};
 use halite::constants::{SHIP_RADIUS, ASSEMBLE_RADIUS};
-use halite::commander::*;
+use halite::command::*;
 use halite::strategy::*;
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
         strategy.clean(&mut game.ships);
         for ship_id in &game.players[game.id].ships {
             let ship = &game.ships[ship_id];
-            if is_docked(ship) { continue; }
+            if ship.is_docked() { continue; }
 
             match strategy.get(ship.id) {
                 None => {
@@ -76,15 +76,16 @@ fn do_none(id: ID,
             assign_attack(ship, ships, strategy, grid, queue);
         },
         Some(best) => {
-            if is_enemy(id, best) {
-                assign_attack(ship, ships, strategy, grid, queue);
-            } else {
-                if can_dock(ship, best) {
+            if best.has_spots() && !best.is_enemy(id) {
+                if ship.in_docking_range(best) {
                     queue.push(&dock(ship, best));
                 } else {
                     strategy.set(ship.id, Strategy::Dock(best.id));
                     queue.push(&navigate(grid, ship, best));
+                
                 }
+            } else {
+                assign_attack(ship, ships, strategy, grid, queue);
             }
         }
     }
@@ -101,11 +102,17 @@ fn do_dock(ship: &Ship,
         return strategy.clear(ship.id);
     }
     let planet = &planets[&target];
-    if can_dock(ship, planet) {
-        queue.push(&dock(ship, planet));
+    if planet.has_spots() {
+        if ship.in_docking_range(planet) {
+            queue.push(&dock(ship, planet));
+        }
+        else {
+            queue.push(&navigate(grid, ship, planet));
+        }
     } else {
-        queue.push(&navigate(grid, ship, planet));
+        return strategy.clear(ship.id);
     }
+
 }
 
 fn do_assemble(ship: &Ship,

@@ -1,7 +1,7 @@
 use fnv::FnvHashMap;
 use std::io::stdin;
 use parse::*;
-use constants::SHIP_SPEED;
+use constants::{SHIP_SPEED, DOCK_RADIUS};
 use collision::*;
 
 pub type ID = usize;
@@ -46,7 +46,16 @@ pub struct Ship {
 
 impl Ship {
     pub fn value(&self) -> f32 {
-        self.status.value() 
+        self.status.value()
+    }
+
+    pub fn is_docked(&self) -> bool {
+        self.status == Status::Docked
+        || self.status == Status::Docking
+    }
+
+    pub fn in_docking_range(&self, p: &Planet) -> bool {
+        within((self.x, self.y), self.rad, (p.x, p.y), p.rad, DOCK_RADIUS)
     }
 }
 
@@ -66,6 +75,17 @@ pub struct Planet {
 impl Planet {
     pub fn value(&self) -> f32 {
         SHIP_SPEED * (self.spots as f32)
+    }
+
+    pub fn is_enemy(&self, id: ID) -> bool {
+        match self.owner {
+            Some(other) => id != other,
+            None => false,
+        }
+    }
+
+    pub fn has_spots(&self) -> bool {
+        self.spots > (self.ships.len() as i32) 
     }
 }
 
