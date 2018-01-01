@@ -1,7 +1,7 @@
 use fnv::FnvHashMap;
 use std::io::stdin;
 use hlt::parse::*;
-use hlt::constants::{SHIP_SPEED, DOCK_RADIUS};
+use hlt::constants::{SHIP_SPEED, DOCK_RADIUS, SIZE_MULTIPLIER};
 use hlt::collision::*;
 
 pub type ID = usize;
@@ -75,7 +75,7 @@ pub struct Planet {
 impl Planet {
     pub fn value(&self) -> f32 {
         self.owner.map_or(SHIP_SPEED * 100.0, |_| 0.0)
-        + (self.spots as f32)
+        + ((self.spots as f32) * SIZE_MULTIPLIER)
     }
 
     pub fn is_enemy(&self, id: ID) -> bool {

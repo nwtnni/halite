@@ -58,7 +58,7 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     let mut n = CORRECTIONS;
 
     let (xf, yf) = match target {
-        Entity::Ship(_) => offset(SHIP_RADIUS*5.0, (xt, yt), angle),
+        Entity::Ship(_) => offset(SHIP_RADIUS, (xt, yt), angle),
         Entity::Planet(_) => {
             offset(DOCK_RADIUS + target.rad() - 0.50, (xt, yt), angle)
         },
@@ -73,7 +73,9 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
             angle += DELTA_THETA;
             n -= 1;
         } else {
+            let (xm, ym) = (((xf - ship.x)/2.0 + ship.x), ((yf - ship.y)/2.0 + ship.y));
             grid.remove((ship.x, ship.y));
+            grid.insert(&Location {x: xm, y: ym, rad: thrust/4.0, id: 0});
             grid.insert(&Location {x: xf, y: yf, rad: ship.rad, id: 0});
             angle = (angle.to_degrees() + 360.00) % 360.00;
             return Command::Thrust(ship.id, thrust as i32, angle as i32)

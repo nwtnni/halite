@@ -34,15 +34,6 @@ impl Entity {
         use hlt::collision::Entity::*;
         match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.rad, }
     }
-    
-    pub fn id(&self) -> ID {
-        use hlt::collision::Entity::*;
-        match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.id, }
-    }
-
-    pub fn intersects(&self, other: &Self) -> bool {
-        within(self.pos(), self.rad(), other.pos(), other.rad(), 0.0)
-    }
 
     // From https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
     pub fn intersects_line(&self, (x1, y1): Point, (x2, y2): Point) -> bool {
@@ -140,7 +131,7 @@ impl Grid {
                 Entity::Ship(Location {x: _, y: _, rad: _, id}) => {
                     ships.get(&id).map_or(false, |ship| ship.owner != player)
                 },
-                _ => false, 
+                _ => false,
             }).count() as i32
     }
 

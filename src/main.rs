@@ -59,7 +59,7 @@ fn do_none(id: ID,
            grid: &mut Grid,
            queue: &mut Queue)
 {
-    match best_planet(ship, ships, planets, strategy, grid) {
+    match best_planet(id, ship, ships, planets, strategy, grid) {
         None => {
             assign_attack(ship, ships, strategy, grid, queue);
         },
@@ -89,7 +89,7 @@ fn do_dock(id: ID,
            queue: &mut Queue)
 {
     if !planets.contains_key(&target) {
-        return assign_attack(ship, ships, strategy, grid, queue);
+        do_none(id, ship, ships, planets, strategy, grid, queue)
     }
     let planet = &planets[&target];
     if planet.has_spots() && !planet.is_enemy(id) {
@@ -114,7 +114,7 @@ fn do_attack(id: ID,
              queue: &mut Queue)
 {
     if !ships.contains_key(&target) {
-        do_dock(id, ship, target, ships, planets, strategy, grid, queue)
+        do_none(id, ship, ships, planets, strategy, grid, queue)
     } else {
         queue.push(&navigate(grid, ship, &ships[&target]));
     }

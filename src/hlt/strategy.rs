@@ -50,6 +50,7 @@ impl Strategies {
 }
 
 pub fn best_planet<'a, 'b, 'c, 'd, 'e>(
+    id: ID,
     ship: &'a Ship,
     ships: &'b Ships,
     planets: &'c Planets,
@@ -57,6 +58,7 @@ pub fn best_planet<'a, 'b, 'c, 'd, 'e>(
     grid: &'e Grid) -> Option<&'c Planet>
 {
     planets.values()
+        .filter(|&planet| planet.owner.map_or(true, |owner| id != owner))
         .min_by_key(|&planet| {
             let d = (planet.y - ship.y).hypot(planet.x - ship.x);
             let v = planet.value();
