@@ -1,7 +1,5 @@
+#![allow(dead_code)]
 use std::f32::consts::PI;
-
-// Name
-pub const BOT_NAME: &str = "Testing";
 
 // Ship radius
 pub const SHIP_RADIUS: f32 = 0.5;

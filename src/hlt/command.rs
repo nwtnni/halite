@@ -4,7 +4,6 @@ use hlt::constants::{SHIP_RADIUS, DOCK_RADIUS, SHIP_SPEED, CORRECTIONS, DELTA_TH
 
 pub enum Command {
     Dock(usize, usize),
-    Undock(usize),
     Thrust(usize, i32, i32),
 }
 
@@ -22,7 +21,6 @@ impl Queue {
         use self::Command::*;
         let string = match *command {
             Dock(ship, planet) => format!("d {} {} ", ship, planet),
-            Undock(ship) => format!("u {} ", ship),
             Thrust(ship, m, a) => format!("t {} {} {} ", ship, m, a),
         };
         self.commands.push_str(&string);
@@ -36,10 +34,6 @@ impl Queue {
 
 pub fn dock(ship: &Ship, planet: &Planet) -> Command {
     Command::Dock(ship.id, planet.id)
-}
-
-pub fn undock(ship: &Ship) -> Command {
-    Command::Undock(ship.id)
 }
 
 pub fn thrust(distance: f32) -> f32 {
