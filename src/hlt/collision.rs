@@ -1,6 +1,6 @@
 use fnv::FnvHashMap;
-use state::*;
-use constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS};
+use hlt::state::*;
+use hlt::constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Location {
@@ -104,17 +104,14 @@ impl Grid {
     pub fn insert<T: ToEntity>(&mut self, e: &T) {
         let entity = e.to_entity();
         let cell = self.to_cell(entity.pos());
-        self.grid.entry(cell)
-            .and_modify(|e| e.push(entity))
-            .or_insert(vec!(entity));
+        self.grid.entry(cell).or_insert(vec!(entity));
+        self.grid.get_mut(&cell).unwrap().push(entity);
     }
 
     pub fn remove(&mut self, e: Point) {
         let cell = self.to_cell(e);
-        self.grid.entry(cell)
-            .and_modify(|bucket| {
-                bucket.retain(|other| other.pos() != e);
-            });
+        self.grid.entry(cell).or_insert(Vec::new());
+        self.grid.get_mut(&cell).unwrap().retain(|other| other.pos() != e);
     }
 
     pub fn near<T: ToEntity>(&self, e: &T) -> Vec<Entity> {

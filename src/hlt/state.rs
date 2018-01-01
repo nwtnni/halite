@@ -1,8 +1,8 @@
 use fnv::FnvHashMap;
 use std::io::stdin;
-use parse::*;
-use constants::{SHIP_SPEED, DOCK_RADIUS};
-use collision::*;
+use hlt::parse::*;
+use hlt::constants::{SHIP_SPEED, DOCK_RADIUS};
+use hlt::collision::*;
 
 pub type ID = usize;
 pub type Point = (f32, f32);

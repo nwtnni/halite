@@ -1,4 +1,4 @@
-use state::*;
+use hlt::state::*;
 use fnv::FnvHashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

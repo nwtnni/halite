@@ -1,6 +1,6 @@
-use state::*;
-use collision::*;
-use constants::{SHIP_RADIUS, DOCK_RADIUS, SHIP_SPEED, CORRECTIONS, DELTA_THETA};
+use hlt::state::*;
+use hlt::collision::*;
+use hlt::constants::{SHIP_RADIUS, DOCK_RADIUS, SHIP_SPEED, CORRECTIONS, DELTA_THETA};
 
 pub enum Command {
     Dock(usize, usize),

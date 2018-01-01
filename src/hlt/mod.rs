@@ -1,4 +1,3 @@
-#![feature(nll, entry_and_modify)]
 extern crate fnv;
 pub mod parse;
 pub mod state;

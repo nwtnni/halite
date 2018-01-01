@@ -1,9 +1,9 @@
-extern crate halite;
 extern crate fnv;
-use halite::state::*;
-use halite::collision::{Grid};
-use halite::command::*;
-use halite::strategy::*;
+mod hlt;
+use hlt::state::*;
+use hlt::collision::{Grid};
+use hlt::command::*;
+use hlt::strategy::*;
 
 fn main() {
     let mut game = Game::new();

@@ -1,9 +1,9 @@
 use std::str::FromStr;
 use std::collections::hash_map::HashMap;
 use fnv::{FnvBuildHasher, FnvHashMap};
-use state::*;
-use collision::Grid;
-use constants::SHIP_RADIUS;
+use hlt::state::*;
+use hlt::collision::Grid;
+use hlt::constants::SHIP_RADIUS;
 
 pub trait FromStream {
     fn take(stream: &mut Vec<&str>) -> Self;
