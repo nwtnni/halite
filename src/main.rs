@@ -1,8 +1,7 @@
 extern crate halite;
 extern crate fnv;
 use halite::state::*;
-use halite::collision::{Grid, within};
-use halite::constants::{SHIP_RADIUS, ASSEMBLE_RADIUS};
+use halite::collision::{Grid};
 use halite::command::*;
 use halite::strategy::*;
 
@@ -25,19 +24,11 @@ fn main() {
                             &mut strategy, &mut game.grid, &mut queue)
                 },
                 Some(Strategy::Dock(target)) => {
-                    do_dock(ship, target, &game.planets,
+                    do_dock(game.id, ship, target, &game.ships, &game.planets,
                             &mut strategy, &mut game.grid, &mut queue)
                 },
                 Some(Strategy::Attack(target)) => {
                     do_attack(ship, target, &game.ships,
-                              &mut strategy, &mut game.grid, &mut queue)
-                },
-                Some(Strategy::Follow(target)) => {
-                    do_follow(ship, target, &game.ships,
-                              &mut strategy, &mut game.grid, &mut queue)
-                },
-                Some(Strategy::Assemble(target)) => {
-                    do_assemble(ship, target, &game.ships,
                               &mut strategy, &mut game.grid, &mut queue)
                 },
             }
@@ -52,14 +43,11 @@ fn assign_attack(ship: &Ship,
                  grid: &mut Grid,
                  queue: &mut Queue)
 {
-    if let Some(attacker) = strategy.attack_group(ship, ships) {
-        strategy.set(ship.id, Strategy::Assemble(attacker));
-        queue.push(&navigate(grid, ship, &ships[&attacker]));
+    if let Some(best) = best_target(ship, ships) {
+        strategy.set(ship.id, Strategy::Attack(best.id));
+        queue.push(&navigate(grid, ship, best));
     } else {
-        if let Some(best) = best_target(ship, ships) {
-            strategy.set(ship.id, Strategy::Attack(best.id));
-            queue.push(&navigate(grid, ship, best));
-        }
+        return;
     }
 }
 
@@ -78,11 +66,11 @@ fn do_none(id: ID,
         Some(best) => {
             if best.has_spots() && !best.is_enemy(id) {
                 if ship.in_docking_range(best) {
+                    strategy.set(ship.id, Strategy::Dock(best.id));
                     queue.push(&dock(ship, best));
                 } else {
                     strategy.set(ship.id, Strategy::Dock(best.id));
                     queue.push(&navigate(grid, ship, best));
-                
                 }
             } else {
                 assign_attack(ship, ships, strategy, grid, queue);
@@ -91,18 +79,20 @@ fn do_none(id: ID,
     }
 }
 
-fn do_dock(ship: &Ship,
+fn do_dock(id: ID,
+           ship: &Ship,
            target: ID,
+           ships: &Ships,
            planets: &Planets,
            strategy: &mut Strategies,
            grid: &mut Grid,
            queue: &mut Queue)
 {
     if !planets.contains_key(&target) {
-        return strategy.clear(ship.id);
+        return assign_attack(ship, ships, strategy, grid, queue);
     }
     let planet = &planets[&target];
-    if planet.has_spots() {
+    if planet.has_spots() && !planet.is_enemy(id) {
         if ship.in_docking_range(planet) {
             queue.push(&dock(ship, planet));
         }
@@ -110,46 +100,11 @@ fn do_dock(ship: &Ship,
             queue.push(&navigate(grid, ship, planet));
         }
     } else {
-        return strategy.clear(ship.id);
-    }
-
-}
-
-fn do_assemble(ship: &Ship,
-               target: ID,
-               ships: &Ships,
-               strategy: &mut Strategies,
-               grid: &mut Grid,
-               queue: &mut Queue)
-{
-    if !ships.contains_key(&target) {
-        return assign_attack(ship, ships, strategy, grid, queue);
-    }
-    let target = &ships[&target];
-    if within((ship.x, ship.y), SHIP_RADIUS,
-              (target.x, target.y), SHIP_RADIUS, ASSEMBLE_RADIUS) {
-        strategy.set(ship.id, Strategy::Follow(target.id));
-    } else {
-        queue.push(&navigate(grid, ship, target));
+        assign_attack(ship, ships, strategy, grid, queue);
     }
 }
 
 fn do_attack(ship: &Ship,
-             target: ID,
-             ships: &Ships,
-             strategy: &mut Strategies,
-             grid: &mut Grid,
-             queue: &mut Queue)
-{
-    if strategy.assembling(ship.id, ships) > 0 { return; }
-    if !ships.contains_key(&target) {
-        return assign_attack(ship, ships, strategy, grid, queue);
-    } else {
-        queue.push(&navigate(grid, ship, &ships[&target]));
-    }
-}
-
-fn do_follow(ship: &Ship,
              target: ID,
              ships: &Ships,
              strategy: &mut Strategies,

@@ -40,7 +40,3 @@ pub const DELTA_THETA: f32 = PI / 10.0;
 
 // How many times to re-attempt navigation
 pub const CORRECTIONS: i32 = 20;
-
-pub const ASSEMBLE_RADIUS: f32 = 2.5;
-
-pub const MAX_GROUP_SIZE: i32 = 4;

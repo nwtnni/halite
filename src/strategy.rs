@@ -1,13 +1,9 @@
 use state::*;
-use std::i32::MAX;
-use constants::MAX_GROUP_SIZE;
 use fnv::FnvHashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Strategy {
     Attack(ID),
-    Assemble(ID),
-    Follow(ID),
     Dock(ID),
 }
 
@@ -32,46 +28,11 @@ impl Strategies {
             .count() as i32
     }
 
-    pub fn assembling(&self, ship: ID, ships: &Ships) -> i32 {
-        self.ships.values()
-            .filter_map(|s| if let &Strategy::Assemble(id) = s { Some(id) } else { None })
-            .filter(|&id| id == ship && ships.contains_key(&id))
-            .count() as i32
-    }
-
-    pub fn following(&self, ship: ID, ships: &Ships) -> i32 {
-        self.ships.values()
-            .filter_map(|s| {
-                if let &Strategy::Follow(id) = s { Some(id) } else {
-                    if let &Strategy::Assemble(id) = s { Some(id) } else {
-                        None
-                    }
-                }
-            })
-            .filter(|&id| id == ship && ships.contains_key(&id))
-            .count() as i32
-
-    }
-
     pub fn attacking(&self, ship: ID, ships: &Ships) -> i32 {
         self.ships.values()
             .filter_map(|s| if let &Strategy::Attack(id) = s { Some(id) } else { None })
             .filter(|&id| id == ship && ships.contains_key(&id))
             .count() as i32
-    }
-
-    pub fn attack_group(&self, ship: &Ship, ships: &Ships) -> Option<ID> {
-        self.ships.iter()
-            .filter_map(|(&id, s)| if let &Strategy::Attack(_) = s { Some(id) } else { None })
-            .filter(|&id| self.following(id, ships) < MAX_GROUP_SIZE && id != ship.id)
-            .min_by_key(|id| {
-                match ships.get(id) {
-                    None => MAX,
-                    Some(target) => (target.y - ship.y).hypot(target.x - ship.x) as i32,
-                }
-            }).and_then(|id| {
-                if ships.contains_key(&id) { Some(id) } else { None }
-            })
     }
 
     pub fn set(&mut self, ship: ID, strategy: Strategy) {
