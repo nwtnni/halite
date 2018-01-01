@@ -43,7 +43,7 @@ fn assign_attack(ship: &Ship,
                  grid: &mut Grid,
                  queue: &mut Queue)
 {
-    if let Some(best) = best_target(ship, ships, strategy) {
+    if let Some(best) = best_target(ship, ships, strategy, grid) {
         strategy.set(ship.id, Strategy::Attack(best.id));
         queue.push(&navigate(grid, ship, best));
     } else {
@@ -59,7 +59,7 @@ fn do_none(id: ID,
            grid: &mut Grid,
            queue: &mut Queue)
 {
-    match best_planet(ship, &planets, &strategy) {
+    match best_planet(ship, ships, planets, strategy, grid) {
         None => {
             assign_attack(ship, ships, strategy, grid, queue);
         },

@@ -42,4 +42,7 @@ pub const DELTA_THETA: f32 = PI / 10.0;
 pub const CORRECTIONS: i32 = 20;
 
 // How unfavorable it is to attack the same enemy
-pub const MOB_PENALTY: i32 = 3;
+pub const MOB_PENALTY: i32 = 1;
+
+// How unfavorable it is to have nearby enemies
+pub const ENEMY_PENALTY: i32 = 1;

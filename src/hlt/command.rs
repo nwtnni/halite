@@ -74,7 +74,7 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
             n -= 1;
         } else {
             grid.remove((ship.x, ship.y));
-            grid.insert(&Location {x: xf, y: yf, rad: ship.rad});
+            grid.insert(&Location {x: xf, y: yf, rad: ship.rad, id: 0});
             angle = (angle.to_degrees() + 360.00) % 360.00;
             return Command::Thrust(ship.id, thrust as i32, angle as i32)
         }

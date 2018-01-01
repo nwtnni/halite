@@ -1,5 +1,6 @@
 use hlt::state::*;
-use hlt::constants::MOB_PENALTY;
+use hlt::collision::Grid;
+use hlt::constants::{MOB_PENALTY, ENEMY_PENALTY};
 use fnv::FnvHashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -47,31 +48,36 @@ impl Strategies {
     }
 }
 
-pub fn best_planet<'a, 'b, 'c>(
+pub fn best_planet<'a, 'b, 'c, 'd, 'e>(
     ship: &'a Ship,
-    planets: &'b Planets,
-    strategy: &'c Strategies) -> Option<&'b Planet>
+    ships: &'b Ships,
+    planets: &'c Planets,
+    strategy: &'d Strategies,
+    grid: &'e Grid) -> Option<&'c Planet>
 {
     planets.values()
-        .filter(|planet| planet.spots > strategy.docking_at(planet.id, planets))
-        .min_by_key(|planet| {
+        .min_by_key(|&planet| {
             let d = (planet.y - ship.y).hypot(planet.x - ship.x);
             let v = planet.value();
-            (d - v) as i32
+            let o = strategy.docking_at(planet.id, planets).pow(2)*MOB_PENALTY;
+            let e = grid.near_enemies(planet, ship.id, ships).pow(2)*ENEMY_PENALTY;
+            ((d - v) as i32) + o + e
         })
 }
 
-pub fn best_target<'a, 'b>(
+pub fn best_target<'a, 'b, 'c>(
     ship: &'a Ship,
     ships: &'a Ships,
-    strategy: &'b Strategies) -> Option<&'a Ship>
+    strategy: &'b Strategies,
+    grid: &'c Grid) -> Option<&'a Ship>
 {
     ships.values()
         .filter(|other| other.owner != ship.owner)
-        .min_by_key(|other| {
+        .min_by_key(|&other| {
             let d = (other.y - ship.y).hypot(other.x - ship.x);
             let v = other.value();
-            let o = (strategy.attacking(other.id, ships)*MOB_PENALTY) as f32;
-            (d - v + o) as i32
+            let o = strategy.attacking(other.id, ships)*MOB_PENALTY;
+            let e = grid.near_enemies(other, ship.id, ships).pow(2)*ENEMY_PENALTY;
+            ((d - v) as i32) + o + e;
         })
 }

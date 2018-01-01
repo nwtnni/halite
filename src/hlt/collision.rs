@@ -7,6 +7,7 @@ pub struct Location {
     pub x: f32,
     pub y: f32,
     pub rad: f32,
+    pub id: ID,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -25,13 +26,18 @@ pub fn within(a: Point, ar: f32, b: Point, br: f32, r: f32) -> bool {
 
 impl Entity {
     pub fn pos(&self) -> (f32, f32) {
-        use self::Entity::*;
+        use hlt::collision::Entity::*;
         match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => (l.x, l.y) }
     }
 
     pub fn rad(&self) -> f32 {
-        use self::Entity::*;
+        use hlt::collision::Entity::*;
         match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.rad, }
+    }
+    
+    pub fn id(&self) -> ID {
+        use hlt::collision::Entity::*;
+        match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.id, }
     }
 
     pub fn intersects(&self, other: &Self) -> bool {
@@ -61,13 +67,13 @@ pub trait ToEntity {
 
 impl ToEntity for Ship {
     fn to_entity(&self) -> Entity {
-        Entity::Ship(Location {x: self.x, y: self.y, rad: self.rad})
+        Entity::Ship(Location {x: self.x, y: self.y, rad: self.rad, id: self.id})
     }
 }
 
 impl ToEntity for Planet {
     fn to_entity(&self) -> Entity {
-        Entity::Planet(Location {x: self.x, y: self.y, rad: self.rad})
+        Entity::Planet(Location {x: self.x, y: self.y, rad: self.rad, id: self.id})
     }
 }
 
@@ -127,12 +133,15 @@ impl Grid {
         near
     }
 
-    pub fn collides<T: ToEntity>(&self, e: &T) -> bool {
-        let entity = e.to_entity();
+    pub fn near_enemies<T: ToEntity>(&self, e: &T, player: ID, ships: &Ships) -> i32 {
         self.near(e)
             .iter()
-            .any(|other| entity.pos() != other.pos()
-                 && entity.intersects(other))
+            .filter(|&&other| match other {
+                Entity::Ship(Location {x, y, rad, id}) => {
+                    ships.get(&id).map_or(false, |ship| ship.owner != player)
+                },
+                _ => false, 
+            }).count() as i32
     }
 
     pub fn collides_toward<T: ToEntity>(&self, e: &T, end: Point) -> bool {

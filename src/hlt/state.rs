@@ -74,7 +74,8 @@ pub struct Planet {
 
 impl Planet {
     pub fn value(&self) -> f32 {
-        SHIP_SPEED * (self.spots as f32)
+        self.owner.map_or(SHIP_SPEED * 100.0, |_| 0.0)
+        + SHIP_SPEED * (self.spots as f32)
     }
 
     pub fn is_enemy(&self, id: ID) -> bool {
