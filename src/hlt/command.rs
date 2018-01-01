@@ -49,7 +49,7 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     let target = target.to_entity();
     let (xt, yt) = target.pos();
     let mut angle = f32::atan2(yt - ship.y, xt - ship.x);
-    let mut n = CORRECTIONS;
+    let mut n = 0;
 
     let (xf, yf) = match target {
         Entity::Ship(_) => offset(SHIP_RADIUS, (xt, yt), angle),
@@ -63,13 +63,14 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     loop {
         let (xf, yf) = (ship.x + thrust * angle.cos(),
                         ship.y + thrust * angle.sin());
-        if grid.collides_toward(ship, (xf, yf)) && n > 0 {
-            angle += DELTA_THETA;
-            n -= 1;
+        if grid.collides_toward(ship, (xf, yf)) && n <= CORRECTIONS {
+            match n % 2 {
+                1 => { n += 1; angle += (n as f32) * DELTA_THETA },
+                0 => { n += 1; angle -= (n as f32) * DELTA_THETA },
+                _ => unreachable!()
+            }
         } else {
-            let (xm, ym) = (((xf - ship.x)/2.0 + ship.x), ((yf - ship.y)/2.0 + ship.y));
             grid.remove(ship);
-            grid.insert(&Location {x: xm, y: ym, rad: thrust/4.0, id: 0});
             grid.insert(&Location {x: xf, y: yf, rad: ship.rad, id: 0});
             angle = (angle.to_degrees() + 360.00) % 360.00;
             return Command::Thrust(ship.id, thrust as i32, angle as i32)
