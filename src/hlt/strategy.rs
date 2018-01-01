@@ -1,4 +1,5 @@
 use hlt::state::*;
+use hlt::constants::MOB_PENALTY;
 use fnv::FnvHashMap;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -39,10 +40,6 @@ impl Strategies {
         self.ships.insert(ship, strategy);
     }
 
-    pub fn clear(&mut self, ship: ID) {
-        self.ships.remove(&ship);
-    }
-
     pub fn clean(&mut self, ships: &mut Ships) {
         self.ships.retain(|id, _| {
             ships.contains_key(id)
@@ -66,13 +63,15 @@ pub fn best_planet<'a, 'b, 'c>(
 
 pub fn best_target<'a, 'b>(
     ship: &'a Ship,
-    ships: &'a Ships) -> Option<&'a Ship>
+    ships: &'a Ships,
+    strategy: &'b Strategies) -> Option<&'a Ship>
 {
     ships.values()
         .filter(|other| other.owner != ship.owner)
         .min_by_key(|other| {
             let d = (other.y - ship.y).hypot(other.x - ship.x);
             let v = other.value();
-            (d - v) as i32
+            let o = (strategy.attacking(other.id, ships)*MOB_PENALTY) as f32;
+            (d - v + o) as i32
         })
 }

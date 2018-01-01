@@ -9,7 +9,7 @@ fn main() {
     let mut game = Game::new();
     let mut queue = Queue::new();
     let mut strategy = Strategies::new();
-    Game::send_ready("TestBot");
+    Game::send_ready("nwtnni");
 
     loop {
         game.update();
@@ -28,7 +28,7 @@ fn main() {
                             &mut strategy, &mut game.grid, &mut queue)
                 },
                 Some(Strategy::Attack(target)) => {
-                    do_attack(ship, target, &game.ships,
+                    do_attack(game.id, ship, target, &game.ships, &game.planets,
                               &mut strategy, &mut game.grid, &mut queue)
                 },
             }
@@ -43,7 +43,7 @@ fn assign_attack(ship: &Ship,
                  grid: &mut Grid,
                  queue: &mut Queue)
 {
-    if let Some(best) = best_target(ship, ships) {
+    if let Some(best) = best_target(ship, ships, strategy) {
         strategy.set(ship.id, Strategy::Attack(best.id));
         queue.push(&navigate(grid, ship, best));
     } else {
@@ -104,15 +104,17 @@ fn do_dock(id: ID,
     }
 }
 
-fn do_attack(ship: &Ship,
+fn do_attack(id: ID,
+             ship: &Ship,
              target: ID,
              ships: &Ships,
+             planets: &Planets,
              strategy: &mut Strategies,
              grid: &mut Grid,
              queue: &mut Queue)
 {
     if !ships.contains_key(&target) {
-        return assign_attack(ship, ships, strategy, grid, queue);
+        do_dock(id, ship, target, ships, planets, strategy, grid, queue)
     } else {
         queue.push(&navigate(grid, ship, &ships[&target]));
     }

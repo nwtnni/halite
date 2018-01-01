@@ -40,3 +40,6 @@ pub const DELTA_THETA: f32 = PI / 10.0;
 
 // How many times to re-attempt navigation
 pub const CORRECTIONS: i32 = 20;
+
+// How unfavorable it is to attack the same enemy
+pub const MOB_PENALTY: i32 = 3;
