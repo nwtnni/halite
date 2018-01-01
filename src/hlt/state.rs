@@ -1,6 +1,8 @@
 use fnv::FnvHashMap;
 use std::io::stdin;
 use hlt::parse::*;
+use hlt::strategy::Plan;
+use hlt::command::Queue;
 use hlt::constants::{SHIP_SPEED, DOCK_RADIUS, SIZE_MULTIPLIER};
 use hlt::collision::*;
 
@@ -90,18 +92,19 @@ impl Planet {
     }
 }
 
-#[derive(Debug)]
-pub struct Game {
+pub struct State {
     pub id: ID,
     pub width: f32,
     pub height: f32,
     pub players: Vec<Player>,
     pub planets: Planets,
     pub ships: Ships,
+    pub strategy: Plan,
+    pub queue: Queue,
     pub grid: Grid,
 }
 
-impl Game {
+impl State {
     pub fn new() -> Self {
         let mut buffer = String::new();
         stdin().read_line(&mut buffer).unwrap();
@@ -111,8 +114,11 @@ impl Game {
         let id = usize::take(&mut stream);
         let width = f32::take(&mut stream);
         let height = f32::take(&mut stream);
+        let strategy = Plan::new();
+        let queue = Queue::new();
         let (players, planets, ships, grid) = take(&mut stream);
-        Game { id, width, height, players, planets, ships, grid }
+        State { id, width, height, players, planets,
+                ships, strategy, queue, grid }
     }
 
     pub fn update(&mut self) {
