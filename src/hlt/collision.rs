@@ -1,8 +1,7 @@
 use fnv::FnvHashMap;
-use std::collections::HashSet;
-use std::f32::consts::FRAC_1_SQRT_2;
+use std::f32::consts::SQRT_2;
 use hlt::state::*;
-use hlt::constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS, FUDGE};
+use hlt::constants::{GRID_SCALE, GRID_SCALE_2, SHIP_RADIUS, FUDGE};
 
 type Cell = (i32, i32);
 
@@ -21,13 +20,6 @@ pub enum Entity {
     Point(Location),
 }
 
-pub fn within(a: Point, ar: f32, b: Point, br: f32, r: f32) -> bool {
-    let (x1, y1) = a;
-    let (x2, y2) = b;
-    let d = (y2 - y1).hypot(x2 - x1);
-    d <= ar + br + r
-}
-
 impl Entity {
     pub fn pos(&self) -> (f32, f32) {
         use hlt::collision::Entity::*;
@@ -42,7 +34,8 @@ impl Entity {
     pub fn key(&self) -> ID {
         use hlt::collision::Entity::*;
         match *self {
-            Ship(ref l) | Point(ref l) => l.id,
+            Ship(ref l) => l.id,
+            Point(ref l) => l.id + 1000000,
             Planet(ref l) => l.id + 100000,
         }
     }
@@ -68,7 +61,7 @@ pub trait ToEntity {
     fn to_entity(&self) -> Entity;
 }
 
-impl ToEntity for Ship {
+impl<'a> ToEntity for &'a Ship {
     fn to_entity(&self) -> Entity {
         Entity::Ship(Location {
             x: self.x,
@@ -79,7 +72,7 @@ impl ToEntity for Ship {
     }
 }
 
-impl ToEntity for Planet {
+impl<'a> ToEntity for &'a Planet {
     fn to_entity(&self) -> Entity {
         Entity::Planet(Location {
             x: self.x,
@@ -94,16 +87,9 @@ impl ToEntity for Location {
     fn to_entity(&self) -> Entity { Entity::Point(*self) }
 }
 
-const SQRT: f32 = FRAC_1_SQRT_2;
-const CIRCLE: [Point; 9] = [
-    (-1.0, 0.0), (-SQRT, SQRT), (0.0, 1.0),
-    (SQRT, SQRT), (1.0, 0.0), (SQRT, -SQRT),
-    (0.0, -1.0), (-SQRT, -SQRT), (0.0, 0.0),
-];
-
 #[derive(Debug, Default)]
 pub struct Grid {
-    scale: (f32, f32),
+    pub id: ID,
     place: FnvHashMap<ID, Vec<Cell>>,
     grid: FnvHashMap<Cell, Vec<Entity>>,
 }
@@ -111,28 +97,45 @@ pub struct Grid {
 impl Grid {
     pub fn new() -> Self {
         Grid {
-            scale: (X_GRID_SCALE, Y_GRID_SCALE),
+            id: 0,
             place: FnvHashMap::default(),
             grid: FnvHashMap::default(),
         }
     }
 
-    fn to_cell(&self, x: f32, y: f32) -> Cell {
-        let (xs, ys) = self.scale;
-        ((x / xs) as i32, (y / ys) as i32)
+    fn to_cell(x: f32, y: f32) -> Cell {
+        ((x / GRID_SCALE) as i32, (y / GRID_SCALE) as i32)
     }
 
-    fn to_cells(&self, (x, y): Point, r: f32) -> Vec<Cell> {
-        CIRCLE.iter()
-            .map(|&(dx, dy)| self.to_cell(x + r*dx, y + r*dy))
-            .collect::<HashSet<_>>()
-            .into_iter()
-            .collect::<Vec<_>>()
+    fn to_cells((x, y): Point, r: f32) -> Vec<Cell> {
+        let mut cells = Vec::new();
+        let (mut x1, mut y1) = (x - SQRT_2*r, y - SQRT_2*r);
+        let (x2, y2) = (x + SQRT_2*r, y + SQRT_2*r);
+        while x1 < x2 {
+            let mark = y1;
+            while y1 < y2 {
+                // From https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
+                let cx = (x - (x1 + GRID_SCALE_2)).abs();
+                let cy = (y - (y1 + GRID_SCALE_2)).abs();
+                if cx > GRID_SCALE_2 + r || cy > GRID_SCALE_2 + r {
+                } else if cx <= GRID_SCALE_2 || cy <= GRID_SCALE_2
+                || (cx - GRID_SCALE_2).hypot(cy - GRID_SCALE_2) <= r {
+                    cells.push(Self::to_cell(x1, y1));
+                }
+                y1 += GRID_SCALE;
+            }
+            y1 = mark;
+            x1 += GRID_SCALE;
+        }
+        cells.push(Self::to_cell(x, y));
+        cells.sort_unstable();
+        cells.dedup();
+        cells
     }
 
     pub fn insert<T: ToEntity>(&mut self, e: &T) {
         let entity = e.to_entity();
-        let cells = self.to_cells(entity.pos(), entity.rad());
+        let cells = Self::to_cells(entity.pos(), entity.rad());
         for &cell in &cells {
             self.grid.entry(cell).or_insert(vec!(entity));
             self.grid.get_mut(&cell).unwrap().push(entity);
@@ -152,10 +155,12 @@ impl Grid {
 
     pub fn near<'a, T: ToEntity>(&'a self, e: &T, r: f32) -> Vec<&'a Entity> {
         let entity = e.to_entity();
-        let cells = self.to_cells(entity.pos(), r);
+        let key = entity.key();
+        let cells = Self::to_cells(entity.pos(), r);
         let mut nearby = cells.iter()
             .filter_map(|cell| self.grid.get(cell))
             .flat_map(|ref bucket| bucket.iter())
+            .filter(|&other| other.key() != key)
             .collect::<Vec<_>>();
         nearby.sort_unstable_by_key(|&entity| entity.key());
         nearby.dedup_by_key(|&mut entity| entity.key());
@@ -172,6 +177,26 @@ impl Grid {
             }).collect::<Vec<_>>();
         nearby.sort_unstable_by_key(|&(x2, y2, _)| (y2 - y1).hypot(x2 - x1) as i32);
         nearby.into_iter().map(|(_, _, id)| id).collect()
+    }
+
+    pub fn near_enemies<'a, T: ToEntity>(&self, e: &T, r: f32, ships: &'a Ships)
+        -> Vec<&'a Ship> {
+        self.near_ships(e, r)
+            .into_iter()
+            .filter_map(|id| { ships.get(&id).map_or(None, |ship| {
+                if ship.owner != self.id { Some(ship) } else { None }
+            })})
+            .collect()
+    }
+
+    pub fn near_allies<'a, T: ToEntity>(&self, e: &T, r: f32, ships: &'a Ships)
+        -> Vec<&'a Ship> {
+        self.near_ships(e, r)
+            .into_iter()
+            .filter_map(|id| { ships.get(&id).map_or(None, |ship| {
+                if ship.owner == self.id { Some(ship) } else { None }
+            })})
+            .collect()
     }
 
     pub fn collides_toward<T: ToEntity>(&self, e: &T, (x2, y2): Point) -> bool {

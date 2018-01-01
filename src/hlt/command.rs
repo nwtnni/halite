@@ -63,14 +63,14 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     loop {
         let (xf, yf) = (ship.x + thrust * angle.cos(),
                         ship.y + thrust * angle.sin());
-        if grid.collides_toward(ship, (xf, yf)) && n <= CORRECTIONS {
+        if grid.collides_toward(&ship, (xf, yf)) && n <= CORRECTIONS {
             match n % 2 {
                 1 => { n += 1; angle += (n as f32) * DELTA_THETA },
                 0 => { n += 1; angle -= (n as f32) * DELTA_THETA },
                 _ => unreachable!()
             }
         } else {
-            grid.remove(ship);
+            grid.remove(&ship);
             grid.insert(&Location {x: xf, y: yf, rad: ship.rad, id: 0});
             angle = (angle.to_degrees() + 360.00) % 360.00;
             return Command::Thrust(ship.id, thrust as i32, angle as i32)

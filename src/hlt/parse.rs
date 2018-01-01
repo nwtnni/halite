@@ -106,7 +106,7 @@ pub fn take(stream: &mut Vec<&str>) -> (
                 let mut ship = Ship::take(stream);
                 ship.owner = id;
                 player_ships.push(ship.id);
-                grid.insert(&ship);
+                grid.insert(&&ship);
                 ships.insert(ship.id, ship);
             }
             players.push(Player {id, ships: player_ships});
@@ -114,7 +114,7 @@ pub fn take(stream: &mut Vec<&str>) -> (
 
         for _ in 0..(i32::take(stream)) {
             let planet = Planet::take(stream);
-            grid.insert(&planet);
+            grid.insert(&&planet);
             planets.insert(planet.id, planet);
         }
         (players, planets, ships, grid)

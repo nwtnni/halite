@@ -29,21 +29,15 @@ pub const PRODUCTIVITY: i32 = 6;
 // Implementation-Specific
 //
 
-// HashGrid bin sizes
-pub const X_GRID_SCALE: f32 = 32.0;
-pub const Y_GRID_SCALE: f32 = 32.0;
+// Grid bin size
+pub const GRID_SCALE: f32 = 14.0;
+pub const GRID_SCALE_2: f32 = 7.0;
 
 // Angle to turn in degrees if failed to navigate
 pub const DELTA_THETA: f32 = PI / 10.0;
 
 // How many times to re-attempt navigation
 pub const CORRECTIONS: i32 = 20;
-
-// How unfavorable it is to attack the same enemy
-pub const MOB_PENALTY: i32 = 1;
-
-// How unfavorable it is to have nearby enemies
-pub const ENEMY_PENALTY: i32 = 1;
 
 // How favorable it is to have a large planet
 pub const SIZE_MULTIPLIER: f32 = 1.5;

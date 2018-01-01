@@ -16,17 +16,6 @@ pub enum Status {
     Docking, Docked, Undocked, Undocking
 }
 
-impl Status {
-    pub fn value(&self) -> f32 {
-        match *self {
-            Status::Docking => SHIP_SPEED * 16.0,
-            Status::Docked => SHIP_SPEED * 9.0,
-            Status::Undocking => SHIP_SPEED * 4.0,
-            Status::Undocked => 0.0,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct Player {
     pub id: ID,
@@ -47,8 +36,12 @@ pub struct Ship {
 }
 
 impl Ship {
-    pub fn value(&self) -> f32 {
-        self.status.value()
+    pub fn is_owned(&self, id: ID) -> bool {
+        self.id == id
+    }
+
+    pub fn is_enemy(&self, id: ID) -> bool {
+        self.id != id
     }
 
     pub fn is_docked(&self) -> bool {
@@ -57,7 +50,7 @@ impl Ship {
     }
 
     pub fn in_docking_range(&self, p: &Planet) -> bool {
-        within((self.x, self.y), self.rad, (p.x, p.y), p.rad, DOCK_RADIUS)
+        (p.y - self.y).hypot(p.x - self.x) <= self.rad + p.rad + DOCK_RADIUS
     }
 }
 
@@ -75,11 +68,6 @@ pub struct Planet {
 }
 
 impl Planet {
-    pub fn value(&self) -> f32 {
-        self.owner.map_or(SHIP_SPEED * 100.0, |_| 0.0)
-        + ((self.spots as f32) * SIZE_MULTIPLIER)
-    }
-
     pub fn is_enemy(&self, id: ID) -> bool {
         match self.owner {
             Some(other) => id != other,
@@ -88,7 +76,7 @@ impl Planet {
     }
 
     pub fn has_spots(&self) -> bool {
-        self.spots > (self.ships.len() as i32) 
+        self.spots > (self.ships.len() as i32)
     }
 }
 
@@ -96,12 +84,12 @@ pub struct State {
     pub id: ID,
     pub width: f32,
     pub height: f32,
+    pub grid: Grid,
     pub players: Vec<Player>,
     pub planets: Planets,
+    pub plan: Plan,
     pub ships: Ships,
-    pub strategy: Plan,
     pub queue: Queue,
-    pub grid: Grid,
 }
 
 impl State {
@@ -114,11 +102,11 @@ impl State {
         let id = usize::take(&mut stream);
         let width = f32::take(&mut stream);
         let height = f32::take(&mut stream);
-        let strategy = Plan::new();
+        let plan = Plan::new();
         let queue = Queue::new();
         let (players, planets, ships, grid) = take(&mut stream);
         State { id, width, height, players, planets,
-                ships, strategy, queue, grid }
+                ships, plan, queue, grid }
     }
 
     pub fn update(&mut self) {
@@ -130,6 +118,7 @@ impl State {
         self.planets = planets;
         self.ships = ships;
         self.grid = grid;
+        self.grid.id = self.id;
     }
 
     pub fn send_ready(name: &str) {
