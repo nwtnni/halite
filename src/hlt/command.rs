@@ -56,7 +56,7 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
         Entity::Planet(_) => {
             offset(DOCK_RADIUS + target.rad() - 0.50, (xt, yt), angle)
         },
-        Entity::Point(_) => (xt, yt),
+        Entity::Obstacle(_) | Entity::Beacon(_) => (xt, yt),
     };
     let thrust = thrust((yf - ship.y).hypot(xf - ship.x));
 
@@ -71,7 +71,7 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
             }
         } else {
             grid.remove(&ship);
-            grid.insert(&Location {x: xf, y: yf, rad: ship.rad, id: 0});
+            grid.insert(&Entity::Obstacle((xf, yf, ship.rad)));
             angle = (angle.to_degrees() + 360.00) % 360.00;
             return Command::Thrust(ship.id, thrust as i32, angle as i32)
         }

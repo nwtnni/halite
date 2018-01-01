@@ -6,37 +6,61 @@ use hlt::constants::{GRID_SCALE, GRID_SCALE_2, SHIP_RADIUS, FUDGE};
 type Cell = (i32, i32);
 
 #[derive(Debug, Copy, Clone)]
-pub struct Location {
-    pub x: f32,
-    pub y: f32,
-    pub rad: f32,
-    pub id: ID,
-}
-
-#[derive(Debug, Copy, Clone)]
 pub enum Entity {
-    Ship(Location),
-    Planet(Location),
-    Point(Location),
+    Ship((f32, f32, f32, ID)),
+    Planet((f32, f32, f32, ID)),
+    Beacon((f32, f32)),
+    Obstacle((f32, f32, f32)),
 }
 
 impl Entity {
     pub fn pos(&self) -> (f32, f32) {
         use hlt::collision::Entity::*;
-        match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => (l.x, l.y) }
+        match *self {
+            Ship((x, y, _, _))
+            | Planet((x, y, _, _))
+            | Beacon((x, y))
+            | Obstacle((x, y, _)) => (x, y)
+        }
     }
 
     pub fn rad(&self) -> f32 {
         use hlt::collision::Entity::*;
-        match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.rad, }
+        match *self {
+            Ship((_, _, r, _)) 
+            | Planet((_, _, r, _))
+            | Obstacle((_, _, r)) => r,
+            Beacon(_) => SHIP_RADIUS
+        }
     }
 
     pub fn key(&self) -> ID {
         use hlt::collision::Entity::*;
         match *self {
-            Ship(ref l) => l.id,
-            Point(ref l) => l.id + 1000000,
-            Planet(ref l) => l.id + 100000,
+            Ship((_, _, _, id)) => id,
+            Planet((_, _, _, id)) => id + 10000,
+            Beacon(_) | Obstacle(_) => 100000,
+        }
+    }
+
+    pub fn to_ship(&self) -> Option<(f32, f32, ID)> {
+        match *self {
+            Entity::Ship((x, y, _, id)) => Some((x, y, id)),
+            _ => None,
+        }
+    }
+
+    pub fn to_planet(&self) -> Option<(f32, f32, ID)> {
+        match *self {
+            Entity::Planet((x, y, _, id)) => Some((x, y, id)),
+            _ => None,
+        }
+    }
+
+    pub fn to_beacon(&self) -> Option<(f32, f32, ID)> {
+        match *self {
+            Entity::Beacon((x, y)) => Some((x, y, 100000)),
+            _ => None,
         }
     }
 
@@ -63,28 +87,18 @@ pub trait ToEntity {
 
 impl<'a> ToEntity for &'a Ship {
     fn to_entity(&self) -> Entity {
-        Entity::Ship(Location {
-            x: self.x,
-            y: self.y,
-            rad: self.rad,
-            id: self.id
-        })
+        Entity::Ship((self.x, self.y, self.rad, self.id))
     }
 }
 
 impl<'a> ToEntity for &'a Planet {
     fn to_entity(&self) -> Entity {
-        Entity::Planet(Location {
-            x: self.x,
-            y: self.y,
-            rad: self.rad,
-            id: self.id
-        })
+        Entity::Planet((self.x, self.y, self.rad, self.id))
     }
 }
 
-impl ToEntity for Location {
-    fn to_entity(&self) -> Entity { Entity::Point(*self) }
+impl ToEntity for Entity {
+    fn to_entity(&self) -> Entity { *self }
 }
 
 #[derive(Debug, Default)]
@@ -153,7 +167,7 @@ impl Grid {
         }
     }
 
-    pub fn near<'a, T: ToEntity>(&'a self, e: &T, r: f32) -> Vec<&'a Entity> {
+    fn near<'a, T: ToEntity>(&'a self, e: &T, r: f32) -> Vec<&'a Entity> {
         let entity = e.to_entity();
         let key = entity.key();
         let cells = Self::to_cells(entity.pos(), r);
@@ -167,35 +181,49 @@ impl Grid {
         nearby
     }
 
-    pub fn near_ships<T: ToEntity>(&self, e: &T, r: f32) -> Vec<ID> {
+    fn near_entity<F, T: ToEntity>(&self, e: &T, r: f32, f: F) -> Vec<(f32, f32, ID)>
+        where F: Fn(&Entity)-> Option<(f32, f32, ID)> {
         let (x1, y1) = e.to_entity().pos();
         let mut nearby = self.near(e, r)
             .into_iter()
-            .filter_map(|&entity| match entity {
-                Entity::Ship(Location {x, y, rad:_, id}) => { Some((x, y, id)) },
-                _ => None,
-            }).collect::<Vec<_>>();
+            .filter_map(|entity| f(entity))
+            .collect::<Vec<_>>();
         nearby.sort_unstable_by_key(|&(x2, y2, _)| (y2 - y1).hypot(x2 - x1) as i32);
-        nearby.into_iter().map(|(_, _, id)| id).collect()
+        nearby
     }
 
     pub fn near_enemies<'a, T: ToEntity>(&self, e: &T, r: f32, ships: &'a Ships)
         -> Vec<&'a Ship> {
-        self.near_ships(e, r)
+        self.near_entity(e, r, |entity| entity.to_ship())
             .into_iter()
-            .filter_map(|id| { ships.get(&id).map_or(None, |ship| {
+            .filter_map(|(_, _, id)| { ships.get(&id).map_or(None, |ship| {
                 if ship.owner != self.id { Some(ship) } else { None }
-            })})
-            .collect()
+            })}).collect()
     }
 
     pub fn near_allies<'a, T: ToEntity>(&self, e: &T, r: f32, ships: &'a Ships)
         -> Vec<&'a Ship> {
-        self.near_ships(e, r)
+        self.near_entity(e, r, |entity| entity.to_ship())
             .into_iter()
-            .filter_map(|id| { ships.get(&id).map_or(None, |ship| {
+            .filter_map(|(_, _, id)| { ships.get(&id).map_or(None, |ship| {
                 if ship.owner == self.id { Some(ship) } else { None }
-            })})
+            })}).collect()
+    }
+
+    pub fn near_planets<'a, T: ToEntity>(&self, e: &T, r: f32, planets: &'a Planets)
+        -> Vec<&'a Planet> {
+        self.near_entity(e, r, |entity| entity.to_planet())
+            .into_iter()
+            .filter_map(|(_, _, id)| {
+                planets.get(&id).map_or(None, |planet| { Some(planet) })
+            }).collect()
+    }
+
+    pub fn near_beacons<'a, T: ToEntity>(&self, e: &T, r: f32)
+        -> Vec<(f32, f32)> {
+        self.near_entity(e, r, |entity| entity.to_beacon()) 
+            .into_iter()
+            .map(|(x, y, _)| (x, y))
             .collect()
     }
 
