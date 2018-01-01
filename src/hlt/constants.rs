@@ -46,3 +46,5 @@ pub const MOB_PENALTY: i32 = 1;
 
 // How unfavorable it is to have nearby enemies
 pub const ENEMY_PENALTY: i32 = 1;
+
+pub const FUDGE: f32 = 1.1;

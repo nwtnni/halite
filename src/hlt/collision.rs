@@ -1,6 +1,6 @@
 use fnv::FnvHashMap;
 use hlt::state::*;
-use hlt::constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS};
+use hlt::constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS, FUDGE};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Location {
@@ -47,7 +47,7 @@ impl Entity {
     // From https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
     pub fn intersects_line(&self, (x1, y1): Point, (x2, y2): Point) -> bool {
         let (x, y) = self.pos();
-        let r = self.rad() + SHIP_RADIUS;
+        let r = self.rad() + SHIP_RADIUS*FUDGE;
         let (dx, dy) = (x2 - x1, y2 - y1);
         let a = dx*dx + dy*dy;
         let b = 2.0 * ((x1 - x)*dx + (y1 - y)*dy);
@@ -137,7 +137,7 @@ impl Grid {
         self.near(e)
             .iter()
             .filter(|&&other| match other {
-                Entity::Ship(Location {x, y, rad, id}) => {
+                Entity::Ship(Location {x: _, y: _, rad: _, id}) => {
                     ships.get(&id).map_or(false, |ship| ship.owner != player)
                 },
                 _ => false, 

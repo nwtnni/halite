@@ -1,7 +1,8 @@
+use std::i32::MIN;
+use fnv::FnvHashMap;
 use hlt::state::*;
 use hlt::collision::Grid;
-use hlt::constants::{MOB_PENALTY, ENEMY_PENALTY};
-use fnv::FnvHashMap;
+use hlt::constants::{MOB_PENALTY, ENEMY_PENALTY, DOCK_RADIUS, SHIP_RADIUS, SHIP_SPEED};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Strategy {
@@ -61,7 +62,11 @@ pub fn best_planet<'a, 'b, 'c, 'd, 'e>(
             let v = planet.value();
             let o = strategy.docking_at(planet.id, planets).pow(2)*MOB_PENALTY;
             let e = grid.near_enemies(planet, ship.id, ships).pow(2)*ENEMY_PENALTY;
-            ((d - v) as i32) + o + e
+            if d < DOCK_RADIUS + SHIP_RADIUS + SHIP_SPEED {
+                MIN
+            } else {
+                ((d - v) as i32) + o + e
+            }
         })
 }
 
