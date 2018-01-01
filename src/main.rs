@@ -134,7 +134,7 @@ fn do_attack(ship: &Ship,
              grid: &mut Grid,
              queue: &mut Queue)
 {
-    if strategy.assembling(ship.id, ships) > 0 { panic!("Assembling") }
+    if strategy.assembling(ship.id, ships) > 0 { return; }
     if !ships.contains_key(&target) {
         return assign_attack(ship, ships, strategy, grid, queue);
     } else {

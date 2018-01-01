@@ -34,9 +34,8 @@ impl Strategies {
 
     pub fn assembling(&self, ship: ID, ships: &Ships) -> i32 {
         self.ships.values()
-            .filter_map(|s| if let &Strategy::Follow(id) = s { Some(id) } else { None })
-            .filter(|&id| id == ship )
-            .filter(|id| ships.contains_key(&id))
+            .filter_map(|s| if let &Strategy::Assemble(id) = s { Some(id) } else { None })
+            .filter(|&id| id == ship && ships.contains_key(&id))
             .count() as i32
     }
 
@@ -62,9 +61,9 @@ impl Strategies {
     }
 
     pub fn attack_group(&self, ship: &Ship, ships: &Ships) -> Option<ID> {
-        self.ships.values()
-            .filter_map(|s| if let &Strategy::Attack(id) = s { Some(id) } else { None })
-            .filter(|&id| self.following(id, ships) < MAX_GROUP_SIZE)
+        self.ships.iter()
+            .filter_map(|(&id, s)| if let &Strategy::Attack(_) = s { Some(id) } else { None })
+            .filter(|&id| self.following(id, ships) < MAX_GROUP_SIZE && id != ship.id)
             .min_by_key(|id| {
                 match ships.get(id) {
                     None => MAX,

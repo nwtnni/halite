@@ -45,7 +45,7 @@ pub fn can_dock(ship: &Ship, planet: &Planet) -> bool {
 
 pub fn is_enemy(id: ID, planet: &Planet) -> bool {
     if let Some(owner) = planet.owner {
-        return owner == id;
+        return owner != id;
     } else { false }
 }
 
