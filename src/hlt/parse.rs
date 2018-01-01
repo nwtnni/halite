@@ -122,8 +122,8 @@ pub fn take(stream: &mut Vec<&str>) -> (
 
 mod tests {
     #![cfg(test)]
-    use ::state::*;
-    use ::parse::{FromStream, take};
+    use hlt::state::*;
+    use hlt::parse::{FromStream, take};
 
     #[test]
     fn test_status_take() {

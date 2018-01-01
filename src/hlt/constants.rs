@@ -49,5 +49,5 @@ pub const ENEMY_PENALTY: i32 = 1;
 pub const SIZE_MULTIPLIER: f32 = 1.5;
 
 // Wider margin of error for collision detection
-pub const FUDGE: f32 = 1.05;
+pub const FUDGE: f32 = 1.10;
 

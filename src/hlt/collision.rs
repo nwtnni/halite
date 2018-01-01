@@ -189,34 +189,12 @@ impl Grid {
 
 mod tests {
     #![cfg(test)]
-    use super::*;
+    use hlt::collision::*;
 
     #[test]
     fn test_insert() {
         let mut grid = Grid::new();
         grid.insert(&Location {x: 12.0, y: 12.0, rad: 12.0, id:0});
-    }
-
-    #[test]
-    fn test_largest_planet() {
-        let mut grid = Grid::new();
-        let p1 = Location {x: 12.0, y: 12.0, rad: 16.0, id:0};
-        let p2 = Location {x: 44.0, y: 12.0, rad: 16.0, id:1};
-        let p3 = Location {x: 44.001, y: 12.0, rad: 16.0, id:2};
-        grid.insert(&p1);
-        assert_eq!(grid.collides(&p2), true);
-        assert_eq!(grid.collides(&p3), false);
-    }
-
-    #[test]
-    fn test_ship() {
-        let mut grid = Grid::new();
-        let s1 = Location {x: 383.5, y: 255.5, rad: 0.5, id:0};
-        let s2 = Location {x: 383.5, y: 254.5, rad: 0.5, id:1};
-        let s3 = Location {x: 383.5, y: 254.4999, rad: 0.5, id:2};
-        grid.insert(&s1);
-        assert_eq!(grid.collides(&s2), true);
-        assert_eq!(grid.collides(&s3), false);
     }
 
     #[test]
