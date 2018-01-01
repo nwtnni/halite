@@ -1,6 +1,10 @@
 use fnv::FnvHashMap;
+use std::collections::HashSet;
+use std::f32::consts::FRAC_1_SQRT_2;
 use hlt::state::*;
 use hlt::constants::{X_GRID_SCALE, Y_GRID_SCALE, SHIP_RADIUS, FUDGE};
+
+type Cell = (i32, i32);
 
 #[derive(Debug, Copy, Clone)]
 pub struct Location {
@@ -35,6 +39,14 @@ impl Entity {
         match *self { Ship(ref l) | Planet(ref l) | Point(ref l) => l.rad, }
     }
 
+    pub fn key(&self) -> ID {
+        use hlt::collision::Entity::*;
+        match *self {
+            Ship(ref l) | Point(ref l) => l.id,
+            Planet(ref l) => l.id + 100000,
+        }
+    }
+
     // From https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
     pub fn intersects_line(&self, (x1, y1): Point, (x2, y2): Point) -> bool {
         let (x, y) = self.pos();
@@ -48,7 +60,7 @@ impl Entity {
 
         let d = d.sqrt();
         let (t1, t2) = ((-b - d)/(2.0*a), (-b + d)/(2.0*a));
-        (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0) || (t1 <= 0.0 && t2 >= 1.0)
+        (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
     }
 }
 
@@ -58,13 +70,23 @@ pub trait ToEntity {
 
 impl ToEntity for Ship {
     fn to_entity(&self) -> Entity {
-        Entity::Ship(Location {x: self.x, y: self.y, rad: self.rad, id: self.id})
+        Entity::Ship(Location {
+            x: self.x,
+            y: self.y,
+            rad: self.rad,
+            id: self.id
+        })
     }
 }
 
 impl ToEntity for Planet {
     fn to_entity(&self) -> Entity {
-        Entity::Planet(Location {x: self.x, y: self.y, rad: self.rad, id: self.id})
+        Entity::Planet(Location {
+            x: self.x,
+            y: self.y,
+            rad: self.rad,
+            id: self.id
+        })
     }
 }
 
@@ -72,16 +94,17 @@ impl ToEntity for Location {
     fn to_entity(&self) -> Entity { Entity::Point(*self) }
 }
 
-type Cell = (i32, i32);
-
-const AROUND: [Cell; 9] = [
-    (-1, -1), (-1, 0), (-1, 1), (0, -1),
-    (0,0), (0, 1), (1, -1), (1, 0), (1, 1)
+const SQRT: f32 = FRAC_1_SQRT_2;
+const CIRCLE: [Point; 9] = [
+    (-1.0, 0.0), (-SQRT, SQRT), (0.0, 1.0),
+    (SQRT, SQRT), (1.0, 0.0), (SQRT, -SQRT),
+    (0.0, -1.0), (-SQRT, -SQRT), (0.0, 0.0),
 ];
 
 #[derive(Debug, Default)]
 pub struct Grid {
     scale: (f32, f32),
+    place: FnvHashMap<ID, Vec<Cell>>,
     grid: FnvHashMap<Cell, Vec<Entity>>,
 }
 
@@ -89,58 +112,78 @@ impl Grid {
     pub fn new() -> Self {
         Grid {
             scale: (X_GRID_SCALE, Y_GRID_SCALE),
+            place: FnvHashMap::default(),
             grid: FnvHashMap::default(),
         }
     }
 
-    fn to_cell(&self, (x, y): Point) -> Cell {
+    fn to_cell(&self, x: f32, y: f32) -> Cell {
         let (xs, ys) = self.scale;
         ((x / xs) as i32, (y / ys) as i32)
     }
 
+    fn to_cells(&self, (x, y): Point, r: f32) -> Vec<Cell> {
+        CIRCLE.iter()
+            .map(|&(dx, dy)| self.to_cell(x + r*dx, y + r*dy))
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>()
+    }
+
     pub fn insert<T: ToEntity>(&mut self, e: &T) {
         let entity = e.to_entity();
-        let cell = self.to_cell(entity.pos());
-        self.grid.entry(cell).or_insert(vec!(entity));
-        self.grid.get_mut(&cell).unwrap().push(entity);
-    }
-
-    pub fn remove(&mut self, e: Point) {
-        let cell = self.to_cell(e);
-        self.grid.entry(cell).or_insert(Vec::new());
-        self.grid.get_mut(&cell).unwrap().retain(|other| other.pos() != e);
-    }
-
-    pub fn near<T: ToEntity>(&self, e: &T) -> Vec<Entity> {
-        let entity = e.to_entity();
-        let (x, y) = self.to_cell(entity.pos());
-        let mut near = Vec::new();
-        for &(xo, yo) in &AROUND {
-            match self.grid.get(&(x + xo, y + yo)) {
-                Some(bucket) => near.extend(bucket.iter()),
-                None => continue,
-            }
+        let cells = self.to_cells(entity.pos(), entity.rad());
+        for &cell in &cells {
+            self.grid.entry(cell).or_insert(vec!(entity));
+            self.grid.get_mut(&cell).unwrap().push(entity);
         }
-        near
+        self.place.insert(entity.key(), cells);
     }
 
-    pub fn near_enemies<T: ToEntity>(&self, e: &T, player: ID, ships: &Ships) -> i32 {
-        self.near(e)
-            .iter()
-            .filter(|&&other| match other {
-                Entity::Ship(Location {x: _, y: _, rad: _, id}) => {
-                    ships.get(&id).map_or(false, |ship| ship.owner != player)
-                },
-                _ => false,
-            }).count() as i32
+    pub fn remove<T: ToEntity>(&mut self, e: &T) {
+        let entity = e.to_entity();
+        let key = entity.key();
+        let cells = self.place.remove(&key).expect("Illegal remove");
+        for cell in cells {
+            self.grid.entry(cell).or_insert(Vec::new());
+            self.grid.get_mut(&cell).unwrap().retain(|other| other.key() != key);
+        }
     }
 
-    pub fn collides_toward<T: ToEntity>(&self, e: &T, end: Point) -> bool {
-        let start = e.to_entity().pos();
-        self.near(e)
-            .iter()
-            .any(|other| start != other.pos()
-                 && other.intersects_line(start, end))
+    pub fn near<'a, T: ToEntity>(&'a self, e: &T, r: f32) -> Vec<&'a Entity> {
+        let entity = e.to_entity();
+        let cells = self.to_cells(entity.pos(), r);
+        let mut nearby = cells.iter()
+            .filter_map(|cell| self.grid.get(cell))
+            .flat_map(|ref bucket| bucket.iter())
+            .collect::<Vec<_>>();
+        nearby.sort_unstable_by_key(|&entity| entity.key());
+        nearby.dedup_by_key(|&mut entity| entity.key());
+        nearby
+    }
+
+    pub fn near_ships<T: ToEntity>(&self, e: &T, r: f32) -> Vec<ID> {
+        let (x1, y1) = e.to_entity().pos();
+        let mut nearby = self.near(e, r)
+            .into_iter()
+            .filter_map(|&entity| match entity {
+                Entity::Ship(Location {x, y, rad:_, id}) => { Some((x, y, id)) },
+                _ => None,
+            }).collect::<Vec<_>>();
+        nearby.sort_unstable_by_key(|&(x2, y2, _)| (y2 - y1).hypot(x2 - x1) as i32);
+        nearby.into_iter().map(|(_, _, id)| id).collect()
+    }
+
+    pub fn collides_toward<T: ToEntity>(&self, e: &T, (x2, y2): Point) -> bool {
+        let entity = e.to_entity();
+        let key = entity.key();
+        let (x1, y1) = entity.pos();
+        let r = (y2 - y1).hypot(x2 - x1);
+        self.near(e, r)
+            .into_iter()
+            .any(|&other| {
+                other.key() != key && other.intersects_line((x1, y1), (x2, y2))
+            })
     }
 }
 
@@ -151,15 +194,15 @@ mod tests {
     #[test]
     fn test_insert() {
         let mut grid = Grid::new();
-        grid.insert(&Location {x: 12.0, y: 12.0, rad: 12.0});
+        grid.insert(&Location {x: 12.0, y: 12.0, rad: 12.0, id:0});
     }
 
     #[test]
     fn test_largest_planet() {
         let mut grid = Grid::new();
-        let p1 = Location {x: 12.0, y: 12.0, rad: 16.0};
-        let p2 = Location {x: 44.0, y: 12.0, rad: 16.0};
-        let p3 = Location {x: 44.001, y: 12.0, rad: 16.0};
+        let p1 = Location {x: 12.0, y: 12.0, rad: 16.0, id:0};
+        let p2 = Location {x: 44.0, y: 12.0, rad: 16.0, id:1};
+        let p3 = Location {x: 44.001, y: 12.0, rad: 16.0, id:2};
         grid.insert(&p1);
         assert_eq!(grid.collides(&p2), true);
         assert_eq!(grid.collides(&p3), false);
@@ -168,9 +211,9 @@ mod tests {
     #[test]
     fn test_ship() {
         let mut grid = Grid::new();
-        let s1 = Location {x: 383.5, y: 255.5, rad: 0.5};
-        let s2 = Location {x: 383.5, y: 254.5, rad: 0.5};
-        let s3 = Location {x: 383.5, y: 254.4999, rad: 0.5};
+        let s1 = Location {x: 383.5, y: 255.5, rad: 0.5, id:0};
+        let s2 = Location {x: 383.5, y: 254.5, rad: 0.5, id:1};
+        let s3 = Location {x: 383.5, y: 254.4999, rad: 0.5, id:2};
         grid.insert(&s1);
         assert_eq!(grid.collides(&s2), true);
         assert_eq!(grid.collides(&s3), false);
@@ -178,7 +221,7 @@ mod tests {
 
     #[test]
     fn test_circle() {
-        let circle = Entity::Point(Location { x: 0.0, y: 0.0, rad: 5.0 });
+        let circle = Entity::Point(Location { x: 0.0, y: 0.0, rad: 5.0, id:0});
         assert!(circle.intersects_line((-5.0, 5.0), (5.0, 5.0)));
         assert!(circle.intersects_line((-5.0, 5.0), (0.0, 5.0)));
         assert!(circle.intersects_line((0.0, 5.0), (5.0, 5.0)));
@@ -186,7 +229,7 @@ mod tests {
 
     #[test]
     fn test_offset_circle() {
-        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 5.0 });
+        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 5.0, id:0});
         assert!(circle.intersects_line((-10.0, 1.0), (10.0, 10.0)));
         assert!(circle.intersects_line((0.0, 0.0), (0.0, 10.0)));
         assert!(circle.intersects_line((0.0, 0.0), (10.0, 0.0)));
@@ -194,7 +237,7 @@ mod tests {
 
     #[test]
     fn test_no_collision() {
-        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 0.0 });
+        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 0.0, id:0});
         assert!(!circle.intersects_line((0.0, 0.0), (1.0, 1.0)));
     }
 }

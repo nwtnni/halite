@@ -68,7 +68,7 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
             n -= 1;
         } else {
             let (xm, ym) = (((xf - ship.x)/2.0 + ship.x), ((yf - ship.y)/2.0 + ship.y));
-            grid.remove((ship.x, ship.y));
+            grid.remove(ship);
             grid.insert(&Location {x: xm, y: ym, rad: thrust/4.0, id: 0});
             grid.insert(&Location {x: xf, y: yf, rad: ship.rad, id: 0});
             angle = (angle.to_degrees() + 360.00) % 360.00;

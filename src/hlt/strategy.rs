@@ -63,11 +63,12 @@ pub fn best_planet<'a, 'b, 'c, 'd, 'e>(
             let d = (planet.y - ship.y).hypot(planet.x - ship.x);
             let v = planet.value();
             let o = strategy.docking_at(planet.id, planets).pow(2)*MOB_PENALTY;
-            let e = grid.near_enemies(planet, ship.id, ships).pow(2)*ENEMY_PENALTY;
+            let e = grid.near_ships(planet, 5.0)
+                .len().pow(2) as i32 * ENEMY_PENALTY;
             if d < DOCK_RADIUS + SHIP_RADIUS + SHIP_SPEED {
                 MIN
             } else {
-                ((d - v) as i32) + o + e
+                ((d - v) as i32) + o + (e as i32)
             }
         })
 }
@@ -84,7 +85,8 @@ pub fn best_target<'a, 'b, 'c>(
             let d = (other.y - ship.y).hypot(other.x - ship.x);
             let v = other.value();
             let o = strategy.attacking(other.id, ships)*MOB_PENALTY;
-            let e = grid.near_enemies(other, ship.id, ships).pow(2)*ENEMY_PENALTY;
+            let e = grid.near_ships(other, 5.0)
+                .len().pow(2) as i32 *ENEMY_PENALTY;
             ((d - v) as i32) + o + e;
         })
 }
