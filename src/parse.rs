@@ -60,7 +60,7 @@ impl FromStream for Ship {
         };
         let progress = i32::take(stream);
         let _deprecated = stream.pop();
-        Ship {id, x, y, hp, rad, status, planet, progress}
+        Ship {id, x, y, hp, rad, status, planet, progress, owner: 0}
     }
 }
 
@@ -103,7 +103,8 @@ pub fn take(stream: &mut Vec<&str>) -> (
             let mut player_ships = Vec::new();
 
             for _ in 0..(i32::take(stream)) {
-                let ship = Ship::take(stream);
+                let mut ship = Ship::take(stream);
+                ship.owner = id;
                 player_ships.push(ship.id);
                 grid.insert(&ship);
                 ships.insert(ship.id, ship);

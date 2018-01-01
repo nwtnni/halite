@@ -77,9 +77,9 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     let mut n = CORRECTIONS;
 
     let (xf, yf) = match target {
-        Entity::Ship(_) => offset(SHIP_RADIUS, (xt, yt), angle),
+        Entity::Ship(_) => offset(SHIP_RADIUS*5.0, (xt, yt), angle),
         Entity::Planet(_) => {
-            offset(DOCK_RADIUS + target.rad() - 1.0, (xt, yt), angle)
+            offset(DOCK_RADIUS + target.rad() - 0.50, (xt, yt), angle)
         },
         Entity::Point(_) => (xt, yt),
     };

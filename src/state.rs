@@ -1,6 +1,7 @@
 use fnv::FnvHashMap;
 use std::io::stdin;
 use parse::*;
+use constants::SHIP_SPEED;
 use collision::*;
 
 pub type ID = usize;
@@ -11,6 +12,17 @@ pub type Ships = FnvHashMap<ID, Ship>;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {
     Docking, Docked, Undocked, Undocking
+}
+
+impl Status {
+    pub fn value(&self) -> f32 {
+        match *self {
+            Status::Docking => SHIP_SPEED * 16.0,
+            Status::Docked => SHIP_SPEED * 9.0,
+            Status::Undocking => SHIP_SPEED * 4.0,
+            Status::Undocked => 0.0,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -29,6 +41,13 @@ pub struct Ship {
     pub status: Status,
     pub planet: Option<ID>,
     pub progress: i32,
+    pub owner: ID,
+}
+
+impl Ship {
+    pub fn value(&self) -> f32 {
+        self.status.value() 
+    }
 }
 
 #[derive(Debug)]
@@ -42,6 +61,12 @@ pub struct Planet {
     pub spawn: i32,
     pub owner: Option<ID>,
     pub ships: Vec<usize>,
+}
+
+impl Planet {
+    pub fn value(&self) -> f32 {
+        SHIP_SPEED * (self.spots as f32)
+    }
 }
 
 #[derive(Debug)]
