@@ -61,7 +61,7 @@ impl Ship {
 
     pub fn distance_to<T: ToEntity>(&self, e: &T) -> f32 {
         let (x, y) = e.to_entity().pos();
-        (y - self.y).hypot(y - self.y)
+        (y - self.y).hypot(x - self.x)
     }
 }
 
@@ -80,7 +80,7 @@ pub struct Planet {
 
 impl Planet {
     pub fn value(&self) -> f32 {
-        self.owner.map_or(700.0, |_| 0.0)
+        self.owner.map_or(35.0, |_| 0.0)
         + (self.spots as f32)
     }
 

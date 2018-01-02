@@ -41,4 +41,4 @@ pub const MIN_THRUST: i32 = 0;
 pub const CORRECTIONS: i32 = 120;
 
 // Wider margin of error for collision detection
-pub const FUDGE: f32 = 1.3;
+pub const FUDGE: f32 = 1.5;
