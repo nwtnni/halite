@@ -51,23 +51,25 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     let (xt, yt) = target.pos();
     let angle = f32::atan2(yt - ship.y, xt - ship.x);
     let (xf, yf) = match target {
-        Entity::Ship(_) => offset(WEAPON_RADIUS, (xt, yt), angle),
-        Entity::Planet(_) => {
+        Entity::Ship(_, _, _, _) => {
+            offset(WEAPON_RADIUS, (xt, yt), angle)
+        },
+        Entity::Planet(_, _, _, _) => {
             offset(DOCK_RADIUS + target.rad() - 0.50, (xt, yt), angle)
         },
-        Entity::Obstacle(_) | Entity::Beacon(_) => (xt, yt),
+        Entity::Obstacle(_, _, _, _) => (xt, yt),
     };
     let thrust = thrust((yf - ship.y).hypot(xf - ship.x));
     let (x, y, thrust, angle) = grid.closest_free(ship, (xf, yf), thrust);
     let mut smoke = 1;
-    while smoke < thrust - 1 {
-        grid.insert(&Entity::Obstacle((
-            x - (smoke as f32)*(angle as f32).to_radians().cos(),
-            y - (smoke as f32)*(angle as f32).to_radians().sin(),
-            SHIP_RADIUS)));
-        smoke += 2;
-    }
+    // while smoke < thrust - 1 {
+    //     grid.insert(&Entity::Obstacle(
+    //         x - (smoke as f32)*(angle as f32).to_radians().cos(),
+    //         y - (smoke as f32)*(angle as f32).to_radians().sin(),
+    //         SHIP_RADIUS);
+    //     smoke += 2;
+    // }
     grid.remove(&ship);
-    grid.insert(&Entity::Ship((x, y, SHIP_RADIUS, ship.id)));
+    grid.insert(&Entity::Ship(x, y, SHIP_RADIUS, ship.id));
     Command::Thrust(ship.id, thrust, (angle + 360) % 360)
 }

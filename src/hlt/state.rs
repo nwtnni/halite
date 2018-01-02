@@ -94,6 +94,10 @@ impl Planet {
     pub fn has_spots(&self) -> bool {
         self.spots > (self.ships.len() as i32)
     }
+
+    pub fn spots(&self) -> i32 {
+        self.spots - (self.ships.len() as i32)
+    }
 }
 
 pub struct State {
@@ -134,7 +138,7 @@ impl State {
         self.planets = planets;
         self.ships = ships;
         self.grid = grid;
-        self.grid.id = self.id;
+        self.grid.owner = self.id;
     }
 
     pub fn send_ready(name: &str) {

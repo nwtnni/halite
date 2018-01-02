@@ -8,59 +8,49 @@ type Cell = (i32, i32);
 
 #[derive(Debug, Copy, Clone)]
 pub enum Entity {
-    Ship((f32, f32, f32, ID)),
-    Planet((f32, f32, f32, ID)),
-    Beacon((f32, f32)),
-    Obstacle((f32, f32, f32)),
+    Ship(f32, f32, f32, ID),
+    Planet(f32, f32, f32, ID),
+    Obstacle(f32, f32, f32, ID),
 }
 
 impl Entity {
     pub fn pos(&self) -> (f32, f32) {
         use hlt::collision::Entity::*;
         match *self {
-            Ship((x, y, _, _))
-            | Planet((x, y, _, _))
-            | Beacon((x, y))
-            | Obstacle((x, y, _)) => (x, y)
+            Ship(x, y, _, _)
+            | Planet(x, y, _, _)
+            | Obstacle(x, y, _, _) => (x, y),
         }
     }
 
     pub fn rad(&self) -> f32 {
         use hlt::collision::Entity::*;
         match *self {
-            Ship((_, _, r, _))
-            | Planet((_, _, r, _))
-            | Obstacle((_, _, r)) => r,
-            Beacon(_) => SHIP_RADIUS
+            Ship(_, _, r, _)
+            | Planet(_, _, r, _)
+            | Obstacle(_, _, r, _) => r,
         }
     }
 
-    pub fn key(&self) -> ID {
+    fn key(&self) -> String {
         use hlt::collision::Entity::*;
         match *self {
-            Ship((_, _, _, id)) => id,
-            Planet((_, _, _, id)) => id + 10000,
-            Beacon(_) | Obstacle(_) => 100000,
+            Ship(_, _, _, id) => "s".to_string() + &id.to_string(),
+            Planet(_, _, _, id) => "p".to_string() + &id.to_string(),
+            Obstacle(_, _, _, id) => "o".to_string() + &id.to_string(),
         }
     }
 
-    pub fn to_ship(&self) -> Option<(f32, f32, ID)> {
+    fn to_ship(&self) -> Option<(f32, f32, ID)> {
         match *self {
-            Entity::Ship((x, y, _, id)) => Some((x, y, id)),
+            Entity::Ship(x, y, _, id) => Some((x, y, id)),
             _ => None,
         }
     }
 
-    pub fn to_planet(&self) -> Option<(f32, f32, ID)> {
+    fn to_planet(&self) -> Option<(f32, f32, ID)> {
         match *self {
-            Entity::Planet((x, y, _, id)) => Some((x, y, id)),
-            _ => None,
-        }
-    }
-
-    pub fn to_beacon(&self) -> Option<(f32, f32, ID)> {
-        match *self {
-            Entity::Beacon((x, y)) => Some((x, y, 100000)),
+            Entity::Planet(x, y, _, id) => Some((x, y, id)),
             _ => None,
         }
     }
@@ -93,31 +83,35 @@ pub trait ToEntity {
 
 impl<'a> ToEntity for &'a Ship {
     fn to_entity(&self) -> Entity {
-        Entity::Ship((self.x, self.y, self.rad, self.id))
+        Entity::Ship(self.x, self.y, self.rad, self.id)
     }
 }
 
 impl<'a> ToEntity for &'a Planet {
     fn to_entity(&self) -> Entity {
-        Entity::Planet((self.x, self.y, self.rad, self.id))
+        Entity::Planet(self.x, self.y, self.rad, self.id)
     }
 }
 
 impl ToEntity for Entity {
-    fn to_entity(&self) -> Entity { *self }
+    fn to_entity(&self) -> Entity {
+        *self
+    }
 }
 
 #[derive(Debug, Default)]
 pub struct Grid {
-    pub id: ID,
-    place: FnvHashMap<ID, Vec<Cell>>,
+    pub owner: ID,
+    count: i32,
+    place: FnvHashMap<String, Vec<Cell>>,
     grid: FnvHashMap<Cell, Vec<Entity>>,
 }
 
 impl Grid {
     pub fn new() -> Self {
         Grid {
-            id: 0,
+            owner: 0,
+            count: 0,
             place: FnvHashMap::default(),
             grid: FnvHashMap::default(),
         }
@@ -130,16 +124,16 @@ impl Grid {
     fn to_cells((x, y): Point, r: f32) -> Vec<Cell> {
         let mut cells = Vec::new();
         let (x1, y1) = Self::to_cell(x - SQRT_2*r, y - SQRT_2*r);
-        let (mut x1, mut y1) = ((x1-1) as f32 * GRID_SCALE, (y1-1) as f32 * GRID_SCALE);
+        let (mut x1, mut y1) = (x1 as f32 * GRID_SCALE, y1 as f32 * GRID_SCALE);
         let (x2, y2) = Self::to_cell(x + SQRT_2*r, y + SQRT_2*r);
-        let (x2, y2) = ((x2+1) as f32 * GRID_SCALE, (y2+1) as f32 * GRID_SCALE);
+        let (x2, y2) = (x2 as f32 * GRID_SCALE, y2 as f32 * GRID_SCALE);
         while x1 < x2 {
             let mark = y1;
             while y1 < y2 {
                 // From https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
                 let (rx, ry) = (x1 + GRID_SCALE_2, y1 + GRID_SCALE_2);
                 let (cx, cy) = ((x - rx).abs(), (y - ry).abs());
-                if cx > GRID_SCALE_2 + r || cy > GRID_SCALE_2 + r {} 
+                if cx > GRID_SCALE_2 + r || cy > GRID_SCALE_2 + r {}
                 else if cx <= GRID_SCALE_2 || cy <= GRID_SCALE_2
                 || (cx - GRID_SCALE_2).hypot(cy - GRID_SCALE_2) <= r {
                     let cell = Self::to_cell(rx, ry);
@@ -178,19 +172,13 @@ impl Grid {
         let pos = entity.pos();
         let key = entity.key();
         let cells = Self::to_cells(pos, r);
-        let mut n = 0;
         let mut nearby = cells.iter()
             .filter_map(|cell| self.grid.get(cell))
             .flat_map(|ref bucket| bucket.iter())
             .filter(|&other| other.key() != key && other.intersects(pos, r) )
             .collect::<Vec<_>>();
         nearby.sort_unstable_by_key(|&entity| entity.key());
-        nearby.dedup_by_key(move |&mut entity| {
-            match *entity {
-                Entity::Planet(_) | Entity::Ship(_) => entity.key(),
-                _ => { n += 1; n },
-            }
-        });
+        nearby.dedup_by_key(|&mut entity| { entity.key() });
         nearby
     }
 
@@ -210,7 +198,7 @@ impl Grid {
         self.near_entity(e, r, |entity| entity.to_ship())
             .into_iter()
             .filter_map(|(_, _, id)| { ships.get(&id).map_or(None, |ship| {
-                if ship.owner != self.id { Some(ship) } else { None }
+                if ship.owner != self.owner { Some(ship) } else { None }
             })}).collect()
     }
 
@@ -219,7 +207,7 @@ impl Grid {
         self.near_entity(e, r, |entity| entity.to_ship())
             .into_iter()
             .filter_map(|(_, _, id)| { ships.get(&id).map_or(None, |ship| {
-                if ship.owner == self.id { Some(ship) } else { None }
+                if ship.owner == self.owner { Some(ship) } else { None }
             })}).collect()
     }
 
@@ -232,36 +220,28 @@ impl Grid {
             }).collect()
     }
 
-    pub fn near_beacons<T: ToEntity>(&self, e: &T, r: f32)
-        -> Vec<(f32, f32)> {
-        self.near_entity(e, r, |entity| entity.to_beacon())
-            .into_iter()
-            .map(|(x, y, _)| (x, y))
-            .collect()
-    }
-
     pub fn collides_at(&self, ship: &Ship, (x, y): Point) -> bool {
-        self.near(
-            &Entity::Ship((x, y, ship.rad, ship.id)),
-            SHIP_RADIUS*FUDGE).len() > 0
+        let near = self.near(&Entity::Ship(x, y, ship.rad, ship.id), SHIP_RADIUS);
+        info!("Checking colliding at ({}, {}):\n{:#?}", x, y, near);
+        near.len() > 0
     }
 
     pub fn collides_toward<T: ToEntity>(&self, e: &T, (x2, y2): Point) -> bool {
         let entity = e.to_entity();
-        let key = entity.key();
         let (x1, y1) = entity.pos();
-        self.near(e, (y2 -y1).hypot(x2 - x1)*1.1)
+        let near = self.near(e, (y2 -y1).hypot(x2 - x1));
+        info!("Checking colliding toward ({}, {}), ({}, {})\n{:#?}", 
+             x1, y1, x2, y2, near);
+        near
             .into_iter()
-            .any(|&other| {
-                other.key() != key && other.intersects_line((x1, y1), (x2, y2))
-            })
+            .any(|&other| other.intersects_line((x1, y1), (x2, y2)))
     }
 
     fn wiggle(n: i32, m: i32, a: i32, t: i32, target: i32)
         -> (i32, i32, i32, i32) {
         if n == m {
-            let t = 7 - (m/6)*DELTA_THRUST;
-            (0, m+6, target, if t > MIN_THRUST {t} else {MIN_THRUST})
+            let t = 7 - (m/8)*DELTA_THRUST;
+            (0, m+8, target, if t > MIN_THRUST {t} else {MIN_THRUST})
         } else {
             match n % 2 {
                 0 => (n+1, m, a - n*DELTA_THETA, t),
@@ -273,6 +253,8 @@ impl Grid {
 
     pub fn closest_free(&self, ship: &Ship, (x, y): Point, thrust: i32)
         -> (f32, f32, i32, i32) {
+        info!("Beginning to search for spot for {:#?} around ({}, {}) at
+              speed {}", ship, x, y, thrust);
         let target = f32::atan2(y - ship.y, x - ship.x).to_degrees().round() as i32;
         let (mut a, mut t, mut n, mut m) = (target, thrust, 0, 0);
         loop {
@@ -280,6 +262,8 @@ impl Grid {
             let (xf, yf) = (ship.x + (t as f32)*r.cos(),
                             ship.y + (t as f32)*r.sin());
 
+            info!("\tChecking collision n: {}, m: {} for ship traveling from
+                  ({}, {}) to ({}, {})", n, m, ship.x, ship.y, xf, yf);
             let at = self.collides_at(&ship, (xf, yf));
             let toward = self.collides_toward(&ship, (xf, yf));
 
@@ -287,6 +271,7 @@ impl Grid {
                 let (n2, m2, a2, t2) = Self::wiggle(n, m, a, t, target);
                 n = n2; m = m2; a = a2; t = t2;
             } else if at || toward {
+                panic!();
                 return (xf, yf, 0, a)
             } else {
                 return (xf, yf, t, a)
