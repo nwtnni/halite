@@ -53,6 +53,16 @@ impl Ship {
     pub fn in_docking_range(&self, p: &Planet) -> bool {
         (p.y - self.y).hypot(p.x - self.x) <= self.rad + p.rad + DOCK_RADIUS
     }
+
+    pub fn retreat_from(&self, e: &Ship, d: i32) -> Point {
+        let angle = f32::atan2(e.y - self.y, e.x - self.x);
+        (self.x - (d as f32)*angle.cos(), self.y - (d as f32)*angle.sin())
+    }
+
+    pub fn distance_to<T: ToEntity>(&self, e: &T) -> f32 {
+        let (x, y) = e.to_entity().pos();
+        (y - self.y).hypot(y - self.y)
+    }
 }
 
 #[derive(Debug)]
@@ -69,6 +79,11 @@ pub struct Planet {
 }
 
 impl Planet {
+    pub fn value(&self) -> f32 {
+        self.owner.map_or(700.0, |_| 0.0)
+        + (self.spots as f32)
+    }
+
     pub fn is_enemy(&self, id: ID) -> bool {
         match self.owner {
             Some(other) => id != other,
