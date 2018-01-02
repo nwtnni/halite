@@ -1,5 +1,5 @@
 use fnv::FnvHashMap;
-use std::f32;
+use std::i32;
 use std::f32::consts::SQRT_2;
 use hlt::state::*;
 use hlt::constants::*;
@@ -257,37 +257,38 @@ impl Grid {
             })
     }
 
-    fn wiggle(n: i32, m: i32, a: f32, t: f32, target: f32)
-        -> (i32, i32, f32, f32) {
+    fn wiggle(n: i32, m: i32, a: i32, t: i32, target: i32)
+        -> (i32, i32, i32, i32) {
         if n == m {
-            (0, m+6, target, f32::max(7.0 - (DELTA_THRUST/6.0*(m as f32)), MIN_THRUST).round())
+            let t = 7 - (m/6)*DELTA_THRUST;
+            (0, m+6, target, if t > MIN_THRUST {t} else {MIN_THRUST})
         } else {
             match n % 2 {
-                0 => (n+1, m, a - (n as f32)*DELTA_THETA, t),
-                1 => (n+1, m, a + (n as f32)*DELTA_THETA, t),
+                0 => (n+1, m, a - n*DELTA_THETA, t),
+                1 => (n+1, m, a + n*DELTA_THETA, t),
                 _ => unreachable!()
             }
         }
     }
 
-    pub fn closest_free(&self, ship: &Ship, (x, y): Point, thrust: f32)
-        -> (f32, f32, f32, f32) {
-        let target = f32::atan2(y - ship.y, x - ship.x).to_degrees().round();
+    pub fn closest_free(&self, ship: &Ship, (x, y): Point, thrust: i32)
+        -> (f32, f32, i32, i32) {
+        let target = f32::atan2(y - ship.y, x - ship.x).to_degrees().round() as i32;
         let (mut a, mut t, mut n, mut m) = (target, thrust, 0, 0);
         loop {
-            let r = a.round().to_radians();
-            let (xf, yf) = (ship.x + t*r.cos(),
-                            ship.y + t*r.sin());
+            let r = (a as f32).to_radians();
+            let (xf, yf) = (ship.x + (t as f32)*r.cos(),
+                            ship.y + (t as f32)*r.sin());
+
             let at = self.collides_at(&ship, (xf, yf));
             let toward = self.collides_toward(&ship, (xf, yf));
+
             if (at || toward) && m < CORRECTIONS {
                 let (n2, m2, a2, t2) = Self::wiggle(n, m, a, t, target);
                 n = n2; m = m2; a = a2; t = t2;
             } else if at || toward {
-                panic!();
-                return (xf, yf, 0.0, a)
+                return (xf, yf, 0, a)
             } else {
-                error!("Final thrust: {} {} {}", t, n, m);
                 return (xf, yf, t, a)
             }
         }

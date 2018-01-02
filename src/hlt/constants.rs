@@ -4,7 +4,7 @@
 pub const SHIP_RADIUS: f32 = 0.5;
 
 // Max thrust
-pub const SHIP_SPEED: f32 = 7.0;
+pub const SHIP_SPEED: i32 = 7;
 
 // Weapon AoE
 pub const WEAPON_RADIUS: f32 = 5.0;
@@ -33,9 +33,9 @@ pub const GRID_SCALE: f32 = 14.0;
 pub const GRID_SCALE_2: f32 = 7.0;
 
 // Angle to turn in degrees if failed to navigate
-pub const DELTA_THETA: f32 = 5.0;
-pub const DELTA_THRUST: f32 = 1.0;
-pub const MIN_THRUST: f32 = 0.0;
+pub const DELTA_THETA: i32 = 5;
+pub const DELTA_THRUST: i32 = 1;
+pub const MIN_THRUST: i32 = 0;
 
 // How many times to re-attempt navigation
 pub const CORRECTIONS: i32 = 120;
