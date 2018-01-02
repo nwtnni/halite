@@ -1,9 +1,10 @@
 use fnv::FnvHashMap;
+use std::f32;
 use std::io::stdin;
 use hlt::parse::*;
 use hlt::strategy::Plan;
 use hlt::command::Queue;
-use hlt::constants::{SHIP_SPEED, DOCK_RADIUS, SIZE_MULTIPLIER};
+use hlt::constants::DOCK_RADIUS;
 use hlt::collision::*;
 
 pub type ID = usize;

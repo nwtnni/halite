@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-use std::f32::consts::PI;
 
 // Ship radius
 pub const SHIP_RADIUS: f32 = 0.5;
@@ -34,14 +33,12 @@ pub const GRID_SCALE: f32 = 14.0;
 pub const GRID_SCALE_2: f32 = 7.0;
 
 // Angle to turn in degrees if failed to navigate
-pub const DELTA_THETA: f32 = PI / 10.0;
+pub const DELTA_THETA: f32 = 5.0;
+pub const DELTA_THRUST: f32 = 1.0;
+pub const MIN_THRUST: f32 = 0.0;
 
 // How many times to re-attempt navigation
-pub const CORRECTIONS: i32 = 20;
-
-// How favorable it is to have a large planet
-pub const SIZE_MULTIPLIER: f32 = 1.5;
+pub const CORRECTIONS: i32 = 120;
 
 // Wider margin of error for collision detection
-pub const FUDGE: f32 = 1.10;
-
+pub const FUDGE: f32 = 1.3;

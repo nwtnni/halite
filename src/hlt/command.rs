@@ -1,6 +1,6 @@
 use hlt::state::*;
 use hlt::collision::*;
-use hlt::constants::{SHIP_RADIUS, DOCK_RADIUS, SHIP_SPEED, CORRECTIONS, DELTA_THETA};
+use hlt::constants::*;
 
 pub enum Command {
     Dock(usize, usize),
@@ -38,42 +38,37 @@ pub fn dock(ship: &Ship, planet: &Planet) -> Command {
 
 pub fn thrust(distance: f32) -> f32 {
     if distance > SHIP_SPEED { SHIP_SPEED }
-    else { distance }
+    else { distance.floor() }
 }
 
 fn offset(offset: f32, (x, y): Point, angle: f32) -> Point {
-    (x - (offset * angle.cos()), y - (offset * angle.sin()))
+    let r = angle.to_radians();
+    (x - (offset * r.cos()), y - (offset * r.sin()))
 }
 
 pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Command {
     let target = target.to_entity();
     let (xt, yt) = target.pos();
-    let mut angle = f32::atan2(yt - ship.y, xt - ship.x);
-    let mut n = 0;
-
+    let angle = f32::atan2(yt - ship.y, xt - ship.x).to_degrees().round();
     let (xf, yf) = match target {
-        Entity::Ship(_) => offset(SHIP_RADIUS, (xt, yt), angle),
+        Entity::Ship(_) => offset(WEAPON_RADIUS - 0.50, (xt, yt), angle),
         Entity::Planet(_) => {
             offset(DOCK_RADIUS + target.rad() - 0.50, (xt, yt), angle)
         },
         Entity::Obstacle(_) | Entity::Beacon(_) => (xt, yt),
     };
     let thrust = thrust((yf - ship.y).hypot(xf - ship.x));
-
-    loop {
-        let (xf, yf) = (ship.x + thrust * angle.cos(),
-                        ship.y + thrust * angle.sin());
-        if grid.collides_toward(&ship, (xf, yf)) && n <= CORRECTIONS {
-            match n % 2 {
-                1 => { n += 1; angle += (n as f32) * DELTA_THETA },
-                0 => { n += 1; angle -= (n as f32) * DELTA_THETA },
-                _ => unreachable!()
-            }
-        } else {
-            grid.remove(&ship);
-            grid.insert(&Entity::Obstacle((xf, yf, ship.rad)));
-            angle = (angle.to_degrees() + 360.00) % 360.00;
-            return Command::Thrust(ship.id, thrust as i32, angle as i32)
-        }
+    let (x, y, thrust, angle) = grid.closest_free(ship, (xf, yf), thrust);
+    let mut smoke = 0.5;
+    while smoke < thrust - 1.0 {
+        grid.insert(&Entity::Obstacle((
+            x - smoke*angle.to_radians().cos(),
+            y - smoke*angle.to_radians().sin(),
+            SHIP_RADIUS)));
+        smoke += 1.0;
     }
+    grid.remove(&ship);
+    grid.insert(&Entity::Ship((x, y, SHIP_RADIUS, ship.id)));
+    Command::Thrust(ship.id, thrust as i32,
+        ((angle.round() + 360.0) % 360.0) as i32)
 }

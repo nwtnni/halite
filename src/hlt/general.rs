@@ -20,8 +20,11 @@ impl General for State {
         let player = &self.players[self.id];
         for id in &player.ships {
             let ship = &self.ships[id];
-            let allies = self.grid.near_allies(&ship, 1000.0, &self.ships);
-            panic!("{}", allies.len())
+            let enemies = self.grid.near_enemies(&ship, 200.0, &self.ships);
+            match enemies.get(0) {
+                None => continue, 
+                Some(enemy) => self.queue.push(&navigate(&mut self.grid, ship, enemy)),
+            };
         }
     }
 }

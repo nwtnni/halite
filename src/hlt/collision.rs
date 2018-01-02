@@ -1,7 +1,8 @@
 use fnv::FnvHashMap;
+use std::f32;
 use std::f32::consts::SQRT_2;
 use hlt::state::*;
-use hlt::constants::{GRID_SCALE, GRID_SCALE_2, SHIP_RADIUS, FUDGE};
+use hlt::constants::*;
 
 type Cell = (i32, i32);
 
@@ -27,7 +28,7 @@ impl Entity {
     pub fn rad(&self) -> f32 {
         use hlt::collision::Entity::*;
         match *self {
-            Ship((_, _, r, _)) 
+            Ship((_, _, r, _))
             | Planet((_, _, r, _))
             | Obstacle((_, _, r)) => r,
             Beacon(_) => SHIP_RADIUS
@@ -79,6 +80,11 @@ impl Entity {
         let (t1, t2) = ((-b - d)/(2.0*a), (-b + d)/(2.0*a));
         (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
     }
+
+    pub fn intersects(&self, (x2, y2): Point, r: f32) -> bool {
+        let (x1, y1) = self.pos();
+        (y2 - y1).hypot(x2 - x1) <= self.rad() + r
+    }
 }
 
 pub trait ToEntity {
@@ -123,27 +129,27 @@ impl Grid {
 
     fn to_cells((x, y): Point, r: f32) -> Vec<Cell> {
         let mut cells = Vec::new();
-        let (mut x1, mut y1) = (x - SQRT_2*r, y - SQRT_2*r);
-        let (x2, y2) = (x + SQRT_2*r, y + SQRT_2*r);
+        let (x1, y1) = Self::to_cell(x - SQRT_2*r, y - SQRT_2*r);
+        let (mut x1, mut y1) = ((x1-1) as f32 * GRID_SCALE, (y1-1) as f32 * GRID_SCALE);
+        let (x2, y2) = Self::to_cell(x + SQRT_2*r, y + SQRT_2*r);
+        let (x2, y2) = ((x2+1) as f32 * GRID_SCALE, (y2+1) as f32 * GRID_SCALE);
         while x1 < x2 {
             let mark = y1;
             while y1 < y2 {
                 // From https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
-                let cx = (x - (x1 + GRID_SCALE_2)).abs();
-                let cy = (y - (y1 + GRID_SCALE_2)).abs();
-                if cx > GRID_SCALE_2 + r || cy > GRID_SCALE_2 + r {
-                } else if cx <= GRID_SCALE_2 || cy <= GRID_SCALE_2
+                let (rx, ry) = (x1 + GRID_SCALE_2, y1 + GRID_SCALE_2);
+                let (cx, cy) = ((x - rx).abs(), (y - ry).abs());
+                if cx > GRID_SCALE_2 + r || cy > GRID_SCALE_2 + r {} 
+                else if cx <= GRID_SCALE_2 || cy <= GRID_SCALE_2
                 || (cx - GRID_SCALE_2).hypot(cy - GRID_SCALE_2) <= r {
-                    cells.push(Self::to_cell(x1, y1));
+                    let cell = Self::to_cell(rx, ry);
+                    cells.push(cell);
                 }
                 y1 += GRID_SCALE;
             }
             y1 = mark;
             x1 += GRID_SCALE;
         }
-        cells.push(Self::to_cell(x, y));
-        cells.sort_unstable();
-        cells.dedup();
         cells
     }
 
@@ -169,15 +175,22 @@ impl Grid {
 
     fn near<'a, T: ToEntity>(&'a self, e: &T, r: f32) -> Vec<&'a Entity> {
         let entity = e.to_entity();
+        let pos = entity.pos();
         let key = entity.key();
-        let cells = Self::to_cells(entity.pos(), r);
+        let cells = Self::to_cells(pos, r);
+        let mut n = 0;
         let mut nearby = cells.iter()
             .filter_map(|cell| self.grid.get(cell))
             .flat_map(|ref bucket| bucket.iter())
-            .filter(|&other| other.key() != key)
+            .filter(|&other| other.key() != key && other.intersects(pos, r) )
             .collect::<Vec<_>>();
         nearby.sort_unstable_by_key(|&entity| entity.key());
-        nearby.dedup_by_key(|&mut entity| entity.key());
+        nearby.dedup_by_key(move |&mut entity| {
+            match *entity {
+                Entity::Planet(_) | Entity::Ship(_) => entity.key(),
+                _ => { n += 1; n },
+            }
+        });
         nearby
     }
 
@@ -219,24 +232,65 @@ impl Grid {
             }).collect()
     }
 
-    pub fn near_beacons<'a, T: ToEntity>(&self, e: &T, r: f32)
+    pub fn near_beacons<T: ToEntity>(&self, e: &T, r: f32)
         -> Vec<(f32, f32)> {
-        self.near_entity(e, r, |entity| entity.to_beacon()) 
+        self.near_entity(e, r, |entity| entity.to_beacon())
             .into_iter()
             .map(|(x, y, _)| (x, y))
             .collect()
+    }
+
+    pub fn collides_at(&self, ship: &Ship, (x, y): Point) -> bool {
+        self.near(
+            &Entity::Ship((x, y, ship.rad, ship.id)),
+            SHIP_RADIUS*FUDGE).len() > 0
     }
 
     pub fn collides_toward<T: ToEntity>(&self, e: &T, (x2, y2): Point) -> bool {
         let entity = e.to_entity();
         let key = entity.key();
         let (x1, y1) = entity.pos();
-        let r = (y2 - y1).hypot(x2 - x1);
-        self.near(e, r)
+        self.near(e, (y2 -y1).hypot(x2 - x1)*1.1)
             .into_iter()
             .any(|&other| {
                 other.key() != key && other.intersects_line((x1, y1), (x2, y2))
             })
+    }
+
+    fn wiggle(n: i32, m: i32, a: f32, t: f32, target: f32)
+        -> (i32, i32, f32, f32) {
+        if n == m {
+            (0, m+6, target, f32::max(7.0 - (DELTA_THRUST/6.0*(m as f32)), MIN_THRUST).round())
+        } else {
+            match n % 2 {
+                0 => (n+1, m, a - (n as f32)*DELTA_THETA, t),
+                1 => (n+1, m, a + (n as f32)*DELTA_THETA, t),
+                _ => unreachable!()
+            }
+        }
+    }
+
+    pub fn closest_free(&self, ship: &Ship, (x, y): Point, thrust: f32)
+        -> (f32, f32, f32, f32) {
+        let target = f32::atan2(y - ship.y, x - ship.x).to_degrees().round();
+        let (mut a, mut t, mut n, mut m) = (target, thrust, 0, 0);
+        loop {
+            let r = a.round().to_radians();
+            let (xf, yf) = (ship.x + t*r.cos(),
+                            ship.y + t*r.sin());
+            let at = self.collides_at(&ship, (xf, yf));
+            let toward = self.collides_toward(&ship, (xf, yf));
+            if (at || toward) && m < CORRECTIONS {
+                let (n2, m2, a2, t2) = Self::wiggle(n, m, a, t, target);
+                n = n2; m = m2; a = a2; t = t2;
+            } else if at || toward {
+                panic!();
+                return (xf, yf, 0.0, a)
+            } else {
+                error!("Final thrust: {} {} {}", t, n, m);
+                return (xf, yf, t, a)
+            }
+        }
     }
 }
 
@@ -247,12 +301,12 @@ mod tests {
     #[test]
     fn test_insert() {
         let mut grid = Grid::new();
-        grid.insert(&Location {x: 12.0, y: 12.0, rad: 12.0, id:0});
+        grid.insert(&Entity::Obstacle((12.0, 12.0, 12.0)));
     }
 
     #[test]
     fn test_circle() {
-        let circle = Entity::Point(Location { x: 0.0, y: 0.0, rad: 5.0, id:0});
+        let circle = Entity::Obstacle((0.0, 0.0, 5.0));
         assert!(circle.intersects_line((-5.0, 5.0), (5.0, 5.0)));
         assert!(circle.intersects_line((-5.0, 5.0), (0.0, 5.0)));
         assert!(circle.intersects_line((0.0, 5.0), (5.0, 5.0)));
@@ -260,7 +314,7 @@ mod tests {
 
     #[test]
     fn test_offset_circle() {
-        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 5.0, id:0});
+        let circle = Entity::Obstacle((5.0, 5.0, 5.0));
         assert!(circle.intersects_line((-10.0, 1.0), (10.0, 10.0)));
         assert!(circle.intersects_line((0.0, 0.0), (0.0, 10.0)));
         assert!(circle.intersects_line((0.0, 0.0), (10.0, 0.0)));
@@ -268,7 +322,32 @@ mod tests {
 
     #[test]
     fn test_no_collision() {
-        let circle = Entity::Point(Location { x: 5.0, y: 5.0, rad: 0.0, id:0});
+        let circle = Entity::Obstacle((5.0, 5.0, 0.0));
         assert!(!circle.intersects_line((0.0, 0.0), (1.0, 1.0)));
+    }
+
+    #[test]
+    fn test_ship_collision() {
+        let ship = Entity::Ship((5.0, 5.0, SHIP_RADIUS, 0));
+        assert_eq!(true, ship.intersects_line((6.0, 0.0), (6.0, 10.0)));
+        assert_eq!(false, ship.intersects_line((6.01, 0.0), (6.01, 10.0)));
+    }
+
+    #[test]
+    fn test_ship_diagonal() {
+        let ship = Entity::Ship((0.0, 0.0, SHIP_RADIUS, 0));
+        assert_eq!(true, ship.intersects_line((1.0, 0.0), (0.0, 1.0)));
+        assert_eq!(true, ship.intersects_line((0.0, 1.0), (-1.0, 0.0)));
+        assert_eq!(true, ship.intersects_line((-1.0, 0.0), (0.0, 1.0)));
+        assert_eq!(true, ship.intersects_line((0.0, -1.0), (1.0, 0.0)));
+    }
+
+    #[test]
+    fn test_planet_diagonal() {
+        let planet = Entity::Planet((0.0, 0.0, SHIP_RADIUS, 0));
+        assert_eq!(true, planet.intersects_line((1.0, 0.0), (0.0, 1.0)));
+        assert_eq!(true, planet.intersects_line((0.0, 1.0), (-1.0, 0.0)));
+        assert_eq!(true, planet.intersects_line((-1.0, 0.0), (0.0, 1.0)));
+        assert_eq!(true, planet.intersects_line((0.0, -1.0), (1.0, 0.0)));
     }
 }
