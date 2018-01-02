@@ -18,14 +18,13 @@ impl General for State {
     }
 
     fn step(&mut self) {
-        info!("New turn");
         let player = &self.players[self.id];
         for id in &player.ships {
-            info!("Find a planet");
             let ship = &self.ships[id];
+            if ship.is_docked() { continue }
             let to_dock = &self.planets.values()
                 .filter(|&planet| {
-                    planet.has_spots() 
+                    planet.has_spots()
                     && !planet.is_enemy(ship.owner)
                 })
                 .min_by_key(|planet| {

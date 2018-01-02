@@ -4,7 +4,7 @@ use hlt::state::*;
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Tactic {
     Attack(ID),
-    Beacon(f32, f32),
+    Beacon(f64, f64),
     Dock(ID),
 }
 
