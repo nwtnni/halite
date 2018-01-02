@@ -191,7 +191,6 @@ impl Grid {
             .collect::<Vec<_>>();
         nearby.sort_unstable_by_key(|&entity| entity.key());
         nearby.dedup_by_key(|&mut entity| { entity.key() });
-        info!("{:#?}", nearby);
         nearby
     }
 
@@ -234,17 +233,13 @@ impl Grid {
     }
 
     pub fn collides_at(&self, ship: &Ship, (x, y): Point) -> bool {
-        let near = self.near(&Entity::Ship(x, y, ship.rad, ship.id), SHIP_RADIUS);
-        info!("Checking collides at ({}, {}), {:#?}", x, y, near);
-        near.len() > 0 
+        self.near(&Entity::Ship(x, y, ship.rad, ship.id), SHIP_RADIUS).len() > 0
     }
 
     pub fn collides_toward<T: ToEntity>(&self, e: &T, (x2, y2): Point) -> bool {
         let entity = e.to_entity();
         let (x1, y1) = entity.pos();
-        let near = self.near(e, (y2 -y1).hypot(x2 - x1));
-        info!("Checking collides toward ({}, {}), ({}, {}){:#?}", x1, y1, x2, y2, near);
-        near
+        self.near(e, (y2 -y1).hypot(x2 - x1))
             .into_iter()
             .any(|&other| other.intersects_line((x1, y1), (x2, y2)))
     }

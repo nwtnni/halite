@@ -61,6 +61,14 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     };
     let thrust = thrust((yf - ship.y).hypot(xf - ship.x));
     let (x, y, thrust, angle) = grid.closest_free(ship, (xf, yf), thrust);
+    let mut smoke = 0.0;
+    while (smoke as i32) < thrust {
+        grid.create_obstacle(
+            ship.x + smoke*(angle as f64).to_radians().cos(),
+            ship.y + smoke*(angle as f64).to_radians().sin(),
+            SHIP_RADIUS);
+        smoke += 0.5;
+    }
     grid.remove(&ship);
     grid.create_ship(x, y, ship.id);
     Command::Thrust(ship.id, thrust, (angle + 360) % 360)
