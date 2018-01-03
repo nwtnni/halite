@@ -29,7 +29,7 @@ impl General for State {
             //
 
             // Get local information
-            let enemies = self.grid.near_enemies(&ship, WEAPON_RADIUS, &self.ships);
+            let enemies = self.grid.near_enemies(&ship, 7.0, &self.ships);
             let docking = enemies.iter()
                 .filter(|enemy| enemy.is_docked())
                 .collect::<Vec<_>>();
@@ -180,7 +180,11 @@ impl General for State {
                 }).min_by_key(|&(planet, _, adv)| {
                     let d = ship.distance_to(&planet) as i32;
                     d + adv.pow(2)
-                }).map(|(_, docked, _)| docked[0].clone());
+                }).map(|(_, docked, _)| {
+                    docked.into_iter().cloned()
+                    .min_by_key(|enemy| ship.distance_to(&enemy) as i32)
+                    .unwrap() 
+                });
 
             if let Some(ref target) = weak {
                 for ally in &ready {
