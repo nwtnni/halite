@@ -94,12 +94,12 @@ impl General for State {
             // Try docking
             let free = self.planets.values()
                 .filter_map(|planet| {
-                    if !planet.has_spots() || planet.is_enemy(self.id) { 
-                        None 
+                    if !planet.has_spots() || planet.is_enemy(self.id) {
+                        None
                     } else {
                         let o = self.plan.docking_at(planet.id);
                         let s = planet.spots();
-                        if s - o/2 >= 0 { Some((planet, o)) } else { None }
+                        if s - o > 0 { Some((planet, o)) } else { None }
                     }
                 })
                 .min_by_key(|&(ref planet, o)| {
