@@ -28,6 +28,7 @@ impl General for State {
             // SHORT RANGE STRATEGIES
             //
 
+            // Get local information
             let enemies = self.grid.near_enemies(&ship, WEAPON_RADIUS, &self.ships);
             let docking = enemies.iter()
                 .filter(|enemy| enemy.is_docked())
@@ -41,6 +42,7 @@ impl General for State {
                     .find(|ally| ally.distance_to(enemy) > WEAPON_RADIUS);
                 self.plan.set(ship.id, Tactic::Retreat(enemy.id));
 
+                // Flee towards ally
                 if let Some(ally) = ally {
                     let point = Entity::Obstacle(ally.x, ally.y, 0.0, 0);
                     self.queue.push(
@@ -49,6 +51,7 @@ impl General for State {
                     continue
                 }
 
+                // No ally nearby; flee from ship
                 let (x, y) = ship.retreat_from(enemy, 7);
                 let point = Entity::Obstacle(x, y, 0.0, 0);
                 self.queue.push(
@@ -67,11 +70,12 @@ impl General for State {
                 continue
             }
 
-            // Try defending
+            // Try defending nearby planets
             let defend = self.grid.near_planets(&ship, 21.0, &self.planets)
                 .into_iter()
                 .filter(|planet| planet.is_owned(self.id))
                 .filter_map(|planet| {
+                    // Send enough to outnumber enemies
                     let e = self.grid.near_enemies(
                         &planet, planet.rad + DOCK_RADIUS, &self.ships
                     ).len() as i32;
@@ -79,6 +83,7 @@ impl General for State {
                     if e > o/2 { Some((planet, e, o)) } else { None }
                 })
                 .min_by_key(|&(ref planet, e, o)| {
+                    // Close planets with many ships docked are good
                     let d = ship.distance_to(planet) as i32;
                     let s = planet.docked();
                     d - s - (e - o).pow(3)
@@ -91,38 +96,51 @@ impl General for State {
                 continue
             }
 
-            // Try docking
+            // Try docking at a lonely planet
             let free = self.planets.values()
                 .filter_map(|planet| {
                     if !planet.has_spots() || planet.is_enemy(self.id) {
                         None
                     } else {
+                        // We want a planet with free spots and no enemies
+                        let e = self.grid.near_enemies(
+                            &planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
+                        ).len() as i32;
+                        let a = self.grid.near_allies(
+                            &planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
+                        ).iter().filter(|ally| !ally.is_docked()).count() as i32;
                         let o = self.plan.docking_at(planet.id);
                         let s = planet.spots();
-                        if s - o > 0 { Some((planet, o)) } else { None }
+                        if s - o > 0 && a >= e { 
+                            Some((planet, e, a, o, s)) 
+                        } else { None }
                     }
                 })
-                .min_by_key(|&(ref planet, o)| {
+                .min_by_key(|&(ref planet, e, a, o, s)| {
                     let d = ship.distance_to(planet) as i32;
-                    let e = self.grid.near_enemies(
-                        planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
-                    ).len() as i32;
-                    let a = self.grid.near_allies(
-                        planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
-                    ).len() as i32;
-                    let s = planet.spots();
                     d.pow(2) + (e - a).pow(2) + (o - s)
-                }).map(|(planet, _)| planet);
+                }).map(|(planet, _, _, _, _)| planet);
 
             // Found somewhere to dock
             if let Some(ref planet) = free {
-                self.plan.set(ship.id, Tactic::Dock(planet.id));
                 if ship.in_docking_range(planet) {
-                    self.queue.push(&dock(ship, planet));
+                    // Don't dock if there are more enemies than allies near
+                    let e = self.grid.near_enemies(
+                        planet, planet.rad + DOCK_RADIUS, &self.ships 
+                    ).len();
+                    let a = self.grid.near_allies(
+                        planet, planet.rad + DOCK_RADIUS, &self.ships     
+                    ).len() - planet.ships.len();
+                    if a >= e {
+                        self.plan.set(ship.id, Tactic::Dock(planet.id));
+                        self.queue.push(&dock(ship, planet));
+                        continue
+                    }
                 } else {
+                    self.plan.set(ship.id, Tactic::Dock(planet.id));
                     self.queue.push(&navigate(&mut self.grid, ship, planet));
+                    continue
                 }
-                continue
             }
 
             //
