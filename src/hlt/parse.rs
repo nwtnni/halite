@@ -16,10 +16,10 @@ impl FromStream for i32 {
     }
 }
 
-impl FromStream for f64 {
+impl FromStream for f32 {
     fn take(stream: &mut Vec<&str>) -> Self {
         let n = stream.pop().expect("Unexpected EOF");
-        f64::from_str(n).expect("Expected f64")
+        f32::from_str(n).expect("Expected f32")
     }
 }
 
@@ -45,8 +45,8 @@ impl FromStream for Status {
 impl FromStream for Ship {
     fn take(stream: &mut Vec<&str>) -> Self {
         let id = usize::take(stream);
-        let x = f64::take(stream);
-        let y = f64::take(stream);
+        let x = f32::take(stream);
+        let y = f32::take(stream);
         let hp = i32::take(stream);
         let _deprecated = stream.pop();
         let _deprecated = stream.pop();
@@ -67,10 +67,10 @@ impl FromStream for Ship {
 impl FromStream for Planet {
     fn take(stream: &mut Vec<&str>) -> Self {
         let id = usize::take(stream);
-        let x = f64::take(stream);
-        let y = f64::take(stream);
+        let x = f32::take(stream);
+        let y = f32::take(stream);
         let hp = i32::take(stream);
-        let rad = f64::take(stream);
+        let rad = f32::take(stream);
         let spots = i32::take(stream);
         let spawn = i32::take(stream);
         let _deprecated = stream.pop();

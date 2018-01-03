@@ -1,6 +1,6 @@
 use fnv::FnvHashMap;
 use std::i32;
-use std::f64::consts::SQRT_2;
+use std::f32::consts::SQRT_2;
 use hlt::state::*;
 use hlt::constants::*;
 
@@ -8,13 +8,13 @@ type Cell = (i32, i32);
 
 #[derive(Debug, Copy, Clone)]
 pub enum Entity {
-    Ship(f64, f64, f64, ID),
-    Planet(f64, f64, f64, ID),
-    Obstacle(f64, f64, f64, ID),
+    Ship(f32, f32, f32, ID),
+    Planet(f32, f32, f32, ID),
+    Obstacle(f32, f32, f32, ID),
 }
 
 impl Entity {
-    pub fn pos(&self) -> (f64, f64) {
+    pub fn pos(&self) -> (f32, f32) {
         use hlt::collision::Entity::*;
         match *self {
             Ship(x, y, _, _)
@@ -23,7 +23,7 @@ impl Entity {
         }
     }
 
-    pub fn rad(&self) -> f64 {
+    pub fn rad(&self) -> f32 {
         use hlt::collision::Entity::*;
         match *self {
             Ship(_, _, r, _)
@@ -41,14 +41,14 @@ impl Entity {
         }
     }
 
-    fn to_ship(&self) -> Option<(f64, f64, ID)> {
+    fn to_ship(&self) -> Option<(f32, f32, ID)> {
         match *self {
             Entity::Ship(x, y, _, id) => Some((x, y, id)),
             _ => None,
         }
     }
 
-    fn to_planet(&self) -> Option<(f64, f64, ID)> {
+    fn to_planet(&self) -> Option<(f32, f32, ID)> {
         match *self {
             Entity::Planet(x, y, _, id) => Some((x, y, id)),
             _ => None,
@@ -71,7 +71,7 @@ impl Entity {
         (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
     }
 
-    pub fn intersects(&self, (x2, y2): Point, r: f64) -> bool {
+    pub fn intersects(&self, (x2, y2): Point, r: f32) -> bool {
         let (x1, y1) = self.pos();
         (y2 - y1).hypot(x2 - x1) <= self.rad() + r
     }
@@ -117,16 +117,16 @@ impl Grid {
         }
     }
 
-    fn to_cell(x: f64, y: f64) -> Cell {
+    fn to_cell(x: f32, y: f32) -> Cell {
         ((x / GRID_SCALE) as i32, (y / GRID_SCALE) as i32)
     }
 
-    fn to_cells((x, y): Point, r: f64) -> Vec<Cell> {
+    fn to_cells((x, y): Point, r: f32) -> Vec<Cell> {
         let mut cells = Vec::new();
         let (x1, y1) = Self::to_cell(x - SQRT_2*r, y - SQRT_2*r);
-        let (mut x1, mut y1) = (x1 as f64 * GRID_SCALE, y1 as f64 * GRID_SCALE);
+        let (mut x1, mut y1) = (x1 as f32 * GRID_SCALE, y1 as f32 * GRID_SCALE);
         let (x2, y2) = Self::to_cell(x + SQRT_2*r, y + SQRT_2*r);
-        let (x2, y2) = (x2 as f64 * GRID_SCALE, y2 as f64 * GRID_SCALE);
+        let (x2, y2) = (x2 as f32 * GRID_SCALE, y2 as f32 * GRID_SCALE);
         while x1 <= x2 {
             let mark = y1;
             while y1 <= y2 {
@@ -147,11 +147,11 @@ impl Grid {
         cells
     }
 
-    pub fn create_ship(&mut self, x: f64, y: f64, id: ID) {
+    pub fn create_ship(&mut self, x: f32, y: f32, id: ID) {
         self.insert(&Entity::Ship(x, y, SHIP_RADIUS, id));
     }
 
-    pub fn create_obstacle(&mut self, x: f64, y: f64, r: f64) {
+    pub fn create_obstacle(&mut self, x: f32, y: f32, r: f32) {
         let id = self.count;
         self.insert(&Entity::Obstacle(x, y, r, id));
         self.count += 1;
@@ -179,7 +179,7 @@ impl Grid {
         }
     }
 
-    fn near<'a, T: ToEntity>(&'a self, e: &T, r: f64) -> Vec<&'a Entity> {
+    fn near<'a, T: ToEntity>(&'a self, e: &T, r: f32) -> Vec<&'a Entity> {
         let entity = e.to_entity();
         let pos = entity.pos();
         let key = entity.key();
@@ -194,8 +194,8 @@ impl Grid {
         nearby
     }
 
-    fn near_entity<F, T: ToEntity>(&self, e: &T, r: f64, f: F) -> Vec<(f64, f64, ID)>
-        where F: Fn(&Entity)-> Option<(f64, f64, ID)> {
+    fn near_entity<F, T: ToEntity>(&self, e: &T, r: f32, f: F) -> Vec<(f32, f32, ID)>
+        where F: Fn(&Entity)-> Option<(f32, f32, ID)> {
         let (x1, y1) = e.to_entity().pos();
         let mut nearby = self.near(e, r)
             .into_iter()
@@ -205,7 +205,7 @@ impl Grid {
         nearby
     }
 
-    pub fn near_enemies<'a, T: ToEntity>(&self, e: &T, r: f64, ships: &'a Ships)
+    pub fn near_enemies<'a, T: ToEntity>(&self, e: &T, r: f32, ships: &'a Ships)
         -> Vec<&'a Ship> {
         self.near_entity(e, r, |entity| entity.to_ship())
             .into_iter()
@@ -214,7 +214,7 @@ impl Grid {
             })}).collect()
     }
 
-    pub fn near_allies<'a, T: ToEntity>(&self, e: &T, r: f64, ships: &'a Ships)
+    pub fn near_allies<'a, T: ToEntity>(&self, e: &T, r: f32, ships: &'a Ships)
         -> Vec<&'a Ship> {
         self.near_entity(e, r, |entity| entity.to_ship())
             .into_iter()
@@ -223,7 +223,7 @@ impl Grid {
             })}).collect()
     }
 
-    pub fn near_planets<'a, T: ToEntity>(&self, e: &T, r: f64, planets: &'a Planets)
+    pub fn near_planets<'a, T: ToEntity>(&self, e: &T, r: f32, planets: &'a Planets)
         -> Vec<&'a Planet> {
         self.near_entity(e, r, |entity| entity.to_planet())
             .into_iter()
@@ -259,13 +259,13 @@ impl Grid {
     }
 
     pub fn closest_free(&self, ship: &Ship, (x, y): Point, thrust: i32)
-        -> (f64, f64, i32, i32) {
-        let target = f64::atan2(y - ship.y, x - ship.x).to_degrees().round() as i32;
+        -> (f32, f32, i32, i32) {
+        let target = f32::atan2(y - ship.y, x - ship.x).to_degrees().round() as i32;
         let (mut a, mut t, mut n, mut m) = (target, thrust, 0, 0);
         loop {
-            let r = (a as f64).to_radians();
-            let (xf, yf) = (ship.x + (t as f64)*r.cos(),
-                            ship.y + (t as f64)*r.sin());
+            let r = (a as f32).to_radians();
+            let (xf, yf) = (ship.x + (t as f32)*r.cos(),
+                            ship.y + (t as f32)*r.sin());
 
             let at = self.collides_at(&ship, (xf, yf));
             let toward = self.collides_toward(&ship, (xf, yf));

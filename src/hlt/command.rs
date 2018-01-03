@@ -36,20 +36,20 @@ pub fn dock(ship: &Ship, planet: &Planet) -> Command {
     Command::Dock(ship.id, planet.id)
 }
 
-pub fn thrust(distance: f64) -> i32 {
+pub fn thrust(distance: f32) -> i32 {
     let d = distance.floor() as i32;
     if d > SHIP_SPEED { SHIP_SPEED }
     else { d }
 }
 
-fn offset(offset: f64, (x, y): Point, angle: f64) -> Point {
+fn offset(offset: f32, (x, y): Point, angle: f32) -> Point {
     (x - (offset*angle.cos()), y - (offset*angle.sin()))
 }
 
 pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Command {
     let target = target.to_entity();
     let (xt, yt) = target.pos();
-    let angle = f64::atan2(yt - ship.y, xt - ship.x);
+    let angle = f32::atan2(yt - ship.y, xt - ship.x);
     let (xf, yf) = match target {
         Entity::Ship(_, _, _, _) => {
             offset(WEAPON_RADIUS, (xt, yt), angle)
@@ -64,8 +64,8 @@ pub fn navigate<T: ToEntity>(grid: &mut Grid, ship: &Ship, target: &T) -> Comman
     let mut smoke = 0.0;
     while (smoke as i32) < thrust {
         grid.create_obstacle(
-            ship.x + smoke*(angle as f64).to_radians().cos(),
-            ship.y + smoke*(angle as f64).to_radians().sin(),
+            ship.x + smoke*(angle as f32).to_radians().cos(),
+            ship.y + smoke*(angle as f32).to_radians().sin(),
             SHIP_RADIUS);
         smoke += 0.5;
     }
