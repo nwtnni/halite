@@ -247,8 +247,8 @@ impl Grid {
     fn wiggle(n: i32, m: i32, a: i32, t: i32, target: i32)
         -> (i32, i32, i32, i32) {
         if n == m {
-            let t = 7 - (m/10)*DELTA_THRUST;
-            (0, m+10, target, if t > MIN_THRUST {t} else {MIN_THRUST})
+            let t = 7 - (m/16)*DELTA_THRUST;
+            (0, m+16, target, if t > MIN_THRUST {t} else {MIN_THRUST})
         } else {
             match n % 2 {
                 0 => (n+1, m, a - n*DELTA_THETA, t),

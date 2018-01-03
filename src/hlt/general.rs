@@ -93,8 +93,16 @@ impl General for State {
 
             // Try docking
             let free = self.planets.values()
-                .filter(|planet| planet.has_spots() && !planet.is_enemy(self.id))
-                .min_by_key(|planet| {
+                .filter_map(|planet| {
+                    if !planet.has_spots() || planet.is_enemy(self.id) { 
+                        None 
+                    } else {
+                        let o = self.plan.docking_at(planet.id);
+                        let s = planet.spots();
+                        if s - o/2 >= 0 { Some((planet, o)) } else { None }
+                    }
+                })
+                .min_by_key(|&(ref planet, o)| {
                     let d = ship.distance_to(planet) as i32;
                     let e = self.grid.near_enemies(
                         planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
@@ -102,10 +110,9 @@ impl General for State {
                     let a = self.grid.near_allies(
                         planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
                     ).len() as i32;
-                    let o = self.plan.docking_at(planet.id);
                     let s = planet.spots();
                     d.pow(2) + (e - a).pow(2) + (o - s)
-                });
+                }).map(|(planet, _)| planet);
 
             // Found somewhere to dock
             if let Some(ref planet) = free {

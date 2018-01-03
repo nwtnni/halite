@@ -34,8 +34,8 @@ pub const GRID_SCALE_2: f32 = 7.0;
 
 // Angle to turn in degrees if failed to navigate
 pub const DELTA_THETA: i32 = 4;
-pub const DELTA_THRUST: i32 = 1;
+pub const DELTA_THRUST: i32 = 2;
 pub const MIN_THRUST: i32 = 0;
 
 // How many times to re-attempt navigation
-pub const CORRECTIONS: i32 = 60;
+pub const CORRECTIONS: i32 = 64;
