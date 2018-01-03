@@ -29,7 +29,7 @@ impl General for State {
             //
 
             // Get local information
-            let enemies = self.grid.near_enemies(&ship, 7.0, &self.ships);
+            let enemies = self.grid.near_enemies(&ship, 12.0, &self.ships);
             let docking = enemies.iter()
                 .filter(|enemy| enemy.is_docked())
                 .collect::<Vec<_>>();
@@ -192,6 +192,15 @@ impl General for State {
                 }
                 self.plan.set(ship.id, Tactic::Attack(target.id));
                 self.queue.push(&navigate(&mut self.grid, ship, &target));
+                continue
+            }
+
+            // Hunt down nearby ships
+            let near = self.grid.near_enemies(&ship, 35.0, &self.ships);
+            if let Some(&target) = near.get(0) {
+                self.plan.set(ship.id, Tactic::Attack(target.id));
+                self.queue.push(&navigate(&mut self.grid, ship, &target));
+                continue
             }
         }
     }
