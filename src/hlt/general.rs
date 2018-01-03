@@ -44,18 +44,15 @@ impl General for State {
 
                 // Flee towards ally
                 if let Some(ally) = ally {
-                    let point = Entity::Obstacle(ally.x, ally.y, 0.0, 0);
                     self.queue.push(
-                        &navigate(&mut self.grid, ship, &point)
+                        &navigate_to_ally(&mut self.grid, ship, &ally)
                     );
                     continue
                 }
 
                 // No ally nearby; flee from ship
-                let (x, y) = ship.retreat_from(enemy, 7);
-                let point = Entity::Obstacle(x, y, 0.0, 0);
                 self.queue.push(
-                    &navigate(&mut self.grid, ship, &point)
+                    &navigate_to_point(&mut self.grid, ship, ship.retreat_from(enemy, 7))
                 );
                 continue
             }
@@ -65,7 +62,7 @@ impl General for State {
                 let docked = docking[0];
                 self.plan.set(ship.id, Tactic::Attack(docked.id));
                 self.queue.push(
-                    &navigate(&mut self.grid, ship, docked)
+                    &navigate_to_enemy(&mut self.grid, ship, docked)
                 );
                 continue
             }
@@ -95,7 +92,7 @@ impl General for State {
                 )[0];
 
                 self.plan.set(ship.id, Tactic::Defend(planet.id));
-                self.queue.push(&navigate(&mut self.grid, ship, enemy));
+                self.queue.push(&navigate_to_enemy(&mut self.grid, ship, enemy));
                 continue
             }
 
@@ -141,7 +138,9 @@ impl General for State {
                     }
                 } else {
                     self.plan.set(ship.id, Tactic::Dock(planet.id));
-                    self.queue.push(&navigate(&mut self.grid, ship, planet));
+                    self.queue.push(
+                        &navigate_to_planet(&mut self.grid, ship, planet, &self.plan)
+                    );
                     continue
                 }
             }
@@ -153,7 +152,9 @@ impl General for State {
             // We've been recruited
             if let Some(id) = self.plan.has_target(ship.id) {
                 let target = &self.ships[&id];
-                self.queue.push(&navigate(&mut self.grid, ship, &target));
+                self.queue.push(
+                    &navigate_to_enemy(&mut self.grid, ship, &target)
+                );
                 continue
             }
 
@@ -183,7 +184,7 @@ impl General for State {
                 }).map(|(_, docked, _)| {
                     docked.into_iter().cloned()
                     .min_by_key(|enemy| ship.distance_to(&enemy) as i32)
-                    .unwrap() 
+                    .unwrap()
                 });
 
             if let Some(ref target) = weak {
@@ -191,7 +192,9 @@ impl General for State {
                     self.plan.set(ally.id, Tactic::Attack(target.id));
                 }
                 self.plan.set(ship.id, Tactic::Attack(target.id));
-                self.queue.push(&navigate(&mut self.grid, ship, &target));
+                self.queue.push(
+                    &navigate_to_enemy(&mut self.grid, ship, &target)
+                );
                 continue
             }
 
@@ -199,7 +202,9 @@ impl General for State {
             let near = self.grid.near_enemies(&ship, 35.0, &self.ships);
             if let Some(&target) = near.get(0) {
                 self.plan.set(ship.id, Tactic::Attack(target.id));
-                self.queue.push(&navigate(&mut self.grid, ship, &target));
+                self.queue.push(
+                    &navigate_to_enemy(&mut self.grid, ship, &target)
+                );
                 continue
             }
         }
