@@ -90,9 +90,12 @@ impl General for State {
                 }).map(|(planet, _, _)| planet);
 
             if let Some(ref planet) = defend {
-                let ally = &self.ships[&planet.ships[0]];
+                let enemy = &self.grid.near_enemies(
+                    planet, planet.rad + DOCK_RADIUS, &self.ships
+                )[0];
+
                 self.plan.set(ship.id, Tactic::Defend(planet.id));
-                self.queue.push(&navigate(&mut self.grid, ship, &ally));
+                self.queue.push(&navigate(&mut self.grid, ship, enemy));
                 continue
             }
 
@@ -111,8 +114,8 @@ impl General for State {
                         ).iter().filter(|ally| !ally.is_docked()).count() as i32;
                         let o = self.plan.docking_at(planet.id);
                         let s = planet.spots();
-                        if s - o > 0 && a >= e { 
-                            Some((planet, e, a, o, s)) 
+                        if s - o > 0 && a >= e {
+                            Some((planet, e, a, o, s))
                         } else { None }
                     }
                 })
@@ -126,10 +129,10 @@ impl General for State {
                 if ship.in_docking_range(planet) {
                     // Don't dock if there are more enemies than allies near
                     let e = self.grid.near_enemies(
-                        planet, planet.rad + DOCK_RADIUS, &self.ships 
+                        planet, planet.rad + DOCK_RADIUS, &self.ships
                     ).len();
                     let a = self.grid.near_allies(
-                        planet, planet.rad + DOCK_RADIUS, &self.ships     
+                        planet, planet.rad + DOCK_RADIUS, &self.ships
                     ).len() - planet.ships.len();
                     if a >= e {
                         self.plan.set(ship.id, Tactic::Dock(planet.id));
