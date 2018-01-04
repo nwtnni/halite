@@ -139,7 +139,7 @@ impl General for State {
                 } else {
                     self.plan.set(ship.id, Tactic::Dock(planet.id));
                     self.queue.push(
-                        &navigate_to_planet(&mut self.grid, ship, planet, &self.plan)
+                        &navigate_to_planet(&mut self.grid, ship, planet)
                     );
                     continue
                 }

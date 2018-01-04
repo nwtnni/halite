@@ -50,7 +50,7 @@ impl FromStream for Ship {
         let hp = i32::take(stream);
         let _deprecated = stream.pop();
         let _deprecated = stream.pop();
-        let rad = 0.51;
+        let rad = SHIP_RADIUS;
         let status = Status::take(stream);
         let planet = if let Status::Docked = status {
             Some(usize::take(stream))

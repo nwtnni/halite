@@ -31,6 +31,7 @@ pub const PRODUCTIVITY: i32 = 6;
 // Grid bin size
 pub const GRID_SCALE: f64 = 14.0;
 pub const GRID_SCALE_2: f64 = 7.0;
+pub const LINE_RADIUS: f64 = 5.0;
 
 // Navigation related
 pub const DELTA_WIGGLE: i32 = 120;
@@ -41,5 +42,3 @@ pub const EPSILON: f64 = 0.001;
 
 // How many times to re-attempt navigation
 pub const CORRECTIONS: i32 = 360;
-
-pub const DOCK_THETA: i32 = 8;

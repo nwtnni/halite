@@ -37,14 +37,6 @@ pub struct Ship {
 }
 
 impl Ship {
-    pub fn is_owned(&self, id: ID) -> bool {
-        self.id == id
-    }
-
-    pub fn is_enemy(&self, id: ID) -> bool {
-        self.id != id
-    }
-
     pub fn is_docked(&self) -> bool {
         self.status != Status::Undocked
     }

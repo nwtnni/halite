@@ -10,26 +10,17 @@ type Cell = (i32, i32);
 pub enum Entity {
     Ship(f64, f64, f64, ID),
     Planet(f64, f64, f64, ID),
-    Obstacle(f64, f64, f64, ID),
 }
 
 impl Entity {
     pub fn pos(&self) -> (f64, f64) {
         use hlt::collision::Entity::*;
-        match *self {
-            Ship(x, y, _, _)
-            | Planet(x, y, _, _)
-            | Obstacle(x, y, _, _) => (x, y),
-        }
+        match *self { Ship(x, y, _, _) | Planet(x, y, _, _) => (x, y), }
     }
 
     pub fn rad(&self) -> f64 {
         use hlt::collision::Entity::*;
-        match *self {
-            Ship(_, _, r, _)
-            | Planet(_, _, r, _)
-            | Obstacle(_, _, r, _) => r,
-        }
+        match *self { Ship(_, _, r, _) | Planet(_, _, r, _) => r }
     }
 
     fn key(&self) -> String {
@@ -37,7 +28,6 @@ impl Entity {
         match *self {
             Ship(_, _, _, id) => "s".to_string() + &id.to_string(),
             Planet(_, _, _, id) => "p".to_string() + &id.to_string(),
-            Obstacle(_, _, _, id) => "o".to_string() + &id.to_string(),
         }
     }
 
@@ -53,27 +43,6 @@ impl Entity {
             Entity::Planet(x, y, _, id) => Some((x, y, id)),
             _ => None,
         }
-    }
-
-    // From https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
-    pub fn intersects_line(&self, (x1, y1): Point, (x2, y2): Point) -> bool {
-        let (x, y) = self.pos();
-        let r = self.rad() + SHIP_RADIUS + EPSILON;
-        let (dx, dy) = (x2 - x1, y2 - y1);
-        let a = dx*dx + dy*dy;
-        let b = 2.0 * ((x1 - x)*dx + (y1 - y)*dy);
-        let c = (x1 - x)*(x1 - x) + (y1 - y)*(y1 - y) - r*r;
-        let d = b*b - 4.0*a*c;
-        if d < 0.0 { return false }
-
-        let d = d.sqrt();
-        let (t1, t2) = ((-b - d)/(2.0*a), (-b + d)/(2.0*a));
-        (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
-    }
-
-    pub fn intersects(&self, (x2, y2): Point, r: f64) -> bool {
-        let (x1, y1) = self.pos();
-        (y2 - y1).hypot(x2 - x1) <= self.rad() + r
     }
 }
 
@@ -102,8 +71,7 @@ impl ToEntity for Entity {
 #[derive(Debug, Default)]
 pub struct Grid {
     pub owner: ID,
-    count: ID,
-    place: FnvHashMap<String, Vec<Cell>>,
+    moved: FnvHashMap<String, (Point, Point)>,
     grid: FnvHashMap<Cell, Vec<Entity>>,
 }
 
@@ -111,8 +79,7 @@ impl Grid {
     pub fn new() -> Self {
         Grid {
             owner: 0,
-            count: 0,
-            place: FnvHashMap::default(),
+            moved: FnvHashMap::default(),
             grid: FnvHashMap::default(),
         }
     }
@@ -121,7 +88,7 @@ impl Grid {
         ((x / GRID_SCALE) as i32, (y / GRID_SCALE) as i32)
     }
 
-    fn to_cells((x, y): Point, r: f64) -> Vec<Cell> {
+    fn circle_to_cells((x, y): Point, r: f64) -> Vec<Cell> {
         let mut cells = Vec::new();
         let (x1, y1) = Self::to_cell(x - SQRT_2*r, y - SQRT_2*r);
         let (mut x1, mut y1) = (x1 as f64 * GRID_SCALE, y1 as f64 * GRID_SCALE);
@@ -147,35 +114,51 @@ impl Grid {
         cells
     }
 
-    pub fn create_ship(&mut self, x: f64, y: f64, id: ID) {
-        self.insert(&Entity::Ship(x, y, SHIP_RADIUS, id));
+    fn line_to_cells((x1, y1): Point, (x2, y2): Point) -> Vec<Cell> {
+        let mut cells = Vec::new();
+        cells.extend(Self::circle_to_cells((x1, y1), LINE_RADIUS));
+        cells.extend(Self::circle_to_cells((x2, y2), LINE_RADIUS));
+        cells.sort_unstable();
+        cells.dedup();
+        cells
     }
 
-    pub fn create_obstacle(&mut self, x: f64, y: f64, r: f64) {
-        let id = self.count;
-        self.insert(&Entity::Obstacle(x, y, r, id));
-        self.count += 1;
+    fn intersects((x1, y1): Point, r1: f64, (x2, y2): Point, r2: f64) -> bool {
+        (y2 - y1).hypot(x2 - x1) <= r1 + r2
+    }
+
+    // From https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
+    fn intersects_line((ax1, ay1): Point, (ax2, ay2): Point,
+                       (bx1, by1): Point, (bx2, by2): Point, r: f64
+    ) -> bool {
+        let (x1, y1) = (ax1 - bx1, ay1 - by1);
+        let (x2, y2) = (ax2 - bx2, ay2 - by2);
+        let (dx, dy) = (x2 - x1, y2 - y1);
+        let a = dx*dx + dy*dy;
+        let b = 2.0 * (x1*dx + y1*dy);
+        let c = x1*x1 + y1*y1 - r*r;
+        let d = b*b - 4.0*a*c;
+        if d < 0.0 { return false }
+
+        let d = d.sqrt();
+        let (t1, t2) = ((-b - d)/(2.0*a), (-b + d)/(2.0*a));
+        (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
     }
 
     pub fn insert<T: ToEntity>(&mut self, e: &T) {
         let entity = e.to_entity();
-        let cells = Self::to_cells(entity.pos(), entity.rad());
+        let cells = Self::circle_to_cells(entity.pos(), entity.rad());
         for &cell in &cells {
-            self.grid.entry(cell).or_insert(Vec::new());
-            self.grid.get_mut(&cell).unwrap().push(entity);
+            self.grid.entry(cell).or_insert(Vec::new()).push(entity);
         }
-        self.place.insert(entity.key(), cells);
     }
 
-    pub fn remove<T: ToEntity>(&mut self, e: &T) {
-        let entity = e.to_entity();
-        let key = entity.key();
-        let cells = self.place.remove(&key).expect("Illegal remove");
-        for cell in cells {
-            match self.grid.get_mut(&cell) {
-                None => continue,
-                Some(bucket) => bucket.retain(|other| other.key() != key),
-            }
+    pub fn update(&mut self, ship: &Ship, end: Point) {
+        let entity = ship.to_entity();
+        self.moved.insert(entity.key(), ((ship.x, ship.y), end));
+        let cells = Self::line_to_cells((ship.x, ship.y), end);
+        for &cell in &cells {
+            self.grid.entry(cell).or_insert(Vec::new()).push(entity);
         }
     }
 
@@ -183,11 +166,19 @@ impl Grid {
         let entity = e.to_entity();
         let pos = entity.pos();
         let key = entity.key();
-        let cells = Self::to_cells(pos, r);
+        let cells = Self::circle_to_cells(pos, r);
         let mut nearby = cells.iter()
             .filter_map(|cell| self.grid.get(cell))
             .flat_map(|ref bucket| bucket.iter())
-            .filter(|&other| other.key() != key && other.intersects(pos, r))
+            .filter(|&other| other.key() != key)
+            .filter(|&other| { match self.moved.get(&other.key()) {
+                None => {
+                    Self::intersects(pos, r, other.pos(), other.rad())
+                },
+                Some(&(_, end)) => {
+                    Self::intersects(pos, r, end, other.rad())
+                },
+            }})
             .collect::<Vec<_>>();
         nearby.sort_unstable_by_key(|&entity| entity.key());
         nearby.dedup_by_key(|&mut entity| { entity.key() });
@@ -232,18 +223,28 @@ impl Grid {
             }).collect()
     }
 
-    pub fn collides_at(&self, ship: &Ship, (x, y): Point) -> bool {
-        self.near(&Entity::Ship(
-                x, y, ship.rad, ship.id), SHIP_RADIUS + EPSILON
-            ).len() > 0
-    }
-
-    pub fn collides_toward<T: ToEntity>(&self, e: &T, (x2, y2): Point) -> bool {
-        let entity = e.to_entity();
-        let (x1, y1) = entity.pos();
-        self.near(e, (y2 -y1).hypot(x2 - x1))
+    pub fn collides_toward(&self, ship: &Ship, (x2, y2): Point) -> bool {
+        let key = ship.to_entity().key();
+        let mut close = Self::line_to_cells((ship.x, ship.y), (x2, y2))
             .into_iter()
-            .any(|&other| other.intersects_line((x1, y1), (x2, y2)))
+            .filter_map(|cell| self.grid.get(&cell))
+            .flat_map(|bucket| bucket.iter())
+            .collect::<Vec<_>>();
+        close.sort_unstable_by_key(|&entity| entity.key());
+        close.dedup_by_key(|&mut entity| entity.key());
+        close.into_iter()
+            .filter(|&other| other.key() != key)
+            .any(|&other| { match self.moved.get(&other.key()) {
+                None => { Self::intersects_line(
+                    (ship.x, ship.y), (x2, y2),
+                    other.pos(), other.pos(),
+                    SHIP_RADIUS + other.rad() + EPSILON
+                )},
+                Some(&(start, end)) => { Self::intersects_line(
+                    (ship.x, ship.y), (x2, y2),
+                    start, end, SHIP_RADIUS + other.rad() + EPSILON
+                )},
+            }})
     }
 
     fn wiggle(n: i32, m: i32, a: i32, t: i32, max: i32, target: i32)
@@ -268,14 +269,11 @@ impl Grid {
             let r = (a as f64).to_radians();
             let (xf, yf) = (ship.x + (t as f64)*r.cos(),
                             ship.y + (t as f64)*r.sin());
-
-            let at = self.collides_at(&ship, (xf, yf));
-            let toward = self.collides_toward(&ship, (xf, yf));
-
-            if (at || toward) && m < CORRECTIONS {
+            let collides = self.collides_toward(&ship, (xf, yf));
+            if collides && m < CORRECTIONS {
                 let (n2, m2, a2, t2) = Self::wiggle(n, m, a, t, thrust, target);
                 n = n2; m = m2; a = a2; t = t2;
-            } else if at || toward {
+            } else if collides {
                 return (ship.x, ship.y, 0, 0)
             } else {
                 return (xf, yf, t, a)
