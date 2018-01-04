@@ -4,7 +4,6 @@ use hlt::state::*;
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Tactic {
     Attack(ID),
-    Defend(ID),
     Dock(ID),
     Retreat(ID),
 }
@@ -44,14 +43,6 @@ impl Plan {
         self.ships.values()
             .filter(|&t| {
                 if let &Tactic::Attack(id) = t { ship == id } else { false }
-            })
-            .count() as i32
-    }
-
-    pub fn defending(&self, planet: ID) -> i32 {
-        self.ships.values()
-            .filter(|&t| {
-                if let &Tactic::Defend(id) = t { planet == id } else { false }
             })
             .count() as i32
     }

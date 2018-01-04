@@ -33,13 +33,15 @@ impl General for State {
             let docking = enemies.iter()
                 .filter(|enemy| enemy.is_docked())
                 .collect::<Vec<_>>();
-            let allies = self.grid.near_allies(&ship, 14.0, &self.ships);
+            let allies = self.grid.near_allies(&ship, 12.0, &self.ships);
 
             // Non-docking enemies nearby
             if enemies.len() - docking.len() > (allies.len() / 2) {
                 let enemy = &enemies[0];
-                let ally = allies.iter()
-                    .find(|ally| ally.distance_to(enemy) > WEAPON_RADIUS);
+                let ally = self.grid.near_allies(&ship, 35.0, &self.ships)
+                    .into_iter()
+                    .min_by_key(|ally| -ally.distance_to(enemy) as i32);
+
                 self.plan.set(ship.id, Tactic::Retreat(enemy.id));
 
                 // Flee towards ally
@@ -74,24 +76,27 @@ impl General for State {
                 .filter_map(|planet| {
                     // Send enough to outnumber enemies
                     let e = self.grid.near_enemies(
-                        &planet, planet.rad + DOCK_RADIUS, &self.ships
+                        &planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
                     ).len() as i32;
-                    let o = self.plan.defending(planet.id);
-                    if e > o/2 { Some((planet, e, o)) } else { None }
+
+                    let a = self.grid.near_allies(
+                       &planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
+                    ).len() as i32 - planet.docked();
+
+                    if e < a && e > 0 { Some((planet, e, a)) } else { None }
                 })
-                .min_by_key(|&(ref planet, e, o)| {
+                .min_by_key(|&(ref planet, e, a)| {
                     // Close planets with many ships docked are good
                     let d = ship.distance_to(planet) as i32;
                     let s = planet.docked();
-                    d - s - (e - o).pow(3)
+                    d - s - (a - e).pow(3)
                 }).map(|(planet, _, _)| planet);
 
             if let Some(ref planet) = defend {
                 let enemy = &self.grid.near_enemies(
-                    planet, planet.rad + DOCK_RADIUS, &self.ships
+                    planet, planet.rad + DOCK_RADIUS + 7.0, &self.ships
                 )[0];
 
-                self.plan.set(ship.id, Tactic::Defend(planet.id));
                 self.queue.push(&navigate_to_enemy(&mut self.grid, ship, enemy));
                 continue
             }
@@ -161,6 +166,19 @@ impl General for State {
             let ready = allies.iter()
                 .filter(|ally| self.plan.is_available(ally.id))
                 .collect::<Vec<_>>();
+
+            // Attack if we can overwhelm
+            if ready.len() / 2 > enemies.len() && enemies.len() > 0 {
+                let target = enemies[0];
+                for ally in &ready {
+                    self.plan.set(ally.id, Tactic::Attack(target.id));
+                }
+                self.plan.set(ship.id, Tactic::Attack(target.id));
+                self.queue.push(
+                    &navigate_to_enemy(&mut self.grid, ship, &target)
+                );
+                continue
+            }
 
             // Find a weak enemy planet
             let weak = self.planets.values()
