@@ -9,6 +9,7 @@ use simplelog::*;
 use std::fs::File;
 use hlt::state::State;
 use hlt::twos;
+use hlt::fours;
 
 fn main() {
     WriteLogger::init(LogLevelFilter::Info, Config::default(), File::create("hlt.log").unwrap()).unwrap();
@@ -22,6 +23,10 @@ fn main() {
             turn += 1;
         }
     } else {
-        unimplemented!() 
+        loop {
+            state.update();     
+            fours::step(&mut state, turn);
+            turn += 1;
+        }
     }
 } 
