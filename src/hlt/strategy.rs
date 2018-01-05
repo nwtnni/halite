@@ -21,7 +21,6 @@ pub enum Tactic {
 }
 
 pub struct Plan {
-    pub strategy: Strategy,
     ships: FnvHashMap<ID, Tactic>,
     attack: FnvHashMap<ID, Vec<ID>>,
     retreat: FnvHashMap<ID, Vec<ID>>,
@@ -34,7 +33,6 @@ pub struct Plan {
 impl Plan {
     pub fn new() -> Self {
         Plan {
-            strategy: Strategy::Neutral,
             ships: FnvHashMap::default(),
             attack: FnvHashMap::default(),
             retreat: FnvHashMap::default(),

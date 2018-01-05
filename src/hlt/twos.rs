@@ -35,7 +35,7 @@ fn early(s: &mut State) {{
         s.grid.near_planets(planet, 35.0, &s.planets)
             .into_iter()
             .map(|planet| planet.spots)
-            .sum::<i32>()*4
+            .sum::<i32>()*3
     });
     ships.sort_unstable_by(|a, b| {
         a.distance_to(&sorted[0]).partial_cmp(
@@ -60,21 +60,20 @@ fn early(s: &mut State) {{
             continue
         }
 
+        // Inside docking range: check if threats nearby
+        let mut near = enemies.iter()
+            .filter(|&enemy| ship.distance_to(enemy) < 70.0)
+            .collect::<Vec<_>>();
+        near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
+
         // If we're outside of docking range
-        if !ship.in_docking_range(closest) && s.plan.strategy == Strategy::Neutral {
+        if !ship.in_docking_range(closest) && near.len() == 0 {
             s.plan.set(ship.id, Tactic::Travel(closest.id));
             continue
         }
 
-        // Inside docking range: check if threats nearby
-        let mut near = enemies.iter()
-            .filter(|&enemy| ship.distance_to(enemy) < 35.0)
-            .collect::<Vec<_>>();
-        near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
-
         // If no threats nearby, just dock
         if near.len() == 0 {
-            s.plan.strategy = Strategy::Neutral;
             if ship.in_docking_range(closest) {
                 s.docked.insert(ship.id, closest.id);
                 s.plan.set(ship.id, Tactic::Dock(closest.id));
@@ -92,7 +91,6 @@ fn early(s: &mut State) {{
         // If all enemy ships docked
         if docked.len() == near.len() {
             let enemy = &docked[0];
-            s.plan.strategy = Strategy::Aggressive;
             for ship in &ships {
                 s.plan.set(ship.id, Tactic::Attack(enemy.id));
             }
