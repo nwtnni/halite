@@ -120,12 +120,22 @@ impl Plan {
         Self::count(&self.travel, planet)
     }
 
+    pub fn traveling_to(&self, planet: ID) -> i32 {
+        Self::count(&self.travel, planet)
+    }
+
     pub fn is_available(&self, ship: ID) -> bool {
         self.ships.get(&ship) == None
     }
 
     pub fn is_attacking(&self, ship: ID) -> bool {
         if let Some(&Tactic::Attack(_)) = self.ships.get(&ship) {
+            true
+        } else { false }
+    }
+
+    pub fn is_defending(&self, ship: ID) -> bool {
+        if let Some(&Tactic::Defend(_)) = self.ships.get(&ship) {
             true
         } else { false }
     }
@@ -245,7 +255,7 @@ impl Plan {
         for (&planet, &ally) in s.plan.harass.iter() {
             let ship = &s.ships[&ally];
             let planet = &s.planets[&planet];
-            let threats = s.grid.near_enemies(&ship, 14.0, &s.ships)
+            let threats = s.grid.near_enemies(&ship, HARASS_RADIUS, &s.ships)
                 .into_iter()
                 .filter(|enemy| !enemy.is_docked())
                 .collect::<Vec<_>>();

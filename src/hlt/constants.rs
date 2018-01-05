@@ -35,19 +35,21 @@ pub const GRID_SCALE_2: f64 = 7.0;
 pub const LINE_RADIUS: f64 = 5.0;
 
 // Navigation related
-pub const DELTA_WIGGLE: i32 = 120;
-pub const DELTA_THETA: i32 = 1;
-pub const DELTA_THRUST: i32 = 1;
+pub const DELTA_WIGGLE: i32 = 5;
+pub const DELTA_THETA: i32 = 18;
+pub const DELTA_THRUST: i32 = 2;
 pub const MIN_THRUST: i32 = 1;
-pub const EPSILON: f64 = 0.001;
-pub const CORRECTIONS: i32 = 360;
+pub const EPSILON: f64 = 0.01;
+pub const CORRECTIONS: i32 = 20;
 pub const SQUADRON_SIZE: usize = 4;
 
 /*
  * Mid-game Constants
  */
 
-pub const MID_ATTACK_RADIUS: f64 = 5.0;
+pub const MID_ATTACK_RADIUS: f64 = 14.0;
+pub const HARASS_RADIUS: f64 = 14.0;
+pub const HARASS_ANGLE: f64 = 0.0;
 
 pub fn defense_radius(planet: &Planet) -> f64 {
     planet.rad + 35.0 as f64

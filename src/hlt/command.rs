@@ -61,8 +61,7 @@ pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
 }
 
 // Assumes sorted by distance to enemy
-pub fn navigate_clump_to_enemy(grid: &mut Grid, mut s: &[Ship], e: &Ship) 
-    -> Vec<Command> {
+pub fn navigate_clump_to_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Command> {
     let far = &s[s.len() - 1].clone();
     let (dx, dy) = (e.x - far.x, e.y - far.y);
     let thrust = f64::min(7.0, dy.hypot(dx));
@@ -76,8 +75,7 @@ pub fn navigate_clump_to_enemy(grid: &mut Grid, mut s: &[Ship], e: &Ship)
 }
 
 // Assumes sorted in reverse
-pub fn navigate_clump_from_enemy(grid: &mut Grid, mut s: &[Ship], e: &Ship)
-    -> Vec<Command> {
+pub fn navigate_clump_from_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Command> {
     let close = &s[s.len() - 1].clone();
     let (dx, dy) = (close.x - e.x, close.y - e.y);
     let angle = f64::atan2(dy, dx);
@@ -93,7 +91,7 @@ pub fn navigate_to_distract(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Comman
     let (x, y) = e.iter().map(|&enemy| (enemy.x, enemy.y))
         .fold((0.0, 0.0), |(x, y), (xe, ye)| (x + xe, y + ye));
     let (x, y) = (x / e.len() as f64, y / e.len() as f64);
-    let angle = f64::atan2(s.y - y, s.x - x);
+    let angle = f64::atan2(s.y - y, s.x - x) + HARASS_ANGLE;
     let (x, y) = (s.x + 7.0*angle.cos(), s.y + 7.0*angle.sin());
     navigate(grid, s, (x, y))
 }
