@@ -1,3 +1,4 @@
+use std::f64::consts::FRAC_PI_6;
 use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
@@ -62,6 +63,15 @@ pub fn navigate_to_ally(grid: &mut Grid, s: &Ship, a: &Ship) -> Command {
 
 pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
     let (x, y) = offset((s.x, s.y), (e.x, e.y), WEAPON_RADIUS, 0.0);
+    navigate(grid, s, (x, y))
+}
+
+pub fn navigate_to_distract(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {
+    let (x, y) = e.iter().map(|&enemy| (enemy.x, enemy.y))
+        .fold((0.0, 0.0), |(x, y), (xe, ye)| (x + xe, y + ye));
+    let (x, y) = (x / e.len() as f64, y / e.len() as f64);
+    let angle = f64::atan2(s.y - y, s.x - x) + FRAC_PI_6;
+    let (x, y) = (s.x + 7.0*angle.cos(), s.y + 7.0*angle.sin());
     navigate(grid, s, (x, y))
 }
 

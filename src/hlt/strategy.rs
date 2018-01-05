@@ -14,6 +14,7 @@ pub enum Tactic {
     Attack(ID),
     Dock(ID),
     Travel(ID),
+    Harass(ID),
 }
 
 pub struct Plan {
@@ -22,14 +23,16 @@ pub struct Plan {
     attack: FnvHashMap<ID, Vec<ID>>,
     dock: FnvHashMap<ID, Vec<ID>>,
     travel: FnvHashMap<ID, Vec<ID>>,
+    harass: FnvHashMap<ID, ID>,
 }
 
 impl Plan {
     pub fn new() -> Self {
-        Plan { 
+        Plan {
             strategy: Strategy::Neutral,
             ships: FnvHashMap::default(),
             attack: FnvHashMap::default(),
+            harass: FnvHashMap::default(),
             dock: FnvHashMap::default(),
             travel: FnvHashMap::default(),
         }
@@ -37,23 +40,7 @@ impl Plan {
 
     pub fn set(&mut self, ship: ID, tactic: Tactic) {
         if let Some(previous) = self.ships.insert(ship, tactic) {
-            match previous {
-                Tactic::Attack(enemy) => {
-                    self.attack.get_mut(&enemy)
-                        .unwrap()
-                        .swap_remove(ship);
-                },
-                Tactic::Dock(planet) => {
-                    self.dock.get_mut(&planet)
-                        .unwrap()
-                        .swap_remove(ship);
-                },
-                Tactic::Travel(planet) => {
-                    self.travel.get_mut(&planet)
-                        .unwrap()
-                        .swap_remove(ship);
-                }
-            }
+            self.remove(ship, previous);
         }
         match tactic {
             Tactic::Attack(enemy) => {
@@ -65,13 +52,33 @@ impl Plan {
             Tactic::Travel(planet) => {
                 self.travel.entry(planet).or_insert(Vec::new()).push(ship);
             },
+            Tactic::Harass(planet) => {
+                self.harass.insert(planet, ship);
+            }
         }
     }
 
-    pub fn clear(&mut self) {
-        self.ships.clear();
-        self.attack.clear();
-        self.travel.clear();
+    fn remove(&mut self, ship: ID, tactic: Tactic) {
+        match tactic {
+            Tactic::Attack(enemy) => {
+                self.attack.get_mut(&enemy)
+                    .unwrap()
+                    .swap_remove(ship);
+            },
+            Tactic::Dock(planet) => {
+                self.dock.get_mut(&planet)
+                    .unwrap()
+                    .swap_remove(ship);
+            },
+            Tactic::Travel(planet) => {
+                self.travel.get_mut(&planet)
+                    .unwrap()
+                    .swap_remove(ship);
+            }
+            Tactic::Harass(planet) => {
+                self.harass.remove(&planet);
+            }
+        }
     }
 
     fn count(map: &FnvHashMap<ID, Vec<ID>>, id: ID) -> i32 {
@@ -86,7 +93,7 @@ impl Plan {
     }
 
     pub fn docking_at(&self, planet: ID) -> i32 {
-        Self::count(&self.dock, planet) + 
+        Self::count(&self.dock, planet) +
         Self::count(&self.travel, planet)
     }
 
@@ -94,13 +101,12 @@ impl Plan {
         self.ships.get(&ship) == None
     }
 
-    pub fn has_target(&self, ship: ID) -> Option<ID> {
-        if let Some(&Tactic::Attack(id)) = self.ships.get(&ship) { Some(id) }
-        else { None }
+    pub fn is_victim(&self, planet: ID) -> bool {
+        self.harass.get(&planet) != None
     }
 
-    pub fn has_planet(&self, ship: ID) -> Option<ID> {
-        if let Some(&Tactic::Dock(id)) = self.ships.get(&ship) { Some(id) }
+    pub fn has_target(&self, ship: ID) -> Option<ID> {
+        if let Some(&Tactic::Attack(id)) = self.ships.get(&ship) { Some(id) }
         else { None }
     }
 
@@ -126,8 +132,8 @@ impl Plan {
                 .map(|ally| &s.ships[&ally])
                 .cloned()
                 .collect::<Vec<_>>();
-            for ally in allies {
-                s.queue.push(&dock(&ally, planet));
+            for ally in &allies {
+                s.queue.push(&dock(ally, planet));
             }
         }
 
@@ -143,6 +149,35 @@ impl Plan {
             });
             for ally in allies {
                 s.queue.push(&navigate_to_planet(&mut s.grid, &ally, planet));
+            }
+        }
+
+        for (&planet, &ally) in s.plan.harass.iter() {
+            let ship = &s.ships[&ally];
+            let planet = &s.planets[&planet];
+            let (docked, threats): (Vec<_>, Vec<_>) = s.grid
+                .near_enemies(&ship, 14.0, &s.ships)
+                .into_iter()
+                .partition(|enemy| enemy.is_docked());
+
+            if threats.len() > 0 {
+                let avoid = s.grid.near_allies(&ship, 35.0, &s.ships)
+                    .into_iter()
+                    .chain(threats.into_iter())
+                    .collect::<Vec<_>>();
+                s.queue.push(
+                    &navigate_to_distract(&mut s.grid, &ship, &avoid)
+                );
+            } else {
+                let docked = planet.ships.iter()
+                    .map(|enemy| s.ships[&enemy].clone())
+                    .min_by(|a, b| {
+                        ship.distance_to(&a).partial_cmp(
+                        &ship.distance_to(&b)).unwrap()
+                    }).unwrap();
+                s.queue.push(
+                    &navigate_to_enemy(&mut s.grid, &ship, &docked)
+                );
             }
         }
     }

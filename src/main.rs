@@ -8,11 +8,20 @@ mod hlt;
 use simplelog::*;
 use std::fs::File;
 use hlt::state::State;
-use hlt::general::General;
+use hlt::twos;
 
 fn main() {
     WriteLogger::init(LogLevelFilter::Info, Config::default(), File::create("hlt.log").unwrap()).unwrap();
-    let state = State::new();
     State::send_ready("nwtnni");
-    state.run()
+    let mut state = State::new();
+    let mut turn = 0;
+    if state.players.len() == 2 {
+        loop {
+            state.update();     
+            twos::step(&mut state, turn);
+            turn += 1;
+        }
+    } else {
+        unimplemented!() 
+    }
 } 

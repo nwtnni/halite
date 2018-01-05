@@ -11,6 +11,7 @@ pub type ID = usize;
 pub type Point = (f64, f64);
 pub type Planets = FnvHashMap<ID, Planet>;
 pub type Ships = FnvHashMap<ID, Ship>;
+pub type Docked = FnvHashMap<ID, ID>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Status {
@@ -43,11 +44,6 @@ impl Ship {
 
     pub fn in_docking_range(&self, p: &Planet) -> bool {
         (p.y - self.y).hypot(p.x - self.x) <= self.rad + p.rad + DOCK_RADIUS
-    }
-
-    pub fn retreat_from(&self, e: &Ship, d: i32) -> Point {
-        let angle = f64::atan2(e.y - self.y, e.x - self.x);
-        (self.x - (d as f64)*angle.cos(), self.y - (d as f64)*angle.sin())
     }
 
     pub fn distance_to<T: ToEntity>(&self, e: &T) -> f64 {
@@ -116,6 +112,7 @@ pub struct State {
     pub plan: Plan,
     pub ships: Ships,
     pub queue: Queue,
+    pub docked: Docked,
 }
 
 impl State {
@@ -130,9 +127,10 @@ impl State {
         let height = f64::take(&mut stream);
         let plan = Plan::new();
         let queue = Queue::new();
+        let docked = FnvHashMap::default();
         let (players, planets, ships, grid) = take(&mut stream);
         State { id, width, height, players, planets,
-                ships, plan, queue, grid }
+                ships, plan, queue, grid, docked}
     }
 
     pub fn update(&mut self) {
@@ -145,7 +143,7 @@ impl State {
         self.ships = ships;
         self.grid = grid;
         self.grid.owner = self.id;
-        self.plan.clear();
+        self.plan = Plan::new();
     }
 
     pub fn send_ready(name: &str) {
