@@ -1,3 +1,4 @@
+use hlt::constants::*;
 use hlt::state::*;
 use hlt::strategy::*;
 
@@ -11,11 +12,11 @@ pub fn step(s: &mut State, turn: i32) {
     let free = s.planets.values()
         .filter(|&planet| planet.owner == None)
         .count();
-    if free != 0 && turn < 60 {
+    // if free != 0 && turn < 150 {
+    // } else {
+    //     late(s);
+    // }
         middle(s);
-    } else {
-        late(s);
-    }
     s.queue.flush();
 }
 
@@ -37,10 +38,11 @@ fn early(s: &mut State) {{
     // Prioritize closest planet to us and center
     let mut sorted = s.planets.values().collect::<Vec<_>>();
     sorted.sort_unstable_by_key(|planet| {
-        (((planet.x - s.width/2.0) *
-        (planet.y - s.height/2.0) /
-        planet.spots as f64).abs() +
-        (planet.y - ya).hypot(planet.x - xa)) as i32
+        (planet.y - ya).hypot(planet.x - xa) as i32 -
+        s.grid.near_planets(planet, 35.0, &s.planets)
+            .into_iter()
+            .map(|planet| planet.spots)
+            .sum::<i32>()*3
     });
     ships.sort_unstable_by(|a, b| {
         a.distance_to(&sorted[0]).partial_cmp(
@@ -73,7 +75,7 @@ fn early(s: &mut State) {{
 
         // Inside docking range: check if threats nearby
         let mut near = enemies.iter()
-            .filter(|&enemy| ship.distance_to(enemy) < 49.0)
+            .filter(|&enemy| ship.distance_to(enemy) < 35.0)
             .collect::<Vec<_>>();
         near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
 
@@ -117,21 +119,42 @@ fn early(s: &mut State) {{
 }
 
 /* Mid Game Goals
- * - Harass enemy hotspots
+ * - Harass enemy planets
  * - Defend from enemy attacks
  * - Expand own territory
  */
 fn middle(s: &mut State) {{
     // Available ships
-    let ships = &s.players[s.id].ships.iter()
-        .filter_map(|ship| {
-            if s.docked.contains_key(ship) {
-                None 
-            } else { Some(&s.ships[&ship]) }
-        })
-        .filter(|&ship| s.plan.is_available(ship.id))
+    let ships = s.players[s.id].ships.iter()
+        .map(|ship| &s.ships[&ship])
+        .filter(|&ship| !ship.is_docked())
         .cloned()
         .collect::<Vec<_>>();
+
+    // Assign ships to dock
+    for ship in &ships {
+        let closest = &s.planets.values()
+            .filter(|planet| !planet.is_enemy(s.id))
+            .filter(|planet| planet.spots() > s.plan.docking_at(planet.id))
+            .filter(|planet| {
+                let e = s.grid.near_enemies(planet, planet.rad + 35.0, &s.ships);
+                let a = s.grid.near_allies(planet, planet.rad + 35.0, &s.ships)
+                    .into_iter()
+                    .filter(|ally| !ally.is_docked())
+                    .count();
+                a >= e.len()
+            })
+            .min_by(|a, b| {
+                ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
+            });
+        if let &Some(planet) = closest {
+            if ship.in_docking_range(planet) {
+                s.plan.set(ship.id, Tactic::Dock(planet.id));
+            } else {
+                s.plan.set(ship.id, Tactic::Travel(planet.id));
+            }
+        }
+    }
 
     // Enemy planets that aren't being harassed
     let victims = &s.planets.values()
@@ -142,14 +165,51 @@ fn middle(s: &mut State) {{
     // Assign our closest ships to harass
     for victim in victims {
         let nearby = ships.iter()
-            .filter(|ally| !ally.is_docked())
-            .filter(|ally| s.plan.is_available(ally.id))
             .min_by(|a, b| {
                 a.distance_to(victim).partial_cmp(
                 &b.distance_to(victim)).unwrap()
             });
         if let Some(ally) = nearby {
             s.plan.set(ally.id, Tactic::Harass(victim.id));
+        }
+    }
+
+    // Assign ships to attack in smaller skirmishes
+    for ship in &ships {
+        if !s.plan.is_available(ship.id) { continue }
+        let allies = s.grid.near_allies(&ship, MID_ATTACK_RADIUS, &s.ships);
+        let enemies = s.grid.near_enemies(&ship, MID_ATTACK_RADIUS, &s.ships);
+
+        if enemies.len() > 0 && allies.len() >= enemies.len() {
+            let enemy = enemies[0].id;
+            s.plan.set(ship.id, Tactic::Attack(enemy));
+            for ally in allies {
+                s.plan.set(ally.id, Tactic::Attack(enemy));
+            }
+        } else if enemies.len() > 0 {
+            let enemy = enemies[0].id;
+            s.plan.set(ship.id, Tactic::Retreat(enemy));
+            for ally in allies {
+                s.plan.set(ally.id, Tactic::Retreat(enemy));
+            }
+        }
+    }
+
+    // Assign ships to defend
+    for ship in ships {
+        let distress = s.planets.values()
+            .filter(|planet| planet.is_owned(s.id))
+            .filter(|planet| {
+                s.grid.near_enemies(planet, defense_radius(planet), &s.ships)
+                    .len() > 0
+            }).min_by(|a, b| {
+                ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
+            });
+        
+        if let Some(distress) = distress {
+            if s.plan.is_available(ship.id) {
+                s.plan.set(ship.id, Tactic::Defend(distress.id));
+            }
         }
     }}
     Plan::execute(s);
@@ -158,7 +218,7 @@ fn middle(s: &mut State) {{
 /* Late Game Goals
  * - Clump up to take out enemy planets
  * - Defend from enemy attacks
- * - Hide when only a few ships are left
+ * - Hide when only a few ships are left(?)
  */
 fn late(s: &mut State) {
     unimplemented!();

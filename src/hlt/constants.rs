@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use hlt::state::*;
 
 // Ship radius
 pub const SHIP_RADIUS: f64 = 0.5;
@@ -39,6 +40,15 @@ pub const DELTA_THETA: i32 = 1;
 pub const DELTA_THRUST: i32 = 1;
 pub const MIN_THRUST: i32 = 1;
 pub const EPSILON: f64 = 0.001;
-
-// How many times to re-attempt navigation
 pub const CORRECTIONS: i32 = 360;
+pub const SQUADRON_SIZE: usize = 4;
+
+/*
+ * Mid-game Constants
+ */
+
+pub const MID_ATTACK_RADIUS: f64 = 5.0;
+
+pub fn defense_radius(planet: &Planet) -> f64 {
+    planet.rad + 35.0 as f64
+}

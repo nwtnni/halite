@@ -1,4 +1,3 @@
-use std::f64::consts::FRAC_PI_6;
 use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
@@ -56,21 +55,45 @@ fn navigate(grid: &mut Grid, ship: &Ship, (x, y): Point) -> Command {
     Command::Thrust(ship.id, thrust, (angle + 360) % 360)
 }
 
-pub fn navigate_to_ally(grid: &mut Grid, s: &Ship, a: &Ship) -> Command {
-    let (x, y) = offset((s.x, s.y), (a.x, a.y), 0.0, 90.0);
-    navigate(grid, s, (x, y))
-}
-
 pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
     let (x, y) = offset((s.x, s.y), (e.x, e.y), WEAPON_RADIUS, 0.0);
     navigate(grid, s, (x, y))
+}
+
+// Assumes sorted by distance to enemy
+pub fn navigate_clump_to_enemy(grid: &mut Grid, mut s: &[Ship], e: &Ship) 
+    -> Vec<Command> {
+    let far = &s[s.len() - 1].clone();
+    let (dx, dy) = (e.x - far.x, e.y - far.y);
+    let thrust = f64::min(7.0, dy.hypot(dx));
+    let angle = f64::atan2(dy, dx);
+    let end = (far.x + thrust*angle.cos(), far.y + thrust*angle.sin());
+    let mut queue = Vec::new();
+    for ship in s {
+        queue.push(navigate_to_point(grid, &ship, end));
+    }
+    queue 
+}
+
+// Assumes sorted in reverse
+pub fn navigate_clump_from_enemy(grid: &mut Grid, mut s: &[Ship], e: &Ship)
+    -> Vec<Command> {
+    let close = &s[s.len() - 1].clone();
+    let (dx, dy) = (close.x - e.x, close.y - e.y);
+    let angle = f64::atan2(dy, dx);
+    let end = (close.x + 7.0*angle.cos(), close.y + 7.0*angle.sin());
+    let mut queue = Vec::new();
+    for ship in s {
+        queue.push(navigate_to_point(grid, &ship, end));
+    }
+    queue 
 }
 
 pub fn navigate_to_distract(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {
     let (x, y) = e.iter().map(|&enemy| (enemy.x, enemy.y))
         .fold((0.0, 0.0), |(x, y), (xe, ye)| (x + xe, y + ye));
     let (x, y) = (x / e.len() as f64, y / e.len() as f64);
-    let angle = f64::atan2(s.y - y, s.x - x) + FRAC_PI_6;
+    let angle = f64::atan2(s.y - y, s.x - x);
     let (x, y) = (s.x + 7.0*angle.cos(), s.y + 7.0*angle.sin());
     navigate(grid, s, (x, y))
 }
