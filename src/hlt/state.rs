@@ -4,7 +4,7 @@ use std::io::stdin;
 use hlt::parse::*;
 use hlt::strategy::Plan;
 use hlt::command::Queue;
-use hlt::constants::DOCK_RADIUS;
+use hlt::constants::*;
 use hlt::collision::*;
 
 pub type ID = usize;
@@ -100,6 +100,10 @@ impl Planet {
     pub fn docked(&self) -> i32 {
         self.ships.len() as i32
     }
+
+    pub fn will_spawn(&self, n: i32) -> i32 {
+        (self.spawn + (self.docked() * PRODUCTIVITY * n)) / 12
+    }
 }
 
 pub struct State {
@@ -141,7 +145,7 @@ impl State {
         self.ships = ships;
         self.grid = grid;
         self.grid.owner = self.id;
-        self.plan = Plan::new();
+        self.plan.clear();
     }
 
     pub fn send_ready(name: &str) {

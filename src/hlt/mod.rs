@@ -4,4 +4,4 @@ pub mod strategy;
 pub mod collision;
 pub mod constants;
 pub mod command;
-pub mod general;
+pub mod twos;
