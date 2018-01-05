@@ -31,11 +31,7 @@ fn early(s: &mut State) {{
     // Prioritize closest planet to us and center
     let mut sorted = s.planets.values().collect::<Vec<_>>();
     sorted.sort_unstable_by_key(|planet| {
-        (planet.y - ya).hypot(planet.x - xa) as i32 -
-        s.grid.near_planets(planet, 35.0, &s.planets)
-            .into_iter()
-            .map(|planet| planet.spots)
-            .sum::<i32>()*3
+        (planet.y - ya).hypot(planet.x - xa) as i32
     });
     ships.sort_unstable_by(|a, b| {
         a.distance_to(&sorted[0]).partial_cmp(
