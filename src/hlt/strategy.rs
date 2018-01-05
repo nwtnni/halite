@@ -5,12 +5,6 @@ use hlt::constants::*;
 use hlt::collision::*;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub enum Strategy {
-    Aggressive,
-    Neutral,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Tactic {
     Attack(ID),
     Retreat(ID),
@@ -113,6 +107,10 @@ impl Plan {
         Self::count(&self.attack, ship)
     }
 
+    pub fn defending(&self, planet: ID) -> i32 {
+        Self::count(&self.defend, planet)
+    }
+
     pub fn docking_at(&self, planet: ID) -> i32 {
         Self::count(&self.dock, planet) +
         Self::count(&self.travel, planet)
@@ -128,12 +126,6 @@ impl Plan {
 
     pub fn is_attacking(&self, ship: ID) -> bool {
         if let Some(&Tactic::Attack(_)) = self.ships.get(&ship) {
-            true
-        } else { false }
-    }
-
-    pub fn is_defending(&self, ship: ID) -> bool {
-        if let Some(&Tactic::Defend(_)) = self.ships.get(&ship) {
             true
         } else { false }
     }
@@ -196,26 +188,16 @@ impl Plan {
                 .cloned()
                 .collect::<Vec<_>>();
 
-            let (x, y) = allies.iter()
-                .map(|ally| (ally.x, ally.y))
-                .fold((0.0, 0.0), |(x, y), (xa, ya)| (x + xa, y + ya));
-            let len = allies.len() as f64;
-            let (x, y) = (x / len, y / len);
-
-            let docked = &planet.ships.iter()
-                .map(|ship| s.ships[&ship].clone())
-                .min_by(|a, b| {
-                    (a.x - x).hypot(a.y - y).partial_cmp(
-                    &(b.x - x).hypot(b.y - y)).unwrap()
-                }).expect("Defend called on non-owned planet");
-
-            let enemy = s.grid.near_enemies(&planet, defense_radius(&planet), &s.ships)
+            for ally in &allies {
+                let enemy = s.grid.near_enemies(
+                    &planet, defense_radius(&planet), &s.ships
+                )
                 .into_iter()
                 .min_by(|a, b| {
-                    a.distance_to(&docked).partial_cmp(
-                    &b.distance_to(&docked)).unwrap()
+                    a.distance_to(&ally).partial_cmp(
+                    &b.distance_to(&ally)).unwrap()
                 }).expect("Defend called with no enemies near");
-            for ally in allies {
+
                 s.queue.push(
                     &navigate_to_enemy(&mut s.grid, &ally, &enemy)
                 );

@@ -48,9 +48,9 @@ pub const SQUADRON_SIZE: usize = 4;
  */
 
 pub const MID_ATTACK_RADIUS: f64 = 14.0;
-pub const HARASS_RADIUS: f64 = 14.0;
+pub const HARASS_RADIUS: f64 = 19.0;
 pub const HARASS_ANGLE: f64 = 0.0;
 
 pub fn defense_radius(planet: &Planet) -> f64 {
-    planet.rad + 35.0 as f64
+    planet.rad + 10.0 as f64
 }
