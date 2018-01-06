@@ -53,7 +53,7 @@ fn early(s: &mut State) {{
         // Make sure planet isn't occupied
         let mut n = 0;
         while s.plan.docking_at(sorted[n].id) >= sorted[n].spots {
-            n += 1; 
+            n += 1;
         }
         let closest = sorted[n];
 
@@ -64,7 +64,7 @@ fn early(s: &mut State) {{
 
         // Check if threats nearby
         let mut near = enemies.iter()
-            .filter(|&enemy| ship.distance_to(enemy) < 63.0)
+            .filter(|&enemy| ship.distance_to(enemy) < 56.0)
             .collect::<Vec<_>>();
         near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
 
@@ -101,7 +101,9 @@ fn early(s: &mut State) {{
                 .min_by_key(|&&enemy| ship.distance_to(enemy) as i32)
                 .unwrap();
             for ship in &ships {
-                s.plan.set(ship.id, Tactic::Attack(enemy.id));
+                if !s.docked.contains_key(&ship.id) {
+                    s.plan.set(ship.id, Tactic::Attack(enemy.id));
+                }
             }
         }
     }}
@@ -165,13 +167,13 @@ fn middle(s: &mut State) {{
 
     // Assign ships to attack in smaller skirmishes
     for ship in &ships {
-        let allies = s.grid.near_allies(&ship, 7.0, &s.ships);
-        let enemies = s.grid.near_enemies(&ship, 7.0, &s.ships);
+        let allies = s.grid.near_allies(&ship, 14.0, &s.ships);
+        let enemies = s.grid.near_enemies(&ship, 14.0, &s.ships);
         let docking = enemies.iter()
             .filter(|enemy| enemy.is_docked())
             .collect::<Vec<_>>();
 
-        if enemies.len() > 0 && allies.len() >= enemies.len() - docking.len() {
+        if docking.len() > 0 {
             let mut n = 0;
             while let Some(target) = docking.get(n) {
                 if s.plan.attacking(target.id) < 8 {
@@ -180,7 +182,16 @@ fn middle(s: &mut State) {{
                 }
                 n += 1;
             }
-        } else if enemies.len() - docking.len() > 0 {
+        } else if allies.len() >= enemies.len() {
+            let mut n = 0;
+            while let Some(&target) = enemies.get(n) {
+                if s.plan.attacking(target.id) < 8 {
+                    s.plan.set(ship.id, Tactic::Attack(target.id));
+                    break
+                }
+                n += 1;
+            }
+        } else if enemies.len() > 0 {
             let enemy = enemies[0].id;
             s.plan.set(ship.id, Tactic::Retreat(enemy));
         }
@@ -227,7 +238,7 @@ fn middle(s: &mut State) {{
 
     // Assign our closest ships to harass
     for victim in victims {
-        let nearby = s.grid.near_allies(victim, 70.0, &s.ships)
+        let nearby = s.grid.near_allies(victim, 100.0, &s.ships)
             .iter()
             .min_by(|a, b| {
                 a.distance_to(victim).partial_cmp(

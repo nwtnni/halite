@@ -206,13 +206,14 @@ impl Plan {
 
         for (planet, allies) in s.plan.dock.iter() {
             if allies.len() == 0 { continue }
-            let planet = &s.planets[&planet];
-            let allies = allies.iter()
-                .map(|ally| &s.ships[&ally])
-                .cloned()
-                .collect::<Vec<_>>();
-            for ally in &allies {
-                s.queue.push(&dock(ally, planet));
+            if let &Some(planet) = &s.planets.get(&planet) {
+                let allies = allies.iter()
+                    .filter_map(|ally| s.ships.get(&ally))
+                    .cloned()
+                    .collect::<Vec<_>>();
+                for ally in &allies {
+                    s.queue.push(&dock(ally, planet));
+                }
             }
         }
 
