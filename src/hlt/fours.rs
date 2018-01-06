@@ -28,8 +28,9 @@ fn early(s: &mut State) {{
         // Prioritize closest planet to us
         let mut sorted = s.planets.values().collect::<Vec<_>>();
         sorted.sort_unstable_by_key(|planet| {
-            ((planet.y - ship.y).hypot(planet.x - ship.x).powf(3.0) -
-            ((planet.x - s.width/2.0)*(planet.y - s.height/2.0)).abs()) as i32
+            ((planet.y - ship.y).hypot(planet.x - ship.x).powf(1.5) -
+            (planet.x - s.width/2.0).abs() -
+            (planet.y - s.height/2.0).abs()) as i32
         });
 
         if ship.is_docked() {
@@ -130,13 +131,16 @@ fn middle(s: &mut State) {{
                 o / 2 <= e
             })
             .min_by_key(|&planet| {
-                (ship.distance_to(&planet).powf(3.0) -
-                ((planet.x - s.width/2.0)*(planet.y - s.height/2.0)).abs()) as i32
+                (ship.distance_to(&planet).powf(2.5) -
+                (planet.x - s.width/2.0).powf(2.0) -
+                (planet.y - s.height/2.0).powf(2.0)) as i32
             });
         if let &Some(planet) = closest {
-            let e = s.grid.near_enemies(&planet, planet.rad + 35.0, &s.ships)
+            let (d, e): (Vec<_>, Vec<_>) = s.grid
+                .near_enemies(&planet, planet.rad + 35.0, &s.ships)
                 .into_iter()
-                .filter(|enemy| !enemy.is_docked()).collect::<Vec<_>>();
+                .partition(|enemy| enemy.is_docked());
+
             let a = s.grid.near_allies(&planet, planet.rad + 14.0, &s.ships)
                 .into_iter()
                 .filter(|ally| !ally.is_docked()).count();
@@ -145,6 +149,8 @@ fn middle(s: &mut State) {{
             } else if e.len() < a && !planet.is_enemy(s.id) && planet.has_spots() {
                 s.docked.insert(ship.id, planet.id);
                 s.plan.set(ship.id, Tactic::Dock(planet.id));
+            } else if d.len() > 0 {
+                s.plan.set(ship.id, Tactic::Attack(d[0].id));
             } else if e.len() > 0 {
                 s.plan.set(ship.id, Tactic::Attack(e[0].id));
             }
@@ -153,22 +159,31 @@ fn middle(s: &mut State) {{
 
     // Assign ships to attack in smaller skirmishes
     for ship in &ships {
-        let allies = s.grid.near_allies(&ship, 7.0, &s.ships);
-        let enemies = s.grid.near_enemies(&ship, 7.0, &s.ships);
+        let allies = s.grid.near_allies(&ship, 14.0, &s.ships);
+        let enemies = s.grid.near_enemies(&ship, 14.0, &s.ships);
         let docking = enemies.iter()
             .filter(|enemy| enemy.is_docked())
             .collect::<Vec<_>>();
 
-        if enemies.len() > 0 && allies.len() >= enemies.len() - docking.len() {
+        if docking.len() > 0 {
             let mut n = 0;
             while let Some(target) = docking.get(n) {
+                if s.plan.attacking(target.id) < 16 {
+                    s.plan.set(ship.id, Tactic::Attack(target.id));
+                    break
+                }
+                n += 1;
+            }
+        } else if allies.len() >= enemies.len() {
+            let mut n = 0;
+            while let Some(&target) = enemies.get(n) {
                 if s.plan.attacking(target.id) < 8 {
                     s.plan.set(ship.id, Tactic::Attack(target.id));
                     break
                 }
                 n += 1;
             }
-        } else if enemies.len() - docking.len() > 0 {
+        } else if enemies.len() > 0 {
             let enemy = enemies[0].id;
             s.plan.set(ship.id, Tactic::Retreat(enemy));
         }
