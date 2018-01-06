@@ -19,27 +19,18 @@ pub fn step(s: &mut State, turn: i32) {
  * - Rush docking enemies
  */
 fn early(s: &mut State) {{
-    let (mut ships, enemies): (Vec<_>, Vec<_>) = s.ships.values()
+    let (ships, enemies): (Vec<_>, Vec<_>) = s.ships.values()
         .partition(|ship| ship.owner == s.id);
-
-    // Find midpoint of group
-    let a = ships.len() as f64;
-    let (xa, ya) = ships.iter().map(|ship| (ship.x, ship.y))
-        .fold((0.0, 0.0), |(x, y), (xs, ys)| (x + xs, y + ys));
-    let (xa, ya) = (xa / a, ya / a);
-
-    // Prioritize closest planet to us and center
-    let mut sorted = s.planets.values().collect::<Vec<_>>();
-    sorted.sort_unstable_by_key(|planet| {
-        (planet.y - ya).hypot(planet.x - xa) as i32
-    });
-    ships.sort_unstable_by(|a, b| {
-        a.distance_to(&sorted[0]).partial_cmp(
-        &b.distance_to(&sorted[0])).unwrap()
-    });
 
     // Let each ship make an independent decision
     for ship in &ships {
+
+        // Prioritize closest planet to us
+        let mut sorted = s.planets.values().collect::<Vec<_>>();
+        sorted.sort_unstable_by_key(|planet| {
+            ((planet.y - ship.y).hypot(planet.x - ship.x).powf(3.0) -
+            ((planet.x - s.width/2.0)*(planet.y - s.height/2.0)).abs()) as i32
+        });
 
         if ship.is_docked() {
             s.plan.set(ship.id, Tactic::Dock(s.docked[&ship.id]));
@@ -49,7 +40,7 @@ fn early(s: &mut State) {{
         // Make sure planet isn't occupied
         let mut n = 0;
         while s.plan.docking_at(sorted[n].id) >= sorted[n].spots {
-            n += 1; 
+            n += 1;
         }
         let closest = sorted[n];
 
@@ -60,7 +51,7 @@ fn early(s: &mut State) {{
 
         // Check if threats nearby
         let mut near = enemies.iter()
-            .filter(|&enemy| ship.distance_to(enemy) < 49.0)
+            .filter(|&enemy| ship.distance_to(enemy) < 35.0)
             .collect::<Vec<_>>();
         near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
 
@@ -139,7 +130,8 @@ fn middle(s: &mut State) {{
                 o / 2 <= e
             })
             .min_by_key(|&planet| {
-                ship.distance_to(&planet) as i32
+                (ship.distance_to(&planet).powf(3.0) -
+                ((planet.x - s.width/2.0)*(planet.y - s.height/2.0)).abs()) as i32
             });
         if let &Some(planet) = closest {
             let e = s.grid.near_enemies(&planet, planet.rad + 35.0, &s.ships)
