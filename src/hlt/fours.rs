@@ -47,28 +47,29 @@ fn early(s: &mut State) {{
         }
 
         // Make sure planet isn't occupied
-        let closest = if s.plan.docking_at(sorted[0].id) >= sorted[0].spots {
-            sorted[1]
-        } else { sorted[0] };
+        let mut n = 0;
+        while s.plan.docking_at(sorted[n].id) >= sorted[n].spots {
+            n += 1; 
+        }
+        let closest = sorted[n];
 
         // If we've been given orders, follow along
         if let Some(_) = s.plan.has_target(ship.id) {
             continue
         }
 
-        // Inside docking range: check if threats nearby
+        // Check if threats nearby
         let mut near = enemies.iter()
-            .filter(|&enemy| ship.distance_to(enemy) < 70.0)
+            .filter(|&enemy| ship.distance_to(enemy) < 49.0)
             .collect::<Vec<_>>();
         near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
 
-        // If we're outside of docking range
-        if !ship.in_docking_range(closest) && near.len() == 0 {
-            s.plan.set(ship.id, Tactic::Travel(closest.id));
-            continue
-        }
+        // Check if docked enemy ships nearby
+        let docked = near.iter()
+            .filter(|&enemy| enemy.is_docked())
+            .collect::<Vec<_>>();
 
-        // If no threats nearby, just dock
+        // If there are no enemies, proceed as usual
         if near.len() == 0 {
             if ship.in_docking_range(closest) {
                 s.docked.insert(ship.id, closest.id);
@@ -79,17 +80,15 @@ fn early(s: &mut State) {{
             continue
         }
 
-        // Check if docked enemy ships nearby
-        let docked = near.iter()
-            .filter(|&enemy| enemy.is_docked())
-            .collect::<Vec<_>>();
-
-        // If all enemy ships docked
-        if docked.len() == near.len() {
+        // If all enemy ships docked, attack
+        if docked.len() == near.len() && s.docked.len() == 0 {
             let enemy = &docked[0];
             for ship in &ships {
-                s.plan.set(ship.id, Tactic::Attack(enemy.id));
+                if !s.docked.contains_key(&ship.id) {
+                    s.plan.set(ship.id, Tactic::Attack(enemy.id));
+                }
             }
+            continue
         }
 
         // Otherwise fight off attacker
@@ -118,6 +117,13 @@ fn middle(s: &mut State) {{
         .cloned()
         .collect::<Vec<_>>();
 
+    // Keep track of docked and docking ships
+    for ship in &ships {
+        if s.docked.contains_key(&ship.id) {
+            s.plan.set(ship.id, Tactic::Dock(s.docked[&ship.id]));
+        }
+    }
+
     // Assign ships to nearby planets
     for ship in &ships {
         let closest = &s.planets.values()
@@ -126,28 +132,28 @@ fn middle(s: &mut State) {{
                     planet.spots() > s.plan.docking_at(planet.id)
                 } else { true }
             })
-            .filter_map(|planet| {
+            .filter(|&planet| {
                 let o = s.plan.traveling_to(planet.id);
                 let e = s.grid.near_enemies(&planet, planet.rad + 14.0, &s.ships)
                     .len() as i32;
-                if o <= e { Some((planet, e)) }
-                else { None }
+                o / 2 <= e
             })
-            .min_by_key(|&(planet, e)| {
-                let a = s.grid.near_allies(&planet, planet.rad + 14.0, &s.ships)
-                    .len() as i32;
-                (e - a) + (ship.distance_to(&planet) as i32)
+            .min_by_key(|&planet| {
+                ship.distance_to(&planet) as i32
             });
-        if let &Some((planet, _)) = closest {
-            let e = s.grid.near_enemies(&planet, planet.rad + 35.0, &s.ships);
+        if let &Some(planet) = closest {
+            let e = s.grid.near_enemies(&planet, planet.rad + 35.0, &s.ships)
+                .into_iter()
+                .filter(|enemy| !enemy.is_docked()).collect::<Vec<_>>();
             let a = s.grid.near_allies(&planet, planet.rad + 14.0, &s.ships)
                 .into_iter()
                 .filter(|ally| !ally.is_docked()).count();
             if !ship.in_docking_range(planet) {
                 s.plan.set(ship.id, Tactic::Travel(planet.id));
-            } else if e.len() < a {
+            } else if e.len() < a && !planet.is_enemy(s.id) && planet.has_spots() {
+                s.docked.insert(ship.id, planet.id);
                 s.plan.set(ship.id, Tactic::Dock(planet.id));
-            } else {
+            } else if e.len() > 0 {
                 s.plan.set(ship.id, Tactic::Attack(e[0].id));
             }
         }
@@ -155,8 +161,8 @@ fn middle(s: &mut State) {{
 
     // Assign ships to attack in smaller skirmishes
     for ship in &ships {
-        let allies = s.grid.near_allies(&ship, 14.0, &s.ships);
-        let enemies = s.grid.near_enemies(&ship, 21.0, &s.ships);
+        let allies = s.grid.near_allies(&ship, 7.0, &s.ships);
+        let enemies = s.grid.near_enemies(&ship, 7.0, &s.ships);
         let docking = enemies.iter()
             .filter(|enemy| enemy.is_docked())
             .collect::<Vec<_>>();
@@ -164,7 +170,7 @@ fn middle(s: &mut State) {{
         if enemies.len() > 0 && allies.len() >= enemies.len() - docking.len() {
             let mut n = 0;
             while let Some(target) = docking.get(n) {
-                if s.plan.attacking(target.id) < 4 {
+                if s.plan.attacking(target.id) < 8 {
                     s.plan.set(ship.id, Tactic::Attack(target.id));
                     break
                 }
@@ -182,7 +188,7 @@ fn middle(s: &mut State) {{
             .filter(|planet| planet.is_owned(s.id))
             .filter(|planet| {
                 s.grid.near_enemies(planet, defense_radius(planet), &s.ships)
-                    .len() as i32 > s.plan.defending(planet.id)
+                    .len() as i32 > s.plan.defending(planet.id) / 2
             }).min_by(|a, b| {
                 ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
             });
@@ -199,32 +205,13 @@ fn middle(s: &mut State) {{
             .filter(|planet| planet.is_enemy(s.id))
             .filter(|planet| {
                 let e = s.grid.near_enemies(planet, 100.0, &s.ships).len();
-                s.plan.traveling_to(planet.id) < e as i32
+                s.plan.traveling_to(planet.id) / 2 < e as i32
             })
             .min_by(|a, b| {
                 ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
             });
         if let Some(planet) = closest {
             s.plan.set(ship.id, Tactic::Travel(planet.id));
-        }
-    }
-
-    // Enemy planets that aren't being harassed
-    let victims = &s.planets.values()
-        .filter(|planet| planet.is_enemy(s.id) && planet.docked() < 3)
-        .filter(|planet| !s.plan.is_victim(planet.id))
-        .collect::<Vec<_>>();
-
-    // Assign our closest ships to harass
-    for victim in victims {
-        let nearby = s.grid.near_allies(victim, 70.0, &s.ships)
-            .iter()
-            .min_by(|a, b| {
-                a.distance_to(victim).partial_cmp(
-                &b.distance_to(victim)).unwrap()
-            }).cloned();
-        if let Some(ally) = nearby {
-            s.plan.set(ally.id, Tactic::Harass(victim.id));
         }
     }}
     Plan::execute(s);
