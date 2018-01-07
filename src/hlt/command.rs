@@ -61,21 +61,16 @@ pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
 }
 
 // Assumes sorted by distance to enemy
-pub fn navigate_clump_to_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Command> {
-    let far = &s[s.len() - 1].clone();
-    let (dx, dy) = (e.x - far.x, e.y - far.y);
-    let thrust = f64::min(7.0, dy.hypot(dx));
-    let angle = f64::atan2(dy, dx);
-    let end = (far.x + thrust*angle.cos(), far.y + thrust*angle.sin());
+pub fn navigate_clump_to_enemy(grid: &mut Grid, s: Vec<Ship>, e: &Ship) -> Vec<Command> {
     let mut queue = Vec::new();
     for ship in s {
-        queue.push(navigate_to_point(grid, &ship, end));
+        queue.push(navigate_to_enemy(grid, &ship, e));
     }
-    queue 
+    queue
 }
 
 // Assumes sorted in reverse
-pub fn navigate_clump_from_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Command> {
+pub fn navigate_clump_from_enemy(grid: &mut Grid, s: Vec<Ship>, e: &Ship) -> Vec<Command> {
     let close = &s[s.len() - 1].clone();
     let (dx, dy) = (close.x - e.x, close.y - e.y);
     let angle = f64::atan2(dy, dx);
@@ -84,7 +79,7 @@ pub fn navigate_clump_from_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<C
     for ship in s {
         queue.push(navigate_to_point(grid, &ship, end));
     }
-    queue 
+    queue
 }
 
 pub fn navigate_to_distract(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {

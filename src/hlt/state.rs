@@ -85,6 +85,10 @@ impl Planet {
         }
     }
 
+    pub fn is_free(&self) -> bool {
+        self.owner == None 
+    }
+
     pub fn has_spots(&self) -> bool {
         self.spots > (self.ships.len() as i32)
     }

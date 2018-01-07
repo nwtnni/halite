@@ -47,6 +47,10 @@ pub const SQUADRON_SIZE: usize = 4;
  * Mid-game Constants
  */
 
+pub const ASSEMBLE_RADIUS: f64 = 12.0;
+pub const SCAN_RADIUS: f64 = 9.0;
+pub const COMBAT_RADIUS: f64 = 7.0;
+
 pub const MID_ATTACK_RADIUS: f64 = 14.0;
 pub const HARASS_RADIUS: f64 = 19.0;
 pub const HARASS_ANGLE: f64 = 0.0;

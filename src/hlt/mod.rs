@@ -6,3 +6,4 @@ pub mod constants;
 pub mod command;
 pub mod twos;
 pub mod fours;
+pub mod value;
