@@ -1,7 +1,6 @@
 use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
-use hlt::strategy::Plan;
 
 pub enum Command {
     Dock(usize, usize),

@@ -2,7 +2,7 @@ use fnv::FnvHashMap;
 use std::f64;
 use std::io::stdin;
 use hlt::parse::*;
-use hlt::strategy::Plan;
+use hlt::tactics::Plan;
 use hlt::command::Queue;
 use hlt::constants::*;
 use hlt::collision::*;

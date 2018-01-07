@@ -34,13 +34,13 @@ pub fn prioritize(s: &State) -> Vec<(ID, ID)>{
 
             if e > 0.0 && a < e * 2.0 { continue }
             let v = if planet.is_free() {
-                -d - e
+                -d + e
             } else if planet.is_enemy(s.id) {
-                -d + ((planet.docked() - 2).pow(8) * 7) as f64
+                -d + e
             } else if planet.has_spots() {
-                -d + (planet.docked() * 7) as f64
+                -d + e
             } else {
-                -d + (planet.docked().pow(2) as f64 * e)
+                -d + e
             };
             feasible.push((ship.id, planet.id, v))
         }
