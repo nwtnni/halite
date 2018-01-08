@@ -2,7 +2,7 @@ use fnv::FnvHashMap;
 use std::f64;
 use std::io::stdin;
 use hlt::parse::*;
-use hlt::strategy::Plan;
+use hlt::tactics::Tactics;
 use hlt::command::Queue;
 use hlt::constants::*;
 use hlt::collision::*;
@@ -108,7 +108,7 @@ pub struct State {
     pub grid: Grid,
     pub players: Vec<Player>,
     pub planets: Planets,
-    pub plan: Plan,
+    pub tactics: Tactics,
     pub ships: Ships,
     pub queue: Queue,
     pub docked: Docked,
@@ -124,12 +124,12 @@ impl State {
         let id = usize::take(&mut stream);
         let width = f64::take(&mut stream);
         let height = f64::take(&mut stream);
-        let plan = Plan::new();
+        let tactics = Tactics::new();
         let queue = Queue::new();
         let docked = FnvHashMap::default();
         let (players, planets, ships, grid) = take(&mut stream);
         State { id, width, height, players, planets,
-                ships, plan, queue, grid, docked}
+                ships, tactics, queue, grid, docked}
     }
 
     pub fn update(&mut self) {
@@ -142,7 +142,7 @@ impl State {
         self.ships = ships;
         self.grid = grid;
         self.grid.owner = self.id;
-        self.plan = Plan::new();
+        self.tactics = Tactics::new();
     }
 
     pub fn send_ready(name: &str) {
