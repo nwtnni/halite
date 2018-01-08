@@ -71,6 +71,8 @@ impl ToEntity for Entity {
 #[derive(Debug, Default)]
 pub struct Grid {
     pub owner: ID,
+    pub width: f64,
+    pub height: f64,
     moved: FnvHashMap<String, (Point, Point)>,
     grid: FnvHashMap<Cell, Vec<Entity>>,
 }
@@ -79,6 +81,8 @@ impl Grid {
     pub fn new() -> Self {
         Grid {
             owner: 0,
+            width: 0.0,
+            height: 0.0,
             moved: FnvHashMap::default(),
             grid: FnvHashMap::default(),
         }
@@ -221,6 +225,22 @@ impl Grid {
             }).collect()
     }
 
+    pub fn collides_border(&self, ship: &Ship, (x2, y2): Point) -> bool {
+        Self::intersects_line(
+            (ship.x, ship.y), (x2, y2), (0.0, 0.0),
+            (self.width, 0.0), SHIP_RADIUS + EPSILON
+        ) || Self::intersects_line(
+            (ship.x, ship.y), (x2, y2), (0.0, 0.0),
+            (0.0, self.height), SHIP_RADIUS + EPSILON
+        ) || Self::intersects_line(
+            (ship.x, ship.y), (x2, y2), (0.0, self.height),
+            (self.width, self.height), SHIP_RADIUS + EPSILON
+        ) || Self::intersects_line(
+            (ship.x, ship.y), (x2, y2), (self.width, 0.0),
+            (self.width, self.height), SHIP_RADIUS + EPSILON
+        )
+    }
+
     pub fn collides_toward(&self, ship: &Ship, (x2, y2): Point) -> bool {
         let key = ship.to_entity().key();
         let mut close = Self::line_to_cells((ship.x, ship.y), (x2, y2))
@@ -268,10 +288,11 @@ impl Grid {
             let (xf, yf) = (ship.x + (t as f64)*r.cos(),
                             ship.y + (t as f64)*r.sin());
             let collides = self.collides_toward(&ship, (xf, yf));
-            if collides && m < CORRECTIONS {
+            let border = self.collides_border(&ship, (xf, yf));
+            if (collides || border) && m < CORRECTIONS {
                 let (n2, m2, a2, t2) = Self::wiggle(n, m, a, t, thrust, target);
                 n = n2; m = m2; a = a2; t = t2;
-            } else if collides {
+            } else if collides || border {
                 return (ship.x, ship.y, 0, 0)
             } else {
                 return (xf, yf, t, a)

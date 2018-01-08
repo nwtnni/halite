@@ -142,6 +142,8 @@ impl State {
         self.ships = ships;
         self.grid = grid;
         self.grid.owner = self.id;
+        self.grid.width = self.width;
+        self.grid.height = self.height;
         self.tactics = Tactics::new();
     }
 
