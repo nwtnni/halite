@@ -1,7 +1,6 @@
 use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
-use hlt::strategy::Plan;
 
 pub enum Command {
     Dock(usize, usize),
@@ -71,7 +70,7 @@ pub fn navigate_clump_to_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Com
     for ship in s {
         queue.push(navigate_to_point(grid, &ship, end));
     }
-    queue 
+    queue
 }
 
 // Assumes sorted in reverse
@@ -84,7 +83,7 @@ pub fn navigate_clump_from_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<C
     for ship in s {
         queue.push(navigate_to_point(grid, &ship, end));
     }
-    queue 
+    queue
 }
 
 pub fn navigate_to_distract(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {

@@ -30,7 +30,6 @@ pub struct Ship {
     pub x: f64,
     pub y: f64,
     pub hp: i32,
-    pub rad: f64,
     pub status: Status,
     pub planet: Option<ID>,
     pub progress: i32,
@@ -43,7 +42,7 @@ impl Ship {
     }
 
     pub fn in_docking_range(&self, p: &Planet) -> bool {
-        (p.y - self.y).hypot(p.x - self.x) <= self.rad + p.rad + DOCK_RADIUS
+        (p.y - self.y).hypot(p.x - self.x) <= SHIP_RADIUS + p.rad + DOCK_RADIUS
     }
 
     pub fn distance_to<T: ToEntity>(&self, e: &T) -> f64 {

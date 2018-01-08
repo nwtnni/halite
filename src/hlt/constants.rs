@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use hlt::state::*;
 
 // Ship radius
@@ -47,7 +46,6 @@ pub const SQUADRON_SIZE: usize = 4;
  * Mid-game Constants
  */
 
-pub const MID_ATTACK_RADIUS: f64 = 14.0;
 pub const HARASS_RADIUS: f64 = 19.0;
 pub const HARASS_ANGLE: f64 = 0.0;
 

@@ -52,7 +52,7 @@ pub trait ToEntity {
 
 impl<'a> ToEntity for &'a Ship {
     fn to_entity(&self) -> Entity {
-        Entity::Ship(self.x, self.y, self.rad, self.id)
+        Entity::Ship(self.x, self.y, SHIP_RADIUS, self.id)
     }
 }
 
@@ -97,7 +97,6 @@ impl Grid {
         while x1 <= x2 {
             let mark = y1;
             while y1 <= y2 {
-                // From https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
                 let (rx, ry) = (x1 + GRID_SCALE_2, y1 + GRID_SCALE_2);
                 let (cx, cy) = ((x - rx).abs(), (y - ry).abs());
                 if cx > GRID_SCALE_2 + r || cy > GRID_SCALE_2 + r {}
@@ -127,7 +126,6 @@ impl Grid {
         (y2 - y1).hypot(x2 - x1) <= r1 + r2
     }
 
-    // From https://stackoverflow.com/questions/1073336/circle-line-segment-collision-detection-algorithm
     fn intersects_line((ax1, ay1): Point, (ax2, ay2): Point,
                        (bx1, by1): Point, (bx2, by2): Point, r: f64
     ) -> bool {
@@ -279,63 +277,5 @@ impl Grid {
                 return (xf, yf, t, a)
             }
         }
-    }
-}
-
-mod tests {
-    #![cfg(test)]
-    use hlt::collision::*;
-
-    #[test]
-    fn test_insert() {
-        let mut grid = Grid::new();
-        grid.insert(&Entity::Obstacle((12.0, 12.0, 12.0)));
-    }
-
-    #[test]
-    fn test_circle() {
-        let circle = Entity::Obstacle((0.0, 0.0, 5.0));
-        assert!(circle.intersects_line((-5.0, 5.0), (5.0, 5.0)));
-        assert!(circle.intersects_line((-5.0, 5.0), (0.0, 5.0)));
-        assert!(circle.intersects_line((0.0, 5.0), (5.0, 5.0)));
-    }
-
-    #[test]
-    fn test_offset_circle() {
-        let circle = Entity::Obstacle((5.0, 5.0, 5.0));
-        assert!(circle.intersects_line((-10.0, 1.0), (10.0, 10.0)));
-        assert!(circle.intersects_line((0.0, 0.0), (0.0, 10.0)));
-        assert!(circle.intersects_line((0.0, 0.0), (10.0, 0.0)));
-    }
-
-    #[test]
-    fn test_no_collision() {
-        let circle = Entity::Obstacle((5.0, 5.0, 0.0));
-        assert!(!circle.intersects_line((0.0, 0.0), (1.0, 1.0)));
-    }
-
-    #[test]
-    fn test_ship_collision() {
-        let ship = Entity::Ship((5.0, 5.0, SHIP_RADIUS, 0));
-        assert_eq!(true, ship.intersects_line((6.0, 0.0), (6.0, 10.0)));
-        assert_eq!(false, ship.intersects_line((6.01, 0.0), (6.01, 10.0)));
-    }
-
-    #[test]
-    fn test_ship_diagonal() {
-        let ship = Entity::Ship((0.0, 0.0, SHIP_RADIUS, 0));
-        assert_eq!(true, ship.intersects_line((1.0, 0.0), (0.0, 1.0)));
-        assert_eq!(true, ship.intersects_line((0.0, 1.0), (-1.0, 0.0)));
-        assert_eq!(true, ship.intersects_line((-1.0, 0.0), (0.0, 1.0)));
-        assert_eq!(true, ship.intersects_line((0.0, -1.0), (1.0, 0.0)));
-    }
-
-    #[test]
-    fn test_planet_diagonal() {
-        let planet = Entity::Planet((0.0, 0.0, SHIP_RADIUS, 0));
-        assert_eq!(true, planet.intersects_line((1.0, 0.0), (0.0, 1.0)));
-        assert_eq!(true, planet.intersects_line((0.0, 1.0), (-1.0, 0.0)));
-        assert_eq!(true, planet.intersects_line((-1.0, 0.0), (0.0, 1.0)));
-        assert_eq!(true, planet.intersects_line((0.0, -1.0), (1.0, 0.0)));
     }
 }
