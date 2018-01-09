@@ -131,8 +131,7 @@ impl Grid {
     }
 
     fn intersects_line((ax1, ay1): Point, (ax2, ay2): Point,
-                       (bx1, by1): Point, (bx2, by2): Point, r: f64
-    ) -> bool {
+                       (bx1, by1): Point, (bx2, by2): Point, r: f64) -> bool {
         let (x1, y1) = (ax1 - bx1, ay1 - by1);
         let (x2, y2) = (ax2 - bx2, ay2 - by2);
         let (dx, dy) = (x2 - x1, y2 - y1);

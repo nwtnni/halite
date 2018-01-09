@@ -58,7 +58,8 @@ impl FromStream for Ship {
         };
         let progress = i32::take(stream);
         let _deprecated = stream.pop();
-        Ship {id, x, y, hp, status, planet, progress, owner: 0}
+        Ship {id, x, y, xp: x, yp: y, hp,
+        status, planet, progress, owner: 0}
     }
 }
 

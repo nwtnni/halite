@@ -27,6 +27,8 @@ pub struct Player {
 #[derive(Debug, Clone)]
 pub struct Ship {
     pub id: ID,
+    pub xp: f64,
+    pub yp: f64,
     pub x: f64,
     pub y: f64,
     pub hp: i32,
@@ -136,15 +138,21 @@ impl State {
         let mut buffer = String::new();
         stdin().read_line(&mut buffer).unwrap();
         let mut stream: Vec<_> = buffer.split_whitespace().rev().collect();
-        let (players, planets, ships, grid) = take(&mut stream);
+        let (players, planets, mut ships, grid) = take(&mut stream);
         self.players = players;
         self.planets = planets;
-        self.ships = ships;
         self.grid = grid;
         self.grid.owner = self.id;
         self.grid.width = self.width;
         self.grid.height = self.height;
         self.tactics = Tactics::new();
+        for ship in &mut ships.values_mut() {
+            if let Some(previous) = self.ships.get(&ship.id) {
+                ship.xp = previous.x;
+                ship.yp = previous.y;
+            }
+        }
+        self.ships = ships;
     }
 
     pub fn send_ready(name: &str) {
