@@ -42,13 +42,8 @@ pub const EPSILON: f64 = 0.01;
 pub const CORRECTIONS: i32 = 20;
 pub const SQUADRON_SIZE: usize = 4;
 
-/*
- * Mid-game Constants
- */
-
-pub const HARASS_RADIUS: f64 = 19.0;
-pub const HARASS_ANGLE: f64 = 0.0;
-
-pub fn defense_radius(planet: &Planet) -> f64 {
-    planet.rad + 10.0 as f64
-}
+// Scouting related
+pub const COMBAT_RADIUS: f64 = 12.0;
+pub const RAID_RADIUS: f64 = 14.0;
+pub const DEFEND_RADIUS: f64 = 14.0;
+pub const CLAIM_RADIUS: f64 = 63.0;

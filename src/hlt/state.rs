@@ -2,7 +2,8 @@ use fnv::FnvHashMap;
 use std::f64;
 use std::io::stdin;
 use hlt::parse::*;
-use hlt::tactics::Tactics;
+use hlt::scout::Scout;
+use hlt::tactic::Tactics;
 use hlt::command::Queue;
 use hlt::constants::*;
 use hlt::collision::*;
@@ -112,6 +113,7 @@ pub struct State {
     pub planets: Planets,
     pub tactics: Tactics,
     pub ships: Ships,
+    pub scout: Scout,
     pub queue: Queue,
     pub docked: Docked,
 }
@@ -126,12 +128,13 @@ impl State {
         let id = usize::take(&mut stream);
         let width = f64::take(&mut stream);
         let height = f64::take(&mut stream);
+        let scout = Scout::new();
         let tactics = Tactics::new();
         let queue = Queue::new();
         let docked = FnvHashMap::default();
         let (players, planets, ships, grid) = take(&mut stream);
         State { id, width, height, players, planets,
-                ships, tactics, queue, grid, docked}
+                ships, scout, tactics, queue, grid, docked}
     }
 
     pub fn update(&mut self) {
@@ -145,6 +148,7 @@ impl State {
         self.grid.owner = self.id;
         self.grid.width = self.width;
         self.grid.height = self.height;
+        self.scout = Scout::new();
         self.tactics = Tactics::new();
         for ship in &mut ships.values_mut() {
             if let Some(previous) = self.ships.get(&ship.id) {
@@ -153,6 +157,7 @@ impl State {
             }
         }
         self.ships = ships;
+        self.scout.initialize(&self.grid, &self.ships, &self.planets);
     }
 
     pub fn send_ready(name: &str) {

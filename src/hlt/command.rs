@@ -90,7 +90,7 @@ pub fn navigate_to_distract(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Comman
     let (x, y) = e.iter().map(|&enemy| (enemy.x, enemy.y))
         .fold((0.0, 0.0), |(x, y), (xe, ye)| (x + xe, y + ye));
     let (x, y) = (x / e.len() as f64, y / e.len() as f64);
-    let angle = f64::atan2(s.y - y, s.x - x) + HARASS_ANGLE;
+    let angle = f64::atan2(s.y - y, s.x - x);
     let (x, y) = (s.x + 7.0*angle.cos(), s.y + 7.0*angle.sin());
     navigate(grid, s, (x, y))
 }

@@ -30,6 +30,13 @@ impl Entity {
             Planet(_, _, _, id) => "p".to_string() + &id.to_string(),
         }
     }
+     
+    pub fn id(&self) -> ID {
+        use hlt::collision::Entity::*;
+        match *self {
+            Ship(_, _, _, id) | Planet(_, _, _, id) => id,
+        }
+    }
 }
 
 pub trait ToEntity {
@@ -149,7 +156,7 @@ impl Grid {
         (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
     }
 
-    fn near<'a, T: ToEntity>(&'a self, e: &T, r: f64) -> Vec<&'a Entity> {
+    pub fn near<'a, T: ToEntity>(&'a self, e: &T, r: f64) -> Vec<&'a Entity> {
         let entity = e.to_entity();
         let pos = entity.pos();
         let key = entity.key();
