@@ -30,20 +30,6 @@ impl Entity {
             Planet(_, _, _, id) => "p".to_string() + &id.to_string(),
         }
     }
-
-    fn to_ship(&self) -> Option<(f64, f64, ID)> {
-        match *self {
-            Entity::Ship(x, y, _, id) => Some((x, y, id)),
-            _ => None,
-        }
-    }
-
-    fn to_planet(&self) -> Option<(f64, f64, ID)> {
-        match *self {
-            Entity::Planet(x, y, _, id) => Some((x, y, id)),
-            _ => None,
-        }
-    }
 }
 
 pub trait ToEntity {
@@ -85,6 +71,23 @@ impl Grid {
             height: 0.0,
             moved: FnvHashMap::default(),
             grid: FnvHashMap::default(),
+        }
+    }
+
+    pub fn insert<T: ToEntity>(&mut self, e: &T) {
+        let entity = e.to_entity();
+        let cells = Self::circle_to_cells(entity.pos(), entity.rad());
+        for &cell in &cells {
+            self.grid.entry(cell).or_insert(Vec::new()).push(entity);
+        }
+    }
+
+    pub fn update(&mut self, ship: &Ship, end: Point) {
+        let entity = ship.to_entity();
+        self.moved.insert(entity.key(), ((ship.x, ship.y), end));
+        let cells = Self::line_to_cells((ship.x, ship.y), end);
+        for &cell in &cells {
+            self.grid.entry(cell).or_insert(Vec::new()).push(entity);
         }
     }
 
@@ -146,23 +149,6 @@ impl Grid {
         (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
     }
 
-    pub fn insert<T: ToEntity>(&mut self, e: &T) {
-        let entity = e.to_entity();
-        let cells = Self::circle_to_cells(entity.pos(), entity.rad());
-        for &cell in &cells {
-            self.grid.entry(cell).or_insert(Vec::new()).push(entity);
-        }
-    }
-
-    pub fn update(&mut self, ship: &Ship, end: Point) {
-        let entity = ship.to_entity();
-        self.moved.insert(entity.key(), ((ship.x, ship.y), end));
-        let cells = Self::line_to_cells((ship.x, ship.y), end);
-        for &cell in &cells {
-            self.grid.entry(cell).or_insert(Vec::new()).push(entity);
-        }
-    }
-
     fn near<'a, T: ToEntity>(&'a self, e: &T, r: f64) -> Vec<&'a Entity> {
         let entity = e.to_entity();
         let pos = entity.pos();
@@ -174,10 +160,10 @@ impl Grid {
             .filter(|&other| other.key() != key)
             .filter(|&other| { match self.moved.get(&other.key()) {
                 None => {
-                    Self::intersects(pos, r, other.pos(), other.rad())
+                    Self::intersects(pos, r + EPSILON, other.pos(), other.rad())
                 },
                 Some(&(_, end)) => {
-                    Self::intersects(pos, r, end, other.rad())
+                    Self::intersects(pos, r + EPSILON, end, other.rad())
                 },
             }})
             .collect::<Vec<_>>();
@@ -186,57 +172,17 @@ impl Grid {
         nearby
     }
 
-    fn near_entity<F, T: ToEntity>(&self, e: &T, r: f64, f: F) -> Vec<(f64, f64, ID)>
-        where F: Fn(&Entity)-> Option<(f64, f64, ID)> {
-        let (x1, y1) = e.to_entity().pos();
-        let mut nearby = self.near(e, r)
-            .into_iter()
-            .filter_map(|entity| f(entity))
-            .collect::<Vec<_>>();
-        nearby.sort_unstable_by_key(|&(x2, y2, _)| (y2 - y1).hypot(x2 - x1) as i32);
-        nearby
-    }
-
-    pub fn near_enemies<'a, T: ToEntity>(&self, e: &T, r: f64, ships: &'a Ships)
-        -> Vec<&'a Ship> {
-        self.near_entity(e, r, |entity| entity.to_ship())
-            .into_iter()
-            .filter_map(|(_, _, id)| { ships.get(&id).map_or(None, |ship| {
-                if ship.owner != self.owner { Some(ship) } else { None }
-            })}).collect()
-    }
-
-    pub fn near_allies<'a, T: ToEntity>(&self, e: &T, r: f64, ships: &'a Ships)
-        -> Vec<&'a Ship> {
-        self.near_entity(e, r, |entity| entity.to_ship())
-            .into_iter()
-            .filter_map(|(_, _, id)| { ships.get(&id).map_or(None, |ship| {
-                if ship.owner == self.owner { Some(ship) } else { None }
-            })}).collect()
-    }
-
-    pub fn near_planets<'a, T: ToEntity>(&self, e: &T, r: f64, planets: &'a Planets)
-        -> Vec<&'a Planet> {
-        self.near_entity(e, r, |entity| entity.to_planet())
-            .into_iter()
-            .filter_map(|(_, _, id)| {
-                planets.get(&id).map_or(None, |planet| { Some(planet) })
-            }).collect()
-    }
-
     pub fn collides_border(&self, ship: &Ship, (x2, y2): Point) -> bool {
         Self::intersects_line(
-            (ship.x, ship.y), (x2, y2), (0.0, 0.0),
-            (self.width, 0.0), SHIP_RADIUS + EPSILON
+            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (self.width, 0.0), EPSILON
         ) || Self::intersects_line(
-            (ship.x, ship.y), (x2, y2), (0.0, 0.0),
-            (0.0, self.height), SHIP_RADIUS + EPSILON
+            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (0.0, self.height), EPSILON
         ) || Self::intersects_line(
             (ship.x, ship.y), (x2, y2), (0.0, self.height),
-            (self.width, self.height), SHIP_RADIUS + EPSILON
+            (self.width, self.height), EPSILON
         ) || Self::intersects_line(
             (ship.x, ship.y), (x2, y2), (self.width, 0.0),
-            (self.width, self.height), SHIP_RADIUS + EPSILON
+            (self.width, self.height), EPSILON
         )
     }
 

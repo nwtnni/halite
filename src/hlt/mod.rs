@@ -1,7 +1,8 @@
-pub mod parse;
-pub mod state;
 pub mod collision;
-pub mod constants;
 pub mod command;
+pub mod constants;
+pub mod parse;
+pub mod scout;
+pub mod state;
 pub mod strategy;
 pub mod tactics;
