@@ -32,8 +32,8 @@ impl Tactics {
             self.remove(ship, previous);
         }
         match tactic {
-            Tactic::Raid(enemy) => {
-                self.raid.entry(enemy).or_insert(Vec::new()).push(ship);
+            Tactic::Raid(planet) => {
+                self.raid.entry(planet).or_insert(Vec::new()).push(ship);
             },
             Tactic::Defend(planet) => {
                 self.defend.entry(planet).or_insert(Vec::new()).push(ship);
@@ -46,8 +46,8 @@ impl Tactics {
 
     fn remove(&mut self, ship: ID, tactic: Tactic) {
         match tactic {
-            Tactic::Raid(enemy) => {
-                self.raid.get_mut(&enemy)
+            Tactic::Raid(planet) => {
+                self.raid.get_mut(&planet)
                     .unwrap()
                     .retain(|&id| id != ship);
             },
@@ -103,7 +103,7 @@ impl Tactics {
         for (planet, allies) in s.tactics.dock.iter() {
             let planet = &s.planets[planet];
             for ship in allies {
-                if resolved.contains(ship) { continue }
+                if resolved.contains(ship) || !s.ships.contains_key(ship) { continue }
                 let ship = &s.ships[ship];
                 resolved.insert(ship.id);
                 if ship.in_docking_range(planet) {

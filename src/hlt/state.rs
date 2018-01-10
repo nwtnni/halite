@@ -61,7 +61,7 @@ pub struct Planet {
     pub y: f64,
     pub hp: i32,
     pub rad: f64,
-    pub spots: i32,
+    pub spots: usize,
     pub spawn: i32,
     pub owner: Option<ID>,
     pub ships: Vec<usize>,
@@ -83,7 +83,7 @@ impl Planet {
     }
 
     pub fn has_spots(&self) -> bool {
-        self.spots > (self.ships.len() as i32)
+        self.spots > self.ships.len()
     }
 
     pub fn spots(&self) -> usize {

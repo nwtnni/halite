@@ -70,7 +70,7 @@ impl FromStream for Planet {
         let y = f64::take(stream);
         let hp = i32::take(stream);
         let rad = f64::take(stream);
-        let spots = i32::take(stream);
+        let spots = usize::take(stream);
         let spawn = i32::take(stream);
         let _deprecated = stream.pop();
         let owned = i32::take(stream);

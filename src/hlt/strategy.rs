@@ -3,6 +3,11 @@ use hlt::state::*;
 use hlt::tactic::*;
 
 pub fn step(s: &mut State, turn: i32) {{
+    // Consistency of state (since docking ships aren't in game info)
+    for (&ship, &planet) in s.docked.iter() {
+        if !s.ships.contains_key(&ship) { continue }
+        s.tactics.set(ship, Tactic::Dock(planet));
+    }
 
     let ships = s.players[s.id].ships.iter()
         .map(|ship| &s.ships[&ship])
@@ -25,7 +30,7 @@ pub fn step(s: &mut State, turn: i32) {{
                 s.tactics.set(ship.id, Tactic::Raid(planet.id));
                 break
             } else if !planet.is_owned(s.id) || planet.has_spots() {
-                if s.tactics.docking(planet.id) >= enemies.len() + planet.spots() {
+                if s.tactics.docking(planet.id) >= enemies.len() + planet.spots {
                     continue
                 }
                 s.tactics.set(ship.id, Tactic::Dock(planet.id));
