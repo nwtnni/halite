@@ -1,3 +1,4 @@
+use std::f64::consts::FRAC_PI_2;
 use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
@@ -52,6 +53,11 @@ fn navigate(grid: &mut Grid, ship: &Ship, (x, y): Point) -> Command {
     let (x, y, thrust, angle) = grid.closest_free(ship, (x, y), thrust);
     grid.update(&ship, (x, y));
     Command::Thrust(ship.id, thrust, (angle + 360) % 360)
+}
+
+pub fn navigate_to_ally(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
+    let (x, y) = offset((s.x, s.y), (e.x, e.y), 0.0, FRAC_PI_2);
+    navigate(grid, s, (x, y))
 }
 
 pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {

@@ -85,14 +85,19 @@ impl Tactics {
 
     pub fn execute(s: &mut State) {
         let mut resolved = FnvHashSet::default();
-        let ships = s.ships.values()
-            .filter(|ship| ship.owner == s.id)
+        let (mut ships, enemies): (Vec<_>, Vec<_>) = s.ships
+            .values()
             .filter(|ship| !s.docked.contains_key(&ship.id))
-            .collect::<Vec<_>>();
+            .partition(|ship| ship.owner == s.id);
+
+        ships.sort_unstable_by_key(|ship| {
+            let &(_, ref e) = s.scout.get_combat(ship.id);
+            e.len()
+        });
 
         // Resolve combat
         info!("Resolving combat...");
-        for ship in ships {
+        for ship in &ships {
             let &(ref a, ref e) = s.scout.get_combat(ship.id);
             if e.len() > a.len() {
                 resolved.insert(ship.id);
@@ -149,6 +154,37 @@ impl Tactics {
                 s.queue.push(&navigate_to_defend(&mut s.grid, &ship, &docked, &enemy))
             }
         }
+
+        // Resolve hotspots
+        if enemies.len() > 0 && ships.len() > 1 {
+            for ship in &ships {
+                if resolved.contains(&ship.id) { continue }
+
+                let enemy = enemies.iter()
+                    .filter(|enemy| {
+                        let &(ref a , ref e) = s.scout.get_combat(enemy.id);
+                        e.len() > a.len() || e.len() > 1
+                    }).min_by(|&a, &b| {
+                        ship.distance_to(a).partial_cmp(
+                        &ship.distance_to(b)).unwrap()
+                    }).unwrap_or(
+                        enemies.iter().min_by(|&a, &b| {
+                            ship.distance_to(a).partial_cmp(
+                            &ship.distance_to(b)).unwrap()
+                        }).expect("No enemies remaining")
+                    );
+
+                let ally = ships.iter()
+                    .min_by(|&a, &b| {
+                        a.distance_to(enemy).partial_cmp(
+                        &b.distance_to(enemy)).unwrap()
+                    }).unwrap();
+                
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_enemy(&mut s.grid, ship, enemy));
+            }
+        }
+
 
         s.queue.flush();
     }

@@ -21,7 +21,7 @@ pub fn step(s: &mut State, turn: i32) {{
             ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
         });
 
-        for planet in planets {
+        for planet in planets.iter().take(3) {
             let &(_, ref enemies) = s.scout.get_env(planet.id);
             if planet.is_enemy(s.id) {
                 if s.tactics.raiding(planet.id) >= enemies.len()*2 {

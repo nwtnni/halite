@@ -33,7 +33,6 @@ impl Scout {
 
     pub fn initialize(&mut self, grid: &Grid, ships: &Ships, planets: &Planets) {
         for ship in ships.values() {
-            if ship.owner != grid.owner { continue }
             Self::insert(&mut self.combat, &grid, &ship, COMBAT_RADIUS, ships);
         }
 
