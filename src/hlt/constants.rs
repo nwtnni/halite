@@ -7,7 +7,7 @@ pub const SHIP_RADIUS: f64 = 0.5;
 pub const SHIP_SPEED: i32 = 7;
 
 // Weapon AoE
-pub const WEAPON_RADIUS: f64 = 5.0;
+pub const WEAPON_RADIUS: f64 = 6.0;
 
 // Damage per turn
 pub const WEAPON_DAMAGE: i32 = 64;
@@ -42,9 +42,10 @@ pub const EPSILON: f64 = 0.01;
 pub const CORRECTIONS: i32 = 20;
 
 // Scouting related
-pub const COMBAT_RADIUS: f64 = 11.5;
-pub const RAID_RADIUS: f64 = 14.0;
-pub const DEFEND_RADIUS: f64 = 14.0;
+pub const COMBAT_RADIUS: f64 = 13.0;
+pub const RAID_RADIUS: f64 = 15.0;
+pub const DEFEND_RADIUS: f64 = 15.0;
 pub const CLAIM_RADIUS: f64 = 70.0;
 
 pub const COVER_RADIUS: f64 = 2.0;
+pub const SQUADRON_SIZE: usize = 6;

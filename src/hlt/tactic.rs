@@ -5,6 +5,7 @@ use hlt::constants::*;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Tactic {
+    Attack(ID),
     Raid(ID),
     Dock(ID),
     Defend(ID),
@@ -12,6 +13,7 @@ pub enum Tactic {
 
 pub struct Tactics {
     ships: FnvHashMap<ID, Tactic>,
+    attack: FnvHashMap<ID, Vec<ID>>,
     raid: FnvHashMap<ID, Vec<ID>>,
     defend: FnvHashMap<ID, Vec<ID>>,
     dock: FnvHashMap<ID, Vec<ID>>,
@@ -21,6 +23,7 @@ impl Tactics {
     pub fn new() -> Self {
         Tactics {
             ships: FnvHashMap::default(),
+            attack: FnvHashMap::default(),
             raid: FnvHashMap::default(),
             defend: FnvHashMap::default(),
             dock: FnvHashMap::default(),
@@ -32,6 +35,9 @@ impl Tactics {
             self.remove(ship, previous);
         }
         match tactic {
+            Tactic::Attack(enemy) => {
+                self.attack.entry(enemy).or_insert(Vec::new()).push(ship);
+            },
             Tactic::Raid(planet) => {
                 self.raid.entry(planet).or_insert(Vec::new()).push(ship);
             },
@@ -46,6 +52,11 @@ impl Tactics {
 
     fn remove(&mut self, ship: ID, tactic: Tactic) {
         match tactic {
+            Tactic::Attack(enemy) => {
+                self.attack.get_mut(&enemy)
+                    .unwrap()
+                    .retain(|&id| id != ship);
+            },
             Tactic::Raid(planet) => {
                 self.raid.get_mut(&planet)
                     .unwrap()
@@ -71,6 +82,12 @@ impl Tactics {
         }
     }
 
+    pub fn is_attacking(&self, ship: ID) -> bool {
+        if let Some(&Tactic::Attack(_)) = self.ships.get(&ship) {
+            true
+        } else { false }
+    }
+
     pub fn raiding(&self, planet: ID) -> usize {
         Self::count(&self.raid, planet)
     }
@@ -92,16 +109,75 @@ impl Tactics {
 
         ships.sort_unstable_by_key(|ship| {
             let &(_, ref e) = s.scout.get_combat(ship.id);
-            e.len()
+            -(e.len() as i32)
         });
 
         // Resolve combat
         info!("Resolving combat...");
         for ship in &ships {
-            let &(ref a, ref e) = s.scout.get_combat(ship.id);
-            if e.len() > a.len() {
+            if resolved.contains(&ship.id) { continue }
+            let &(ref allies, ref enemies) = s.scout.get_combat(ship.id);
+            let mut a = allies.iter()
+                .filter(|ally| !ally.is_docked())
+                .cloned()
+                .collect::<Vec<_>>();
+            a.push((*ship).clone());
+
+            let (d, e): (Vec<_>, Vec<_>) = enemies.into_iter()
+                .partition(|enemy| enemy.is_docked());
+
+            if e.len() == 0 && d.len() == 0 { continue }
+
+            if e.len() >= a.len() {
                 resolved.insert(ship.id);
-                s.queue.push(&navigate_from_enemies(&mut s.grid, ship, e));
+                s.queue.push(&navigate_from_enemies(&mut s.grid, ship, &e));
+                for ally in allies {
+                    if !resolved.contains(&ally.id) {
+                        resolved.insert(ally.id);
+                        s.queue.push(&navigate_from_enemies(&mut s.grid, ally, &e));
+                    }
+                }
+            } else if d.len() > 0 {
+                let mut a = a.into_iter()
+                    .filter(|ally| !resolved.contains(&ally.id))
+                    .collect::<Vec<_>>();
+                a.sort_unstable_by(|a, b| {
+                    a.distance_to(&d[0]).partial_cmp(&b.distance_to(&d[0])).unwrap()
+                });
+                let a = a.into_iter().take(SQUADRON_SIZE).collect::<Vec<_>>();
+                for ally in &a {
+                    resolved.insert(ally.id);
+                }
+                for command in navigate_clump_to_enemy(&mut s.grid, &a, &d[0]) {
+                    s.queue.push(&command);
+                }
+            } else if e.len() > 1 && a.len() > e.len() {
+                let mut a = a.into_iter()
+                    .filter(|ally| !resolved.contains(&ally.id))
+                    .take(SQUADRON_SIZE)
+                    .collect::<Vec<_>>();
+                a.sort_unstable_by(|a, b| {
+                    a.distance_to(&e[0]).partial_cmp(&b.distance_to(&e[0])).unwrap()
+                });
+                let a = a.into_iter().take(SQUADRON_SIZE).collect::<Vec<_>>();
+                for ally in &a {
+                    resolved.insert(ally.id);
+                }
+                for command in navigate_clump_to_enemy(&mut s.grid, &a, &e[0]) {
+                    s.queue.push(&command);
+                }
+            }
+        }
+
+        // Resolve attacking
+        info!("Resolving attacking...");
+        for (enemy, allies) in s.tactics.attack.iter() {
+            let enemy = &s.ships[enemy];
+            for ally in allies {
+                if resolved.contains(&ally) { continue }
+                let ship = &s.ships[ally];
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_enemy(&mut s.grid, ship, enemy));
             }
         }
 
@@ -112,16 +188,12 @@ impl Tactics {
             for ship in allies {
                 if resolved.contains(ship) || !s.ships.contains_key(ship) { continue }
                 let ship = &s.ships[ship];
-                let &(ref a, ref e) = s.scout.get_env(planet.id);
+
                 resolved.insert(ship.id);
-                if ship.in_docking_range(planet) && e.len() < a.len() {
-                    info!("Ship {} was in docking range with {} to {}",
-                          ship.id, a.len(), e.len());
+                if ship.in_docking_range(planet) {
                     s.docked.insert(ship.id, planet.id);
                     s.queue.push(&dock(&ship, &planet));
                 } else {
-                    info!("Ship {} was not in docking range with {} to {}",
-                          ship.id, a.len(), e.len());
                     s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
                 }
             }
@@ -167,24 +239,26 @@ impl Tactics {
                     }).min_by(|&a, &b| {
                         ship.distance_to(a).partial_cmp(
                         &ship.distance_to(b)).unwrap()
-                    }).unwrap_or(
-                        enemies.iter().min_by(|&a, &b| {
-                            ship.distance_to(a).partial_cmp(
-                            &ship.distance_to(b)).unwrap()
-                        }).expect("No enemies remaining")
-                    );
+                    });
 
-                let ally = ships.iter()
-                    .min_by(|&a, &b| {
-                        a.distance_to(enemy).partial_cmp(
-                        &b.distance_to(enemy)).unwrap()
-                    }).unwrap();
-                
-                resolved.insert(ship.id);
-                s.queue.push(&navigate_to_enemy(&mut s.grid, ship, enemy));
+                if let Some(enemy) = enemy {
+                    let ally = ships.iter()
+                        .filter(|ally| {
+                            let &(ref a, _) = s.scout.get_combat(ally.id);
+                            a.len() < 5
+                        })
+                        .min_by(|&a, &b| {
+                            enemy.distance_to(a).partial_cmp(
+                            &enemy.distance_to(b)).unwrap()
+                        });
+
+                    if let Some(ally) = ally {
+                        resolved.insert(ship.id);
+                        s.queue.push(&navigate_to_ally(&mut s.grid, ship, ally));
+                    }
+                }
             }
         }
-
 
         s.queue.flush();
     }

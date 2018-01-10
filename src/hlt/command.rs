@@ -1,4 +1,3 @@
-use std::f64::consts::FRAC_PI_2;
 use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
@@ -56,16 +55,29 @@ fn navigate(grid: &mut Grid, ship: &Ship, (x, y): Point) -> Command {
 }
 
 pub fn navigate_to_ally(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
-    let (x, y) = offset((s.x, s.y), (e.x, e.y), 0.0, FRAC_PI_2);
+    let (x, y) = offset((s.x, s.y), (e.x, e.y), 0.0, 90.0);
     navigate(grid, s, (x, y))
 }
 
 pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
-    let (x, y) = offset((s.x, s.y), (e.x, e.y), WEAPON_RADIUS, 0.0);
+    let (x, y) = offset((s.x, s.y), (e.x, e.y), WEAPON_RADIUS, 90.0);
     navigate(grid, s, (x, y))
 }
 
-pub fn navigate_from_enemies(grid: &mut Grid, s: &Ship, e: &Vec<Ship>) -> Command {
+pub fn navigate_clump_to_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Command> {
+    let far = &s[s.len() - 1].clone();
+    let (dx, dy) = (e.x - far.x, e.y - far.y);
+    let thrust = f64::min(7.0, dy.hypot(dx) - WEAPON_RADIUS);
+    let angle = f64::atan2(dy, dx);
+    let end = (far.x + thrust*angle.cos(), far.y + thrust*angle.sin());
+    let mut queue = Vec::new();
+    for ship in s {
+        queue.push(navigate(grid, &ship, end));
+    }
+    queue
+}
+
+pub fn navigate_from_enemies(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {
     let (x, y, hp) = e.into_iter()
         .map(|ship| (ship.x, ship.y, ship.hp))
         .fold((0.0, 0.0, 0.0), |(x, y, hp), (xs, ys, hps)| {;
