@@ -28,24 +28,36 @@ fn early(s: &mut State) {{
 
     // Prioritize closest planet to us and center
     let mut sorted = s.planets.values().collect::<Vec<_>>();
-    sorted.sort_unstable_by_key(|planet| {
-        (planet.y - ya).hypot(planet.x - xa) as i32 -
-        s.planets.values()
-            .filter(|other| {
-                (planet.x - other.x).hypot(planet.y - other.y) < other.rad + 35.0
-            })
-            .map(|planet| planet.spots as i32)
-            .sum::<i32>()*4
-    });
-    ships.sort_unstable_by(|a, b| {
-        a.distance_to(&sorted[0]).partial_cmp(
-        &b.distance_to(&sorted[0])).unwrap()
-    });
+
+    if s.players.len() == 2 {
+        sorted.sort_unstable_by_key(|planet| {
+            (planet.y - ya).hypot(planet.x - xa) as i32 -
+            s.planets.values()
+                .filter(|other| {
+                    (planet.x - other.x).hypot(planet.y - other.y) < other.rad + 35.0
+                })
+                .map(|planet| planet.spots as i32)
+                .sum::<i32>()*4
+        });
+        ships.sort_unstable_by(|a, b| {
+            a.distance_to(&sorted[0]).partial_cmp(
+            &b.distance_to(&sorted[0])).unwrap()
+        });
+    }
+
 
     // Let each ship make an independent decision
     for ship in &ships {
 
         if ship.is_docked() { continue }
+
+        if s.players.len() == 4 {
+            sorted.sort_unstable_by_key(|planet| {
+            ((planet.y - ship.y).hypot(planet.x - ship.x).powf(1.5) -
+            (planet.x - s.width/2.0).abs() -
+            (planet.y - s.height/2.0).abs()) as i32
+            });
+        }
 
         // Make sure planet isn't occupied
         let mut n = 0;
@@ -134,7 +146,7 @@ fn middle(s: &mut State) {
             } else if !planet.is_owned(s.id) || planet.has_spots() {
                 if s.tactics.docking(planet.id) >= planet.spots || e > a/2 {
                     continue
-                } 
+                }
                 s.tactics.set(ship.id, Tactic::Dock(planet.id));
                 break
             } else if e > 0 {

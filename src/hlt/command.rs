@@ -1,3 +1,4 @@
+use std::f64::consts::FRAC_PI_2;
 use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
@@ -66,10 +67,10 @@ pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
 
 pub fn navigate_clump_to_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Command> {
     let far = &s[s.len() - 1].clone();
-    let (dx, dy) = (e.x - far.x, e.y - far.y);
+    let (dx, dy) = (far.x - e.x, far.y - e.y);
     let thrust = f64::min(7.0, dy.hypot(dx) - WEAPON_RADIUS);
-    let angle = f64::atan2(dy, dx);
-    let end = (far.x + thrust*angle.cos(), far.y + thrust*angle.sin());
+    let angle = f64::atan2(dy, dx) + FRAC_PI_2;
+    let end = (e.x - thrust*angle.cos(), e.y - thrust*angle.sin());
     let mut queue = Vec::new();
     for ship in s {
         queue.push(navigate(grid, &ship, end));
