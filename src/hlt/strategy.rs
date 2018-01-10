@@ -11,9 +11,7 @@ pub fn step(s: &mut State, turn: i32) {{
         .collect::<Vec<_>>();
 
     for ship in ships {
-        let mut planets = s.planets.values()
-            .filter(|planet| ship.distance_to(planet) < 70.0)
-            .collect::<Vec<_>>();
+        let mut planets = s.planets.values().collect::<Vec<_>>();
 
         planets.sort_unstable_by(|a, b| {
             ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()

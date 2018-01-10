@@ -122,11 +122,12 @@ impl Tactics {
         // Resolve raids
         for (planet, allies) in s.tactics.raid.iter() {
             let planet = &s.planets[planet];
+            let target = &s.ships[&planet.ships[0]];
             for ship in allies {
                 if resolved.contains(ship) { continue }
                 let ship = &s.ships[ship];
                 resolved.insert(ship.id);
-                s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
+                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &target))
             }
         }
 
