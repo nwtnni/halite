@@ -93,10 +93,10 @@ impl Tactics {
         // Resolve combat
         info!("Resolving combat...");
         for ship in ships {
-            let &(_, ref enemies) = s.scout.get_combat(ship.id);
-            if enemies.len() > 0 {
+            let &(ref a, ref e) = s.scout.get_combat(ship.id);
+            if e.len() > a.len() {
                 resolved.insert(ship.id);
-                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemies[0]));
+                s.queue.push(&navigate_from_enemies(&mut s.grid, ship, e));
             }
         }
 

@@ -156,6 +156,13 @@ impl Grid {
         (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0)
     }
 
+    fn intersects_segment(a: Point, b: Point, c: Point, d: Point) -> bool {
+        fn ccw((ax, ay): Point, (bx, by): Point, (cx, cy): Point) -> bool {
+            (cy - ay)*(bx - ax) > (by - ay)*(cx - ax)
+        }
+        ccw(a, c, d) != ccw(b, c, d) && ccw(a, b, c) != ccw(a, b, d)
+    }
+
     pub fn near<'a, T: ToEntity>(&'a self, e: &T, r: f64) -> Vec<&'a Entity> {
         let entity = e.to_entity();
         let pos = entity.pos();
@@ -180,16 +187,14 @@ impl Grid {
     }
 
     pub fn collides_border(&self, ship: &Ship, (x2, y2): Point) -> bool {
-        Self::intersects_line(
-            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (self.width, 0.0), EPSILON
-        ) || Self::intersects_line(
-            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (0.0, self.height), EPSILON
-        ) || Self::intersects_line(
-            (ship.x, ship.y), (x2, y2), (0.0, self.height),
-            (self.width, self.height), EPSILON
-        ) || Self::intersects_line(
-            (ship.x, ship.y), (x2, y2), (self.width, 0.0),
-            (self.width, self.height), EPSILON
+        Self::intersects_segment(
+            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (self.width, 0.0)
+        ) || Self::intersects_segment(
+            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (0.0, self.height) 
+        ) || Self::intersects_segment(
+            (ship.x, ship.y), (x2, y2), (0.0, self.height), (self.width, self.height)
+        ) || Self::intersects_segment(
+            (ship.x, ship.y), (x2, y2), (self.width, 0.0), (self.width, self.height)
         )
     }
 
