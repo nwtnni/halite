@@ -30,7 +30,7 @@ impl Entity {
             Planet(_, _, _, id) => "p".to_string() + &id.to_string(),
         }
     }
-     
+
     pub fn id(&self) -> ID {
         use hlt::collision::Entity::*;
         match *self {

@@ -3,11 +3,11 @@ use hlt::state::*;
 use hlt::constants::*;
 use hlt::collision::*;
 
-type Environment = FnvHashMap<ID, (i32, i32)>;
+type Env = FnvHashMap<ID, (Vec<Ship>, Vec<Ship>)>;
 
 pub struct Scout {
-    combat: Environment,
-    planets: Environment,
+    combat: Env,
+    planets: Env,
 }
 
 impl Scout {
@@ -18,19 +18,16 @@ impl Scout {
         }
     }
 
-    fn insert<T: ToEntity>(env: &mut Environment, grid: &Grid,
-                           t: &T, r: f64, ships: &Ships) {
-        let (allies, enemies): (Vec<_>, Vec<_>) = grid
+    fn insert<T: ToEntity>(env: &mut Env, g: &Grid, t: &T, r: f64, ships: &Ships) {
+        env.insert(t.to_entity().id(), g
             .near(t, r)
             .into_iter()
             .filter_map(|&entity| {
                 match entity {
-                    Entity::Ship(_, _, _, id) => Some(&ships[&id]),
+                    Entity::Ship(_, _, _, id) => Some(ships[&id].clone()),
                     _ => None,
                 }
-            }).partition(|ship| ship.owner == grid.owner);
-        let id = t.to_entity().id();
-        env.insert(id, (allies.len() as i32, enemies.len() as i32));
+            }).partition(|ship| ship.owner == g.owner));
     }
 
     pub fn initialize(&mut self, grid: &Grid, ships: &Ships, planets: &Planets) {
@@ -50,11 +47,11 @@ impl Scout {
         }
     }
 
-    pub fn get_combat(&self, ship: ID) -> (i32, i32) {
-        self.combat[&ship]
+    pub fn get_combat(&self, ship: ID) -> &(Vec<Ship>, Vec<Ship>) {
+        &self.combat[&ship]
     }
 
-    pub fn get_env(&self, planet: ID) -> (i32, i32) {
-        self.planets[&planet]
+    pub fn get_env(&self, planet: ID) -> &(Vec<Ship>, Vec<Ship>) {
+        &self.planets[&planet]
     }
 }
