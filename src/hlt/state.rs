@@ -68,11 +68,6 @@ pub struct Planet {
 }
 
 impl Planet {
-    pub fn value(&self) -> f64 {
-        self.owner.map_or(35.0, |_| 0.0)
-        + (self.spots as f64)
-    }
-
     pub fn is_owned(&self, id: ID) -> bool {
         match self.owner {
             Some(body_once_told_me) => id == body_once_told_me,
@@ -91,8 +86,8 @@ impl Planet {
         self.spots > (self.ships.len() as i32)
     }
 
-    pub fn spots(&self) -> i32 {
-        self.spots - (self.ships.len() as i32)
+    pub fn spots(&self) -> usize {
+        self.spots as usize - self.ships.len()
     }
 
     pub fn docked(&self) -> i32 {

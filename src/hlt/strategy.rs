@@ -12,7 +12,6 @@ pub fn step(s: &mut State, turn: i32) {{
 
     for ship in ships {
         let mut planets = s.planets.values().collect::<Vec<_>>();
-
         planets.sort_unstable_by(|a, b| {
             ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
         });
@@ -20,12 +19,21 @@ pub fn step(s: &mut State, turn: i32) {{
         for planet in planets {
             let &(_, ref enemies) = s.scout.get_env(planet.id);
             if planet.is_enemy(s.id) {
+                if s.tactics.raiding(planet.id) >= enemies.len()*2 {
+                    continue
+                }
                 s.tactics.set(ship.id, Tactic::Raid(planet.id));
                 break
             } else if !planet.is_owned(s.id) || planet.has_spots() {
+                if s.tactics.docking(planet.id) >= enemies.len() + planet.spots() {
+                    continue
+                }
                 s.tactics.set(ship.id, Tactic::Dock(planet.id));
                 break
             } else if enemies.len() > 0 {
+                if s.tactics.defending(planet.id) >= enemies.len() {
+                    continue
+                }
                 s.tactics.set(ship.id, Tactic::Defend(planet.id));
                 break
             }

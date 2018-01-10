@@ -64,27 +64,23 @@ impl Tactics {
         }
     }
 
-    fn count(map: &FnvHashMap<ID, Vec<ID>>, id: ID) -> i32 {
+    fn count(map: &FnvHashMap<ID, Vec<ID>>, id: ID) -> usize {
         match map.get(&id) {
             None => 0,
-            Some(list) => list.len() as i32,
+            Some(list) => list.len(),
         }
     }
 
-    pub fn attacking(&self, planet: ID) -> i32 {
+    pub fn raiding(&self, planet: ID) -> usize {
         Self::count(&self.raid, planet)
     }
 
-    pub fn defending(&self, planet: ID) -> i32 {
+    pub fn defending(&self, planet: ID) -> usize {
         Self::count(&self.defend, planet)
     }
 
-    pub fn docking_at(&self, planet: ID) -> i32 {
+    pub fn docking(&self, planet: ID) -> usize {
         Self::count(&self.dock, planet)
-    }
-
-    pub fn is_available(&self, ship: ID) -> bool {
-        self.ships.get(&ship) == None
     }
 
     pub fn execute(s: &mut State) {
@@ -96,7 +92,7 @@ impl Tactics {
 
         // Resolve combat
         for ship in ships {
-            let &(ref allies, ref enemies) = s.scout.get_combat(ship.id);
+            let &(_, ref enemies) = s.scout.get_combat(ship.id);
             if enemies.len() > 0 {
                 resolved.insert(ship.id);
                 s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemies[0]));
