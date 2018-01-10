@@ -19,8 +19,9 @@ impl Scout {
     }
 
     fn insert<T: ToEntity>(env: &mut Env, g: &Grid, t: &T, r: f64, ships: &Ships) {
-        env.insert(t.to_entity().id(), g
-            .near(t, r)
+        let e = t.to_entity();
+        env.insert(e.id(), g
+            .near(t, e.rad() + r)
             .into_iter()
             .filter_map(|&entity| {
                 match entity {

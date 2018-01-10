@@ -91,6 +91,7 @@ impl Tactics {
             .collect::<Vec<_>>();
 
         // Resolve combat
+        info!("Resolving combat...");
         for ship in ships {
             let &(_, ref enemies) = s.scout.get_combat(ship.id);
             if enemies.len() > 0 {
@@ -100,22 +101,29 @@ impl Tactics {
         }
 
         // Resolve docking
+        info!("Resolving docking...");
         for (planet, allies) in s.tactics.dock.iter() {
             let planet = &s.planets[planet];
             for ship in allies {
                 if resolved.contains(ship) || !s.ships.contains_key(ship) { continue }
                 let ship = &s.ships[ship];
+                let &(ref a, ref e) = s.scout.get_env(planet.id);
                 resolved.insert(ship.id);
-                if ship.in_docking_range(planet) {
+                if ship.in_docking_range(planet) && e.len() < a.len() {
+                    info!("Ship {} was in docking range with {} to {}",
+                          ship.id, a.len(), e.len());
                     s.docked.insert(ship.id, planet.id);
                     s.queue.push(&dock(&ship, &planet));
                 } else {
+                    info!("Ship {} was not in docking range with {} to {}",
+                          ship.id, a.len(), e.len());
                     s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
                 }
             }
         }
 
         // Resolve raids
+        info!("Resolving raids...");
         for (planet, allies) in s.tactics.raid.iter() {
             let planet = &s.planets[planet];
             let target = &s.ships[&planet.ships[0]];
@@ -128,13 +136,17 @@ impl Tactics {
         }
 
         // Resolve defense
+        info!("Resolving defense...");
         for (planet, allies) in s.tactics.defend.iter() {
             let planet = &s.planets[planet];
+            let &(_, ref e) = s.scout.get_env(planet.id);
+            let docked = &s.ships[&planet.ships[0]];
+            let enemy = &e[0];
             for ship in allies {
                 if resolved.contains(ship) { continue }
                 let ship = &s.ships[ship];
                 resolved.insert(ship.id);
-                s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
+                s.queue.push(&navigate_to_defend(&mut s.grid, &ship, &docked, &enemy))
             }
         }
 

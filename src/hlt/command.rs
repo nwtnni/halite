@@ -63,3 +63,8 @@ pub fn navigate_to_planet(grid: &mut Grid, s: &Ship, p: &Planet) -> Command {
     let (x, y) = offset((s.x, s.y), (p.x, p.y), DOCK_RADIUS + p.rad - 1.0, 0.0);
     navigate(grid, s, (x, y))
 }
+
+pub fn navigate_to_defend(grid: &mut Grid, s: &Ship, d: &Ship, e: &Ship) -> Command {
+    let (x, y) = offset((d.x, d.y), (e.x, e.y), COVER_RADIUS, 0.0);
+    navigate(grid, s, (x, y))
+}

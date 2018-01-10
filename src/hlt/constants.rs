@@ -42,7 +42,9 @@ pub const EPSILON: f64 = 0.01;
 pub const CORRECTIONS: i32 = 20;
 
 // Scouting related
-pub const COMBAT_RADIUS: f64 = 12.0;
+pub const COMBAT_RADIUS: f64 = 11.5;
 pub const RAID_RADIUS: f64 = 14.0;
 pub const DEFEND_RADIUS: f64 = 14.0;
-pub const CLAIM_RADIUS: f64 = 63.0;
+pub const CLAIM_RADIUS: f64 = 70.0;
+
+pub const COVER_RADIUS: f64 = 2.0;
