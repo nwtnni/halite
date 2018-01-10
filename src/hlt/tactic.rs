@@ -1,4 +1,4 @@
-use fnv::FnvHashMap;
+use fnv::{FnvHashMap, FnvHashSet};
 use hlt::state::*;
 use hlt::command::*;
 use hlt::constants::*;
@@ -87,6 +87,63 @@ impl Tactics {
         self.ships.get(&ship) == None
     }
 
-    pub fn execute(_: &mut State) {
+    pub fn execute(s: &mut State) {
+        let mut resolved = FnvHashSet::default();
+        let ships = s.ships.values()
+            .filter(|ship| ship.owner == s.id)
+            .filter(|ship| !s.docked.contains_key(&ship.id))
+            .collect::<Vec<_>>();
+
+        info!("1");
+        // Resolve combat
+        for ship in ships {
+            let &(ref allies, ref enemies) = s.scout.get_combat(ship.id);
+            if enemies.len() > 0 {
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemies[0]));
+            }
+        }
+
+        info!("2");
+        // Resolve docking
+        for (planet, allies) in s.tactics.dock.iter() {
+            let planet = &s.planets[planet];
+            for ship in allies {
+                if resolved.contains(ship) { continue }
+                let ship = &s.ships[ship];
+                resolved.insert(ship.id);
+                if ship.in_docking_range(planet) {
+                    s.queue.push(&dock(&ship, &planet));
+                } else {
+                    s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
+                }
+            }
+        }
+
+        info!("3");
+        // Resolve raids
+        for (planet, allies) in s.tactics.raid.iter() {
+            let planet = &s.planets[planet];
+            for ship in allies {
+                if resolved.contains(ship) { continue }
+                let ship = &s.ships[ship];
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
+            }
+        }
+
+        info!("4");
+        // Resolve defense
+        for (planet, allies) in s.tactics.defend.iter() {
+            let planet = &s.planets[planet];
+            for ship in allies {
+                if resolved.contains(ship) { continue }
+                let ship = &s.ships[ship];
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
+            }
+        }
+
+        s.queue.flush();
     }
 }

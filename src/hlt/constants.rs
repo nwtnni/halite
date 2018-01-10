@@ -40,7 +40,6 @@ pub const DELTA_THRUST: i32 = 2;
 pub const MIN_THRUST: i32 = 1;
 pub const EPSILON: f64 = 0.01;
 pub const CORRECTIONS: i32 = 20;
-pub const SQUADRON_SIZE: usize = 4;
 
 // Scouting related
 pub const COMBAT_RADIUS: f64 = 12.0;
