@@ -94,7 +94,6 @@ impl Tactics {
             .filter(|ship| !s.docked.contains_key(&ship.id))
             .collect::<Vec<_>>();
 
-        info!("1");
         // Resolve combat
         for ship in ships {
             let &(ref allies, ref enemies) = s.scout.get_combat(ship.id);
@@ -104,7 +103,6 @@ impl Tactics {
             }
         }
 
-        info!("2");
         // Resolve docking
         for (planet, allies) in s.tactics.dock.iter() {
             let planet = &s.planets[planet];
@@ -113,6 +111,7 @@ impl Tactics {
                 let ship = &s.ships[ship];
                 resolved.insert(ship.id);
                 if ship.in_docking_range(planet) {
+                    s.docked.insert(ship.id, planet.id);
                     s.queue.push(&dock(&ship, &planet));
                 } else {
                     s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet))
@@ -120,7 +119,6 @@ impl Tactics {
             }
         }
 
-        info!("3");
         // Resolve raids
         for (planet, allies) in s.tactics.raid.iter() {
             let planet = &s.planets[planet];
@@ -132,7 +130,6 @@ impl Tactics {
             }
         }
 
-        info!("4");
         // Resolve defense
         for (planet, allies) in s.tactics.defend.iter() {
             let planet = &s.planets[planet];

@@ -54,7 +54,7 @@ impl Ship {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Planet {
     pub id: ID,
     pub x: f64,

@@ -16,7 +16,7 @@ fn main() {
     let mut state = State::new();
     let mut turn = 0;
     loop {
-        { state.update(); }
+        state.update();
         strategy::step(&mut state, turn);
         turn += 1;
     }
