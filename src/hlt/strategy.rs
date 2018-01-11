@@ -1,11 +1,14 @@
-use hlt::constants::*;
+use hlt::command::*;
 use hlt::state::*;
 use hlt::tactic::*;
 
-pub fn step(s: &mut State, turn: i32) {{
+pub fn step(s: &mut State, turn: i32) {
     let allies = s.players[s.id].ships.len();
     if allies <= 3 && turn < 30 {
         early(s);
+        return
+    } else if s.players.len() == 4 && allies <= 5 && turn > 100 {
+        desert(s);
         return
     }
     middle(s);
@@ -112,7 +115,7 @@ fn early(s: &mut State) {{
     Tactics::execute(s);
 }
 
-fn middle(s: &mut State) {
+fn middle(s: &mut State) {{
 
     // Consistency of state (since docking ships aren't in game info)
     for (&ship, &planet) in s.docked.iter() {
@@ -159,4 +162,27 @@ fn middle(s: &mut State) {
         }
     }}
     Tactics::execute(s);
+}
+
+fn desert(s: &mut State) {
+    let ships = s.players[s.id].ships.iter()
+        .map(|ship| &s.ships[&ship])
+        .filter(|&ship| !s.docked.contains_key(&ship.id))
+        .cloned()
+        .collect::<Vec<_>>();
+
+    for ship in ships {
+        let mut enemies = s.ships.values()
+            .filter(|ship| ship.owner != s.id)
+            .collect::<Vec<_>>();
+
+        enemies.sort_unstable_by(|a, b| {
+            ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
+        });
+
+        let enemies = enemies.into_iter().take(5).collect::<Vec<_>>();
+        s.queue.push(&navigate_from_enemies(&mut s.grid, &ship, &enemies));
+    }
+
+    s.queue.flush();
 }

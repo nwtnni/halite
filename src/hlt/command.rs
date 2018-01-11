@@ -3,6 +3,7 @@ use hlt::state::*;
 use hlt::collision::*;
 use hlt::constants::*;
 
+#[derive(Debug)]
 pub enum Command {
     Dock(usize, usize),
     Thrust(usize, i32, i32),
@@ -85,6 +86,7 @@ pub fn navigate_from_enemies(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Comma
             (x + xs*(hps as f64), y + ys*(hps as f64), hp + hps as f64)
         });
     let (x, y) = (x/hp, y/hp);
+    info!("COM: {}, {}", x, y);
     let angle = f64::atan2(s.y - y, s.x - x).to_degrees().round();
     let (x, y) = (s.x + 7.0*angle.to_radians().cos(),
                   s.y + 7.0*angle.to_radians().sin());
