@@ -88,10 +88,6 @@ impl Tactics {
         } else { false }
     }
 
-    pub fn raiding(&self, planet: ID) -> usize {
-        Self::count(&self.raid, planet)
-    }
-
     pub fn defending(&self, planet: ID) -> usize {
         Self::count(&self.defend, planet)
     }
@@ -111,6 +107,27 @@ impl Tactics {
             let &(_, ref e) = s.scout.get_combat(ship.id);
             -(e.len() as i32)
         });
+
+        // Resolve defense
+        info!("Resolving defense...");
+        for (planet, allies) in s.tactics.defend.iter() {
+            let planet = &s.planets[planet];
+            let &(_, ref e) = s.scout.get_env(planet.id);
+            let enemy = &e[0];
+            let docked = planet.ships
+                .iter()
+                .map(|ship| s.ships[&ship].clone())
+                .min_by(|a, b| {
+                    enemy.distance_to(&a).partial_cmp(
+                    &enemy.distance_to(&b)).unwrap()
+                }).expect("Defend called on non-owned planet");
+            for ship in allies {
+                if resolved.contains(ship) { continue }
+                let ship = &s.ships[ship];
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_defend(&mut s.grid, &ship, &docked, &enemy))
+            }
+        }
 
         // Resolve combat
         info!("Resolving combat...");
@@ -209,21 +226,6 @@ impl Tactics {
                 let ship = &s.ships[ship];
                 resolved.insert(ship.id);
                 s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &target))
-            }
-        }
-
-        // Resolve defense
-        info!("Resolving defense...");
-        for (planet, allies) in s.tactics.defend.iter() {
-            let planet = &s.planets[planet];
-            let &(_, ref e) = s.scout.get_env(planet.id);
-            let docked = &s.ships[&planet.ships[0]];
-            let enemy = &e[0];
-            for ship in allies {
-                if resolved.contains(ship) { continue }
-                let ship = &s.ships[ship];
-                resolved.insert(ship.id);
-                s.queue.push(&navigate_to_defend(&mut s.grid, &ship, &docked, &enemy))
             }
         }
 
