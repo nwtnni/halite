@@ -7,7 +7,7 @@ pub fn step(s: &mut State, turn: i32) {
     if allies <= 3 && turn < 30 {
         early(s);
         return
-    } else if s.players.len() == 4 && allies <= 5 && turn > 100 {
+    } else if s.players.len() == 4 && allies <= 10 && turn > 100 {
         desert(s);
         return
     }
@@ -74,7 +74,7 @@ fn early(s: &mut State) {{
 
         // Check if threats nearby
         let mut near = enemies.iter()
-            .filter(|&enemy| ship.distance_to(enemy) < 56.0)
+            .filter(|&enemy| ship.distance_to(enemy) < 70.0)
             .collect::<Vec<_>>();
         near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
 
