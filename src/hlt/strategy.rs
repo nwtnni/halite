@@ -73,7 +73,7 @@ fn early(s: &mut State) {{
 
         // Check if threats nearby
         let mut near = enemies.iter()
-            .filter(|&enemy| ship.distance_to(enemy) < 70.0)
+            .filter(|&enemy| ship.distance_to(enemy) < 63.0)
             .collect::<Vec<_>>();
         near.sort_unstable_by_key(|&enemy| ship.distance_to(enemy) as i32);
 
@@ -128,18 +128,11 @@ fn middle(s: &mut State) {{
         .cloned()
         .collect::<Vec<_>>();
 
-    let (x, y) = ships.iter()
-        .filter(|ship| ship.is_docked())
-        .map(|ship| (ship.x, ship.y))
-        .fold((0.0, 0.0), |(xa, ya), (x, y)| (x + xa, y + ya));
-    let len = f64::max(s.docked.len() as f64, 1.0);
-    let (x, y) = (x/len, y/len);
-
     for ship in ships {
         let mut planets = s.planets.values().collect::<Vec<_>>();
         planets.sort_unstable_by(|a, b| {
-            (ship.distance_to(a) + (y - a.y).hypot(x - a.x)).partial_cmp(
-            &(ship.distance_to(b) + (y - b.y).hypot(x - b.x))).unwrap()
+            ship.distance_to(a).partial_cmp(
+            &ship.distance_to(b)).unwrap()
         });
 
         for planet in planets.iter() {
@@ -154,7 +147,7 @@ fn middle(s: &mut State) {{
                 s.tactics.set(ship.id, Tactic::Raid(planet.id));
                 break
             } else if !planet.is_owned(s.id) || planet.has_spots() {
-                if s.tactics.docking(planet.id) >= planet.spots || e > a {
+                if s.tactics.docking(planet.id) >= e + planet.spots || e > a {
                     continue
                 }
                 if planets.iter()
