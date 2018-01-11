@@ -128,10 +128,16 @@ fn middle(s: &mut State) {{
         .cloned()
         .collect::<Vec<_>>();
 
+    let (x, y) = ships.iter()
+        .map(|ship| (ship.x, ship.y))
+        .fold((0.0, 0.0), |(xa, ya), (x, y)| (x + xa, y + ya));
+    let (x, y) = (x/(ships.len() as f64), y/(ships.len() as f64));
+
     for ship in ships {
         let mut planets = s.planets.values().collect::<Vec<_>>();
         planets.sort_unstable_by(|a, b| {
-            ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
+            (ship.distance_to(a) + (y - a.y).hypot(x - a.x)).partial_cmp(
+            &(ship.distance_to(b) + (y - b.y).hypot(x - b.x))).unwrap()
         });
 
         for planet in planets.iter() {
@@ -149,6 +155,13 @@ fn middle(s: &mut State) {{
                 if s.tactics.docking(planet.id) >= planet.spots || e > a/2 {
                     continue
                 }
+                if planets.iter()
+                    .filter(|other| other.is_enemy(s.id))
+                    .filter(|other| (other.y - planet.y).hypot(other.x - planet.x) < 35.0)
+                    .any(|other| {
+                        let (_, e) = s.scout.get_env_within(other, 14.0);
+                        s.tactics.raiding(other.id) < e.len()
+                    }) { continue }
                 s.tactics.set(ship.id, Tactic::Dock(planet.id));
                 break
             } else if e > 0 {

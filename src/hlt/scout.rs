@@ -54,4 +54,18 @@ impl Scout {
     pub fn get_env(&self, planet: ID) -> &(Vec<Ship>, Vec<Ship>) {
         &self.planets[&planet]
     }
+
+    pub fn get_env_within(&self, p: &Planet, r: f64) 
+        -> (Vec<Ship>, Vec<Ship>) {
+        let (ref a, ref e) = self.planets[&p.id];
+        let a = a.iter()
+            .filter(|ship| ship.distance_to(&p) < p.rad + r)
+            .cloned()
+            .collect::<Vec<_>>();
+        let e = e.iter()
+            .filter(|ship| ship.distance_to(&p) < p.rad + r)
+            .cloned()
+            .collect::<Vec<_>>();
+        return (a, e)
+    }
 }

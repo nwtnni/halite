@@ -88,6 +88,10 @@ impl Tactics {
         } else { false }
     }
 
+    pub fn raiding(&self, planet: ID) -> usize {
+        Self::count(&self.raid, planet)
+    }
+
     pub fn defending(&self, planet: ID) -> usize {
         Self::count(&self.defend, planet)
     }
@@ -117,14 +121,39 @@ impl Tactics {
                 .filter(|ally| !ally.is_docked())
                 .cloned()
                 .collect::<Vec<_>>();
-            a.push((*ship).clone());
+                a.push((*ship).clone());
+
+            // Midpoint
+            let (x, y) = a.iter()
+                .map(|ship| (ship.x, ship.y))
+                .fold((0.0, 0.0), |(xa, ya), (x, y)| (x + xa, y + ya));
+            let (x, y) = (x / (a.len() as f64), y / (a.len() as f64));
 
             let (d, e): (Vec<_>, Vec<_>) = enemies.into_iter()
                 .partition(|enemy| enemy.is_docked());
 
             if e.len() == 0 && d.len() == 0 { continue }
 
-            if e.len() >= a.len() {
+            if d.len() > 0 && (a.len() >= d.len() || e.len() < a.len()) {
+                let d = d.into_iter()
+                    .min_by(|a, b| {
+                        ((a.y - y).hypot(a.x - x)).partial_cmp(
+                        &(b.y - y).hypot(b.x - x)).unwrap()
+                    }).unwrap();
+                let mut a = a.into_iter()
+                    .filter(|ally| !resolved.contains(&ally.id))
+                    .collect::<Vec<_>>();
+                a.sort_unstable_by(|a, b| {
+                    a.distance_to(&d).partial_cmp(&b.distance_to(&d)).unwrap()
+                });
+                let a = a.into_iter().take(SQUADRON_SIZE).collect::<Vec<_>>();
+                for ally in &a {
+                    resolved.insert(ally.id);
+                }
+                for command in navigate_clump_to_enemy(&mut s.grid, &a, &d) {
+                    s.queue.push(&command);
+                }
+            } else if e.len() >= a.len() {
                 resolved.insert(ship.id);
                 s.queue.push(&navigate_from_enemies(&mut s.grid, ship, &e));
                 for ally in allies {
@@ -133,33 +162,24 @@ impl Tactics {
                         s.queue.push(&navigate_from_enemies(&mut s.grid, ally, &e));
                     }
                 }
-            } else if d.len() > 0 {
-                let mut a = a.into_iter()
-                    .filter(|ally| !resolved.contains(&ally.id))
-                    .collect::<Vec<_>>();
-                a.sort_unstable_by(|a, b| {
-                    a.distance_to(&d[0]).partial_cmp(&b.distance_to(&d[0])).unwrap()
-                });
-                let a = a.into_iter().take(SQUADRON_SIZE).collect::<Vec<_>>();
-                for ally in &a {
-                    resolved.insert(ally.id);
-                }
-                for command in navigate_clump_to_enemy(&mut s.grid, &a, &d[0]) {
-                    s.queue.push(&command);
-                }
             } else if e.len() > 1 && a.len() > e.len() {
+                let e = e.into_iter()
+                    .min_by(|a, b| {
+                        ((a.y - y).hypot(a.x - x)).partial_cmp(
+                        &(b.y - y).hypot(b.x - x)).unwrap()
+                    }).unwrap();
                 let mut a = a.into_iter()
                     .filter(|ally| !resolved.contains(&ally.id))
                     .take(SQUADRON_SIZE)
                     .collect::<Vec<_>>();
                 a.sort_unstable_by(|a, b| {
-                    a.distance_to(&e[0]).partial_cmp(&b.distance_to(&e[0])).unwrap()
+                    a.distance_to(&e).partial_cmp(&b.distance_to(&e)).unwrap()
                 });
                 let a = a.into_iter().take(SQUADRON_SIZE).collect::<Vec<_>>();
                 for ally in &a {
                     resolved.insert(ally.id);
                 }
-                for command in navigate_clump_to_enemy(&mut s.grid, &a, &e[0]) {
+                for command in navigate_clump_to_enemy(&mut s.grid, &a, &e) {
                     s.queue.push(&command);
                 }
             }
@@ -247,7 +267,7 @@ impl Tactics {
                     let ally = ships.iter()
                         .filter(|ally| {
                             let &(ref a, _) = s.scout.get_combat(ally.id);
-                            a.len() < 5
+                            a.len() < 8
                         })
                         .min_by(|&a, &b| {
                             enemy.distance_to(a).partial_cmp(
