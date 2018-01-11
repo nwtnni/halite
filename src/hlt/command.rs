@@ -79,6 +79,34 @@ pub fn navigate_clump_to_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Com
     queue
 }
 
+// Closest ally outside of combat radius?
+pub fn navigate_to_retreat(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>, ships: &Ships)
+    -> Command {
+    let all = ships.values()
+        .filter(|ally| !ally.is_docked())
+        .filter(|ally| ally.owner == grid.owner)
+        .filter(|ally| ally.id != s.id)
+        .collect::<Vec<_>>();
+
+    let ally = all.iter()
+        .filter(|&ally| s.distance_to(ally) > COMBAT_RADIUS)
+        .min_by(|&a, &b| s.distance_to(a).partial_cmp(&s.distance_to(b)).unwrap());
+
+    if let Some(ally) = ally {
+        return navigate_to_ally(grid, s, ally)
+    }
+
+    let ally = all.iter()
+        .filter(|&ally| s.distance_to(ally) < COMBAT_RADIUS)
+        .max_by(|&a, &b| s.distance_to(a).partial_cmp(&s.distance_to(b)).unwrap());
+
+    if let Some(ally) = ally {
+        navigate_to_ally(grid, s, ally)
+    } else {
+        navigate_from_enemies(grid, s, e)
+    }
+}
+
 pub fn navigate_from_enemies(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {
     let (x, y, hp) = e.into_iter()
         .map(|ship| (ship.x, ship.y, ship.hp))

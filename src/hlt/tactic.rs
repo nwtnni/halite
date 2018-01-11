@@ -104,8 +104,13 @@ impl Tactics {
         let mut resolved = FnvHashSet::default();
         let (mut ships, enemies): (Vec<_>, Vec<_>) = s.ships
             .values()
-            .filter(|ship| !s.docked.contains_key(&ship.id))
             .partition(|ship| ship.owner == s.id);
+
+        for ship in &ships {
+            if s.docked.contains_key(&ship.id) {
+                resolved.insert(ship.id);
+            }
+        }
 
         ships.sort_unstable_by_key(|ship| {
             let &(_, ref e) = s.scout.get_combat(ship.id);
@@ -154,13 +159,12 @@ impl Tactics {
                     s.queue.push(&command);
                 }
             } else if e.len() >= a.len() {
-                resolved.insert(ship.id);
-                s.queue.push(&navigate_from_enemies(&mut s.grid, ship, &e));
-                for ally in allies {
-                    if !resolved.contains(&ally.id) {
-                        resolved.insert(ally.id);
-                        s.queue.push(&navigate_from_enemies(&mut s.grid, ally, &e));
-                    }
+                let allies = allies.iter()
+                    .filter(|ally| !resolved.contains(&ally.id))
+                    .collect::<Vec<_>>();
+                for ally in &allies {
+                    resolved.insert(ally.id);
+                    s.queue.push(&navigate_to_retreat(&mut s.grid, &ally, &e, &s.ships));
                 }
             } else if e.len() > 1 && a.len() > e.len() {
                 let e = e.into_iter()

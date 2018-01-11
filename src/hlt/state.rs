@@ -150,9 +150,6 @@ impl State {
                 ship.xp = previous.x;
                 ship.yp = previous.y;
             }
-            if ship.owner != self.id {
-                self.grid.extrapolate(ship);
-            }
         }
         self.ships = ships;
         self.scout.initialize(&self.grid, &self.ships, &self.planets);
