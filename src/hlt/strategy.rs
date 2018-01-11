@@ -48,7 +48,6 @@ fn early(s: &mut State) {{
         });
     }
 
-
     // Let each ship make an independent decision
     for ship in &ships {
 
@@ -146,14 +145,14 @@ fn middle(s: &mut State) {{
             if planet.is_enemy(s.id) {
                 s.tactics.set(ship.id, Tactic::Raid(planet.id));
                 break
-            } else if !planet.is_owned(s.id) || planet.has_spots() {
-                if s.tactics.docking(planet.id) >= planet.spots || e > a/2 {
+            } else if !planet.is_owned(s.id) || (planet.has_spots() && e <= a/2) {
+                if s.tactics.docking(planet.id) >= planet.spots {
                     continue
                 }
                 s.tactics.set(ship.id, Tactic::Dock(planet.id));
                 break
             } else if e > 0 {
-                if s.tactics.defending(planet.id) >= e*2 {
+                if s.tactics.defending(planet.id) > e {
                     continue
                 }
                 s.tactics.set(ship.id, Tactic::Defend(planet.id));
@@ -180,7 +179,7 @@ fn desert(s: &mut State) {
             ship.distance_to(a).partial_cmp(&ship.distance_to(b)).unwrap()
         });
 
-        let enemies = enemies.into_iter().take(5).collect::<Vec<_>>();
+        let enemies = enemies.into_iter().take(3).collect::<Vec<_>>();
         s.queue.push(&navigate_from_enemies(&mut s.grid, &ship, &enemies));
     }
 
