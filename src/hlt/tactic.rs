@@ -134,7 +134,7 @@ impl Tactics {
 
             if e.len() == 0 && d.len() == 0 { continue }
 
-            if d.len() > 0 && (a.len() >= d.len() || e.len() < a.len()) {
+            if d.len() > 0 && (a.len() >= d.len() + 2 || e.len() < a.len()) {
                 let d = d.into_iter()
                     .min_by(|a, b| {
                         ((a.y - y).hypot(a.x - x)).partial_cmp(
@@ -220,19 +220,16 @@ impl Tactics {
         for (planet, allies) in s.tactics.defend.iter() {
             let planet = &s.planets[planet];
             let &(_, ref e) = s.scout.get_env(planet.id);
-            let enemy = &e[0];
-            let docked = planet.ships
-                .iter()
-                .map(|ship| s.ships[&ship].clone())
+            let enemy = e.iter()
                 .min_by(|a, b| {
-                    enemy.distance_to(&a).partial_cmp(
-                    &enemy.distance_to(&b)).unwrap()
-                }).expect("Defend called on non-owned planet");
+                    a.distance_to(&planet).partial_cmp(
+                    &b.distance_to(&planet)).unwrap()
+                }).expect("Defend called on non-contested planet");
             for ship in allies {
                 if resolved.contains(ship) { continue }
                 let ship = &s.ships[ship];
                 resolved.insert(ship.id);
-                s.queue.push(&navigate_to_defend(&mut s.grid, &ship, &docked, &enemy))
+                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemy))
             }
         }
 

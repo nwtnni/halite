@@ -129,9 +129,10 @@ fn middle(s: &mut State) {{
         .collect::<Vec<_>>();
 
     let (x, y) = ships.iter()
+        .filter(|ship| ship.is_docked())
         .map(|ship| (ship.x, ship.y))
         .fold((0.0, 0.0), |(xa, ya), (x, y)| (x + xa, y + ya));
-    let (x, y) = (x/(ships.len() as f64), y/(ships.len() as f64));
+    let (x, y) = (x/(s.docked.len() as f64), y/(s.docked.len() as f64));
 
     for ship in ships {
         let mut planets = s.planets.values().collect::<Vec<_>>();
@@ -152,12 +153,12 @@ fn middle(s: &mut State) {{
                 s.tactics.set(ship.id, Tactic::Raid(planet.id));
                 break
             } else if !planet.is_owned(s.id) || planet.has_spots() {
-                if s.tactics.docking(planet.id) >= planet.spots || e > a/2 {
+                if s.tactics.docking(planet.id) >= planet.spots || e > a {
                     continue
                 }
                 if planets.iter()
                     .filter(|other| other.is_enemy(s.id))
-                    .filter(|other| (other.y - planet.y).hypot(other.x - planet.x) < 35.0)
+                    .filter(|other| (other.y - planet.y).hypot(other.x - planet.x) < 14.0)
                     .any(|other| {
                         let (_, e) = s.scout.get_env_within(other, 14.0);
                         s.tactics.raiding(other.id) < e.len()
