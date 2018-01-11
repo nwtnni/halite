@@ -99,6 +99,8 @@ pub fn navigate_to_planet(grid: &mut Grid, s: &Ship, p: &Planet) -> Command {
 }
 
 pub fn navigate_to_defend(grid: &mut Grid, s: &Ship, d: &Ship, e: &Ship) -> Command {
-    let (x, y) = offset((d.x, d.y), (e.x, e.y), COVER_RADIUS, 0.0);
+    let angle = f64::atan2(e.y - d.y, e.y - d.y).to_degrees().round();
+    let (x, y) = (d.x + (COVER_RADIUS*angle.to_radians().cos()), 
+                  d.y + (COVER_RADIUS*angle.to_radians().sin()));
     navigate(grid, s, (x, y))
 }

@@ -48,7 +48,6 @@ fn early(s: &mut State) {{
         });
     }
 
-
     // Let each ship make an independent decision
     for ship in &ships {
 
