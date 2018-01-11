@@ -132,7 +132,8 @@ fn middle(s: &mut State) {{
         .filter(|ship| ship.is_docked())
         .map(|ship| (ship.x, ship.y))
         .fold((0.0, 0.0), |(xa, ya), (x, y)| (x + xa, y + ya));
-    let (x, y) = (x/(s.docked.len() as f64), y/(s.docked.len() as f64));
+    let len = f64::max(s.docked.len() as f64, 1.0);
+    let (x, y) = (x/len, y/len);
 
     for ship in ships {
         let mut planets = s.planets.values().collect::<Vec<_>>();

@@ -89,6 +89,15 @@ impl Grid {
         }
     }
 
+    pub fn extrapolate(&mut self, s: &Ship) {
+        let angle = f64::atan2(s.y - s.yp, s.x - s.xp).to_degrees().round();
+        let thrust = (s.y - s.yp).hypot(s.x - s.xp).floor();
+        let (x, y) = (s.x + thrust*angle.to_radians().cos(),
+                        s.y + thrust*angle.to_radians().sin());
+        let (x, y, _, _) = self.closest_free(s, (x, y), thrust as i32);
+        self.update(s, (x, y));
+    }
+
     pub fn update(&mut self, ship: &Ship, end: Point) {
         let entity = ship.to_entity();
         self.moved.insert(entity.key(), ((ship.x, ship.y), end));
@@ -190,7 +199,7 @@ impl Grid {
         Self::intersects_segment(
             (ship.x, ship.y), (x2, y2), (0.0, 0.0), (self.width, 0.0)
         ) || Self::intersects_segment(
-            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (0.0, self.height) 
+            (ship.x, ship.y), (x2, y2), (0.0, 0.0), (0.0, self.height)
         ) || Self::intersects_segment(
             (ship.x, ship.y), (x2, y2), (0.0, self.height), (self.width, self.height)
         ) || Self::intersects_segment(

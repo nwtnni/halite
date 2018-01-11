@@ -247,6 +247,7 @@ impl Tactics {
         }
 
         // Resolve hotspots
+        info!("Resolving hotspots...");
         if enemies.len() > 0 && ships.len() > 1 {
             for ship in &ships {
                 if resolved.contains(&ship.id) { continue }
