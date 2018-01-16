@@ -89,15 +89,6 @@ impl Grid {
         }
     }
 
-    pub fn extrapolate(&mut self, s: &Ship) {
-        let angle = f64::atan2(s.y - s.yp, s.x - s.xp).to_degrees().round();
-        let thrust = (s.y - s.yp).hypot(s.x - s.xp).floor();
-        let (x, y) = (s.x + thrust*angle.to_radians().cos(),
-                        s.y + thrust*angle.to_radians().sin());
-        let (x, y, _, _) = self.closest_free(s, (x, y), thrust as i32);
-        self.update(s, (x, y));
-    }
-
     pub fn update(&mut self, ship: &Ship, end: Point) {
         let entity = ship.to_entity();
         self.moved.insert(entity.key(), ((ship.x, ship.y), end));
@@ -170,29 +161,6 @@ impl Grid {
             (cy - ay)*(bx - ax) > (by - ay)*(cx - ax)
         }
         ccw(a, c, d) != ccw(b, c, d) && ccw(a, b, c) != ccw(a, b, d)
-    }
-
-    pub fn near<'a, T: ToEntity>(&'a self, e: &T, r: f64) -> Vec<&'a Entity> {
-        let entity = e.to_entity();
-        let pos = entity.pos();
-        let key = entity.key();
-        let cells = Self::circle_to_cells(pos, r);
-        let mut nearby = cells.iter()
-            .filter_map(|cell| self.grid.get(cell))
-            .flat_map(|ref bucket| bucket.iter())
-            .filter(|&other| other.key() != key)
-            .filter(|&other| { match self.moved.get(&other.key()) {
-                None => {
-                    Self::intersects(pos, r + EPSILON, other.pos(), other.rad())
-                },
-                Some(&(_, end)) => {
-                    Self::intersects(pos, r + EPSILON, end, other.rad())
-                },
-            }})
-            .collect::<Vec<_>>();
-        nearby.sort_unstable_by_key(|&entity| entity.key());
-        nearby.dedup_by_key(|&mut entity| { entity.key() });
-        nearby
     }
 
     pub fn collides_border(&self, ship: &Ship, (x2, y2): Point) -> bool {

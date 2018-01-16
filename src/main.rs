@@ -17,7 +17,6 @@ fn main() {
     let mut turn = 0;
     loop {
         state.update();
-        strategy::step(&mut state, turn);
         turn += 1;
     }
 } 
