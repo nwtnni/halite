@@ -6,6 +6,7 @@ use hlt::tactic::Tactics;
 use hlt::command::Queue;
 use hlt::constants::*;
 use hlt::collision::*;
+use hlt::scout::*;
 
 pub type ID = usize;
 pub type Point = (f64, f64);
@@ -106,6 +107,7 @@ pub struct State {
     pub players: Vec<Player>,
     pub planets: Planets,
     pub tactics: Tactics,
+    pub scout: Scout,
     pub ships: Ships,
     pub queue: Queue,
     pub docked: Docked,
@@ -125,7 +127,8 @@ impl State {
         let queue = Queue::new();
         let docked = FnvHashMap::default();
         let (players, planets, ships, grid) = take(&mut stream);
-        State { id, width, height, players, planets,
+        let scout = Scout::new(&ships, &planets);
+        State { id, width, height, players, planets, scout,
                 ships, tactics, queue, grid, docked}
     }
 
