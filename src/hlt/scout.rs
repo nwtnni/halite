@@ -134,13 +134,17 @@ impl Scout {
             })
             .filter(|planet| planet.has_spots())
             .filter(|planet| !planet.is_enemy(ship.owner))
+            .filter(|planet| {
+                let (allies, enemies): (Vec<_>, Vec<_>) = self.ships[&ship.id]
+                    .iter()
+                    .filter(|other| other.distance_to(planet) < 70.0)
+                    .filter(|other| !other.is_docked())
+                    .partition(|other| other.owner == ship.owner);
+                enemies.len() == 0 || allies.len() > enemies.len() * 2
+            })
             .min_by(|a, b| {
                 ship.distance_to(a).partial_cmp(
                 &ship.distance_to(b)).unwrap()
-            }).and_then(|planet| {
-                if ship.distance_to(&self.nearest_enemy(ship)) < 35.0 {
-                    None
-                } else { Some(planet) }
             })
     }
 

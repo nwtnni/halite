@@ -26,12 +26,12 @@ pub fn step(s: &mut State, turn: i32) {
         // Retreat to ally, or away from enemy
         if s.scout.is_distressed(group) {
             info!("Distress signal on turn {} for group {:?}", turn, ships);
+            let ally = s.scout.nearest_ally(&ships[0]);
+            let enemy = s.scout.nearest_enemy(&ships[0]);
             for ship in ships {
-                let ally = s.scout.nearest_ally(&ship);
                 if let Some(ally) = ally {
                     s.queue.push(&navigate_to_ally(&mut s.grid, &ship, &ally));
                 } else {
-                    let enemy = s.scout.nearest_enemy(&ship);
                     s.queue.push(&navigate_from_enemy(&mut s.grid, &ship, &enemy));
                 }
             }
@@ -92,7 +92,7 @@ pub fn step(s: &mut State, turn: i32) {
          */
 
         // Nearby enemy to fight
-        for (enemy, required) in s.scout.near_groups(&ships[0], 35.0) {
+        for (enemy, required) in s.scout.near_groups(&ships[0], 70.0) {
             let mut n = 0;
             for ship in &ships {
                 if n >= required || resolved.contains(&ship.id) { continue }
@@ -118,6 +118,15 @@ pub fn step(s: &mut State, turn: i32) {
             continue
         }
 
+        // Any docked enemy
+        if let Some(enemy) = s.scout.nearest_target(&ships[0], 500.0) {
+            info!("Attacking docked enemy {} on turn {} for group {:?}", enemy.id, turn, ships);
+            for ship in ships {
+                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemy));
+            }
+            continue
+        }
+
         // Any distress signal
         if let Some((ally, required)) = s.scout.nearest_distress(&ships[0], 500.0) {
             info!("Responding to distress signal on turn {} for group {:?}", turn, ships);
@@ -129,21 +138,6 @@ pub fn step(s: &mut State, turn: i32) {
                 n += 1;
             }
             s.scout.assist(&ally, n);
-        }
-
-        // Keep going without assisting ships
-        let ships = ships.into_iter()
-            .filter(|ship| !resolved.contains(&ship.id))
-            .collect::<Vec<_>>();
-        if ships.len() == 0 { continue }
-
-        // Any docked enemy
-        if let Some(enemy) = s.scout.nearest_target(&ships[0], 500.0) {
-            info!("Attacking docked enemy {} on turn {} for group {:?}", enemy.id, turn, ships);
-            for ship in ships {
-                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemy));
-            }
-            continue
         }
     }
 
