@@ -92,14 +92,22 @@ pub fn step(s: &mut State, turn: i32) {
          */
 
         // Nearby enemy to fight
-        if ships[0].distance_to(&s.scout.nearest_enemy(&ships[0])) < 35.0 {
+        for (enemy, required) in s.scout.near_groups(&ships[0], 35.0) {
+            let mut n = 0;
             for ship in &ships {
-                s.queue.push(
-                    &navigate_to_enemy(&mut s.grid, &ship, &s.scout.nearest_enemy(&ships[0]))
-                );
+                if n >= required || resolved.contains(&ship.id) { continue }
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemy));
+                n += 1;
             }
-            continue
+            s.scout.attack(&enemy, n);
         }
+
+        // Keep going without attacking ships
+        let ships = ships.into_iter()
+            .filter(|ship| !resolved.contains(&ship.id))
+            .collect::<Vec<_>>();
+        if ships.len() == 0 { continue }
 
         // Farther docking sites
         if let Some(planet) = s.scout.nearest_planet(&ships[0], 70.0) {

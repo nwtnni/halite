@@ -7,6 +7,7 @@ pub struct Scout {
     groups: Vec<Vec<Ship>>,
     distress: FnvHashSet<ID>,
     assist: FnvHashMap<ID, usize>,
+    attack: FnvHashMap<ID, usize>,
     assign: FnvHashMap<ID, ID>,
     planets: FnvHashMap<ID, Vec<Planet>>,
 }
@@ -16,6 +17,7 @@ impl Scout {
         let mut ordered_ships = FnvHashMap::default();
         let mut ordered_planets = FnvHashMap::default();
         let mut assign = FnvHashMap::default();
+        let mut attack = FnvHashMap::default();
         let mut assist = FnvHashMap::default();
         let mut groups = Vec::new();
         let mut nearby = Vec::new();
@@ -64,6 +66,7 @@ impl Scout {
 
             let group = groups.len();
             for ship in &unassigned { assign.insert(ship.id, group); }
+            attack.insert(group, unassigned.len());
             groups.push(unassigned);
         }
 
@@ -91,7 +94,7 @@ impl Scout {
         }
 
         Scout { ships: ordered_ships, planets: ordered_planets,
-                distress, groups, assign, assist }
+                distress, groups, assign, assist, attack }
     }
 
     pub fn is_distressed(&self, group: ID) -> bool {
@@ -102,6 +105,12 @@ impl Scout {
         let group = self.assign[&ship.id];
         let m = self.assist[&group];
         self.assist.insert(group, m - n);
+    }
+
+    pub fn attack(&mut self, ship: &Ship, n: usize) {
+        let group = self.assign[&ship.id];
+        let m = self.attack[&group];
+        self.attack.insert(group, m - n);
     }
 
     pub fn nearest_ally(&self, ship: &Ship) -> Option<&Ship> {
@@ -160,6 +169,15 @@ impl Scout {
             .filter(|planet| planet.has_spots())
             .filter(|planet| !planet.is_enemy(ship.owner))
             .nth(0)
+    }
+
+    pub fn near_groups(&self, ship: &Ship, d: f64) -> Vec<(Ship, usize)> {
+        self.ships[&ship.id].iter()
+            .filter(|other| other.owner != ship.owner)
+            .filter(|other| ship.distance_to(other) < d)
+            .filter(|other| self.attack[&self.assign[&other.id]] > 0)
+            .map(|other| (other.clone(), self.attack[&self.assign[&other.id]]))
+            .collect::<Vec<_>>()
     }
 
     pub fn groups(&self, id: ID) -> Vec<(usize, Vec<Ship>)> {
