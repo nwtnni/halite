@@ -73,7 +73,9 @@ impl Scout {
                 .nth(0);
 
             if let Some(enemy) = nearby {
-                if ship.distance_to(&enemy) < COMBAT_RADIUS {
+                let allies = groups[assign[&ship.id]].len();
+                let enemies = groups[assign[&enemy.id]].len();
+                if ship.distance_to(&enemy) < COMBAT_RADIUS && enemies > allies {
                     distress.insert(assign[&ship.id]);
                 }
             }
