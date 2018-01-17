@@ -6,6 +6,7 @@ pub struct Scout {
     ships: FnvHashMap<ID, Vec<Ship>>,
     groups: Vec<Vec<Ship>>,
     distress: FnvHashSet<ID>,
+    assist: FnvHashMap<ID, usize>,
     assign: FnvHashMap<ID, ID>,
     planets: FnvHashMap<ID, Vec<Planet>>,
 }
@@ -15,6 +16,7 @@ impl Scout {
         let mut ordered_ships = FnvHashMap::default();
         let mut ordered_planets = FnvHashMap::default();
         let mut assign = FnvHashMap::default();
+        let mut assist = FnvHashMap::default();
         let mut groups = Vec::new();
         let mut nearby = Vec::new();
         for ship in ships.values() {
@@ -73,22 +75,33 @@ impl Scout {
                 .filter(|other| other.owner != id)
                 .nth(0);
 
-            // TODO: don't count docked enemy/ally ships?
             if let Some(enemy) = nearby {
-                let allies = groups[assign[&ship.id]].len();
-                let enemies = groups[assign[&enemy.id]].len();
+                let allies = groups[assign[&ship.id]].iter()
+                    .filter(|ally| !ally.is_docked())
+                    .count();
+                let enemies = groups[assign[&enemy.id]].iter()
+                    .filter(|enemy| !enemy.is_docked())
+                    .count();
                 let radius = if ship.is_docked() { DEFEND_RADIUS } else { COMBAT_RADIUS };
-                if ship.distance_to(&enemy) < radius && enemies > allies {
+                if ship.distance_to(&enemy) < radius && enemies >= allies {
                     distress.insert(assign[&ship.id]);
+                    assist.insert(assign[&ship.id], enemies - allies);
                 }
             }
         }
 
-        Scout { ships: ordered_ships, planets: ordered_planets, distress, groups, assign }
+        Scout { ships: ordered_ships, planets: ordered_planets,
+                distress, groups, assign, assist }
     }
 
     pub fn is_distressed(&self, group: ID) -> bool {
-        self.distress.contains(&group) 
+        self.distress.contains(&group)
+    }
+
+    pub fn assist(&mut self, ship: &Ship, n: usize) {
+        let group = self.assign[&ship.id];
+        let m = self.assist[&group];
+        self.assist.insert(group, m - n);
     }
 
     pub fn nearest_ally(&self, ship: &Ship) -> Option<&Ship> {
@@ -118,11 +131,13 @@ impl Scout {
             })
     }
 
-    pub fn nearest_distress(&self, ship: &Ship, d: f64) -> Option<&Ship> {
+    pub fn nearest_distress(&self, ship: &Ship, d: f64) -> Option<(Ship, usize)> {
         self.ships[&ship.id].iter()
             .take_while(|other| ship.distance_to(other) < d)
             .filter(|other| other.owner == ship.owner)
             .filter(|other| self.distress.contains(&self.assign[&other.id]))
+            .filter(|other| self.assist[&self.assign[&other.id]] > 0)
+            .map(|other| (other.clone(), self.assist[&self.assign[&other.id]]))
             .nth(0)
     }
 
@@ -142,10 +157,11 @@ impl Scout {
             .nth(0)
     }
 
-    pub fn groups(&self, id: ID) -> Vec<(usize, &Vec<Ship>)> {
+    pub fn groups(&self, id: ID) -> Vec<(usize, Vec<Ship>)> {
         self.groups.iter()
             .enumerate()
-            .filter(|&(group, ships)| ships[0].owner == id)
+            .filter(|&(_, ref ships)| ships[0].owner == id)
+            .map(|(group, ships)| (group, ships.clone()))
             .collect::<Vec<_>>()
     }
 }

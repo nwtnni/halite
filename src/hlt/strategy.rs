@@ -1,4 +1,4 @@
-use fnv::FnvHashSet;
+use fnv::{FnvHashSet, FnvHashMap};
 use hlt::command::*;
 use hlt::state::*;
 
@@ -9,7 +9,7 @@ use hlt::state::*;
 // 4) Go for nearby docking site
 // 5) Go for closest distress signal
 pub fn step(s: &mut State, turn: i32) {
-    let mut docking = FnvHashSet::default();
+    let mut resolved = FnvHashSet::default();
     for (group, ships) in s.scout.groups(s.id) {
 
         let ships = ships.into_iter()
@@ -33,30 +33,21 @@ pub fn step(s: &mut State, turn: i32) {
         }
 
         // Check distance of distress signal
-        if let Some(ally) = s.scout.nearest_distress(&ships[0], 35.0) {
+        if let Some((ally, required)) = s.scout.nearest_distress(&ships[0], 21.0) {
             info!("Responding to distress signal on turn {} for group {:?}", turn, ships);
-            for ship in ships {
-                s.queue.push(&navigate_to_ally(&mut s.grid, &ship, &ally));
-            }
-            continue
-        }
-
-        // Dock if we can
-        if let Some(planet) = s.scout.nearest_dock(&ships[0]) {
-            info!("Docking on turn {} for group {:?}", turn, ships);
             let mut n = 0;
             for ship in &ships {
-                if n < planet.spots() {
-                    docking.insert(ship.id);
-                    s.queue.push(&dock(&ship, &planet));
-                    n += 1;
-                } else { break }
+                if n >= required { break }
+                resolved.insert(ship.id);
+                s.queue.push(&navigate_to_ally(&mut s.grid, &ship, &ally));
+                n += 1;
             }
+            s.scout.assist(&ally, n);
         }
 
-        // Keep going without docking ships
+        // Keep going without assisting ships
         let ships = ships.into_iter()
-            .filter(|ship| !docking.contains(&ship.id))
+            .filter(|ship| !resolved.contains(&ship.id))
             .collect::<Vec<_>>();
         if ships.len() == 0 { continue }
 
@@ -69,6 +60,25 @@ pub fn step(s: &mut State, turn: i32) {
             continue
         }
 
+        // Dock if we can
+        if let Some(planet) = s.scout.nearest_dock(&ships[0]) {
+            info!("Docking on turn {} for group {:?}", turn, ships);
+            let mut n = 0;
+            for ship in &ships {
+                if n < planet.spots() {
+                    resolved.insert(ship.id);
+                    s.queue.push(&dock(&ship, &planet));
+                    n += 1;
+                } else { break }
+            }
+        }
+
+        // Keep going without docking ships
+        let ships = ships.into_iter()
+            .filter(|ship| !resolved.contains(&ship.id))
+            .collect::<Vec<_>>();
+        if ships.len() == 0 { continue }
+
         // Nearby docking site
         if let Some(planet) = s.scout.nearest_planet(&ships[0], 70.0) {
             info!("Traveling to {} on turn {} for group {:?}", planet.id, turn, ships);
@@ -78,13 +88,16 @@ pub fn step(s: &mut State, turn: i32) {
             continue
         }
 
-        // Otherwise reinforce distress signal
-        if let Some(ally) = s.scout.nearest_distress(&ships[0], 500.0) {
+        // Check distance of distress signal
+        if let Some((ally, required)) = s.scout.nearest_distress(&ships[0], 500.0) {
             info!("Responding to distress signal on turn {} for group {:?}", turn, ships);
+            let mut n = 0;
             for ship in ships {
+                if n >= required { break }
                 s.queue.push(&navigate_to_ally(&mut s.grid, &ship, &ally));
+                n += 1;
             }
-            continue
+            s.scout.assist(&ally, n);
         }
     }
 
