@@ -61,16 +61,16 @@ pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
     navigate(grid, s, (x, y))
 }
 
-pub fn navigate_from_enemies(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {
-    let (x, y, hp) = e.into_iter()
-        .map(|ship| (ship.x, ship.y, ship.hp))
-        .fold((0.0, 0.0, 0.0), |(x, y, hp), (xs, ys, hps)| {;
-            (x + xs*(hps as f64), y + ys*(hps as f64), hp + hps as f64)
-        });
-    let (x, y) = (x/hp, y/hp);
-    let angle = f64::atan2(s.y - y, s.x - x).to_degrees().round();
-    let (x, y) = (s.x + 7.0*angle.to_radians().cos(),
-                  s.y + 7.0*angle.to_radians().sin());
+pub fn navigate_from_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
+    let angle = f64::atan2(s.y - e.y, s.x - e.x).to_degrees().round();
+    let thrust = f64::min(7.0, (COMBAT_RADIUS - s.distance_to(&e)).ceil());
+    let (x, y) = (s.x + thrust*angle.to_radians().cos(),
+                  s.y + thrust*angle.to_radians().sin());
+    navigate(grid, s, (x, y))
+}
+
+pub fn navigate_to_ally(grid: &mut Grid, s: &Ship, a: &Ship) -> Command {
+    let (x, y) = offset((s.x, s.y), (a.x, a.y), SHIP_RADIUS + EPSILON, 90.0);
     navigate(grid, s, (x, y))
 }
 

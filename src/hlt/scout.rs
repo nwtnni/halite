@@ -73,6 +73,7 @@ impl Scout {
                 .filter(|other| other.owner != id)
                 .nth(0);
 
+            // TODO: don't count docked enemy/ally ships?
             if let Some(enemy) = nearby {
                 let allies = groups[assign[&ship.id]].len();
                 let enemies = groups[assign[&enemy.id]].len();
@@ -86,11 +87,8 @@ impl Scout {
         Scout { ships: ordered_ships, planets: ordered_planets, distress, groups, assign }
     }
 
-    pub fn nearest_distress(&self, ship: &Ship) -> Option<&Ship> {
-        self.ships[&ship.id].iter()
-            .filter(|other| other.owner == ship.owner)
-            .filter(|ship| self.distress.contains(&self.assign[&ship.id]))
-            .nth(0)
+    pub fn is_distressed(&self, group: ID) -> bool {
+        self.distress.contains(&group) 
     }
 
     pub fn nearest_ally(&self, ship: &Ship) -> Option<&Ship> {
@@ -101,14 +99,49 @@ impl Scout {
             .nth(0)
     }
 
-    pub fn nearest_target(&self, ship: &Ship) -> Option<&Ship> {
+    pub fn nearest_enemy(&self, ship: &Ship) -> &Ship {
         self.ships[&ship.id].iter()
+            .filter(|other| other.owner != ship.owner)
+            .nth(0).expect("No enemies remaining")
+    }
+
+    pub fn nearest_dock(&self, ship: &Ship) -> Option<&Planet> {
+        self.planets[&ship.id].iter()
+            .filter(|planet| ship.distance_to(planet) < DOCK_RADIUS - EPSILON)
+            .min_by(|a, b| {
+                ship.distance_to(a).partial_cmp(
+                &ship.distance_to(b)).unwrap()
+            })
+    }
+
+    pub fn nearest_distress(&self, ship: &Ship, d: f64) -> Option<&Ship> {
+        self.ships[&ship.id].iter()
+            .take_while(|other| ship.distance_to(other) < d)
+            .filter(|other| other.owner == ship.owner)
+            .filter(|other| self.distress.contains(&self.assign[&other.id]))
+            .nth(0)
+    }
+
+    pub fn nearest_target(&self, ship: &Ship, d: f64) -> Option<&Ship> {
+        self.ships[&ship.id].iter()
+            .take_while(|other| ship.distance_to(other) < d)
             .filter(|other| other.owner != ship.owner)
             .filter(|other| other.is_docked())
             .nth(0)
     }
 
-    pub fn near_planets(&self, ship: &Ship) -> &Vec<Planet> {
-        &self.planets[&ship.id]
+    pub fn nearest_planet(&self, ship: &Ship, d: f64) -> Option<&Planet> {
+        self.planets[&ship.id].iter()
+            .take_while(|planet| ship.distance_to(planet) < d)
+            .filter(|planet| planet.has_spots())
+            .filter(|planet| !planet.is_enemy(ship.owner))
+            .nth(0)
+    }
+
+    pub fn groups(&self, id: ID) -> Vec<(usize, &Vec<Ship>)> {
+        self.groups.iter()
+            .enumerate()
+            .filter(|&(group, ships)| ships[0].owner == id)
+            .collect::<Vec<_>>()
     }
 }
