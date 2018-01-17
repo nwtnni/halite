@@ -67,15 +67,17 @@ impl Scout {
 
         // Find groups in distress
         let mut distress = FnvHashSet::default();
-        for ship in ships.values().filter(|ship| !ship.is_docked() && ship.owner == id) {
+        for ship in ships.values().filter(|ship| ship.owner == id) {
             let nearby = ordered_ships[&ship.id].iter()
-                .filter(|other| other.id != id)
+                .filter(|other| !other.is_docked())
+                .filter(|other| other.owner != id)
                 .nth(0);
 
             if let Some(enemy) = nearby {
                 let allies = groups[assign[&ship.id]].len();
                 let enemies = groups[assign[&enemy.id]].len();
-                if ship.distance_to(&enemy) < COMBAT_RADIUS && enemies > allies {
+                let radius = if ship.is_docked() { DEFEND_RADIUS } else { COMBAT_RADIUS };
+                if ship.distance_to(&enemy) < radius && enemies > allies {
                     distress.insert(assign[&ship.id]);
                 }
             }
@@ -84,15 +86,29 @@ impl Scout {
         Scout { ships: ordered_ships, planets: ordered_planets, distress, groups, assign }
     }
 
-    pub fn get_group(&self, id: ID) -> &Vec<Ship> {
-        &self.groups[self.assign[&id]]
+    pub fn nearest_distress(&self, ship: &Ship) -> Option<&Ship> {
+        self.ships[&ship.id].iter()
+            .filter(|other| other.owner == ship.owner)
+            .filter(|ship| self.distress.contains(&self.assign[&ship.id]))
+            .nth(0)
     }
 
-    pub fn get_planets(&self, id: ID) -> &Vec<Planet> {
-        &self.planets[&id]
+    pub fn nearest_ally(&self, ship: &Ship) -> Option<&Ship> {
+        self.ships[&ship.id].iter()
+            .filter(|other| other.owner == ship.owner)
+            .filter(|other| self.assign[&ship.id] != self.assign[&other.id])
+            .filter(|other| !self.distress.contains(&self.assign[&other.id]))
+            .nth(0)
     }
 
-    pub fn get_ships(&self, id: ID) -> &Vec<Ship> {
-        &self.ships[&id]
+    pub fn nearest_target(&self, ship: &Ship) -> Option<&Ship> {
+        self.ships[&ship.id].iter()
+            .filter(|other| other.owner != ship.owner)
+            .filter(|other| other.is_docked())
+            .nth(0)
+    }
+
+    pub fn near_planets(&self, ship: &Ship) -> &Vec<Planet> {
+        &self.planets[&ship.id]
     }
 }

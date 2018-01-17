@@ -8,13 +8,5 @@ pub fn step(s: &mut State, turn: i32) {
         .collect::<Vec<_>>();
 
     for ship in ships {
-        let planets = s.scout.get_planets(ship.id)
-            .into_iter()
-            .filter(|planet| ship.distance_to(planet) < 70.0)
-            .collect::<Vec<_>>();
-
-        for planet in planets {
-
-        }
     }
 }

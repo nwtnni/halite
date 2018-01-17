@@ -43,6 +43,7 @@ pub const CORRECTIONS: i32 = 20;
 
 // Scouting related
 pub const COMBAT_RADIUS: f64 = 21.0;
+pub const DEFEND_RADIUS: f64 = 21.0;
 
 pub const COVER_RADIUS: f64 = 2.0;
 pub const SQUADRON_SIZE: usize = 4;
