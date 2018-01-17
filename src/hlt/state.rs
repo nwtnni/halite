@@ -52,6 +52,12 @@ impl Ship {
         let (x, y) = e.to_entity().pos();
         (y - self.y).hypot(x - self.x)
     }
+
+    pub fn is_facing(&self, s: &Ship) -> bool {
+        let theta = f64::atan2(s.yp - self.yp, s.xp - self.xp);
+        let phi = f64::atan2(self.y - self.yp, self.x - self.xp);
+        (theta - phi).abs() < EPSILON
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -127,7 +133,7 @@ impl State {
         let queue = Queue::new();
         let docked = FnvHashMap::default();
         let (players, planets, ships, grid) = take(&mut stream);
-        let scout = Scout::new(&ships, &planets);
+        let scout = Scout::new(id, &ships, &planets);
         State { id, width, height, players, planets, scout,
                 ships, tactics, queue, grid, docked}
     }

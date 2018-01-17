@@ -99,7 +99,4 @@ impl Tactics {
     pub fn docking(&self, planet: ID) -> usize {
         Self::count(&self.dock, planet)
     }
-
-    pub fn execute(s: &mut State) {
-    }
 }

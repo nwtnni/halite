@@ -56,55 +56,9 @@ fn navigate(grid: &mut Grid, ship: &Ship, (x, y): Point) -> Command {
     Command::Thrust(ship.id, thrust, (angle + 360) % 360)
 }
 
-pub fn navigate_to_ally(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
-    let (x, y) = offset((s.x, s.y), (e.x, e.y), 0.0, 90.0);
-    navigate(grid, s, (x, y))
-}
-
 pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
     let (x, y) = offset((s.x, s.y), (e.x, e.y), WEAPON_RADIUS, 90.0);
     navigate(grid, s, (x, y))
-}
-
-pub fn navigate_clump_to_enemy(grid: &mut Grid, s: &[Ship], e: &Ship) -> Vec<Command> {
-    let far = &s[s.len() - 1].clone();
-    let (dx, dy) = (far.x - e.x, far.y - e.y);
-    let thrust = f64::min(7.0, dy.hypot(dx) - WEAPON_RADIUS);
-    let angle = f64::atan2(dy, dx) + FRAC_PI_2;
-    let end = (e.x - thrust*angle.cos(), e.y - thrust*angle.sin());
-    let mut queue = Vec::new();
-    for ship in s {
-        queue.push(navigate(grid, &ship, end));
-    }
-    queue
-}
-
-// Closest ally outside of combat radius?
-pub fn navigate_to_retreat(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>, ships: &Ships)
-    -> Command {
-    let all = ships.values()
-        .filter(|ally| !ally.is_docked())
-        .filter(|ally| ally.owner == grid.owner)
-        .filter(|ally| ally.id != s.id)
-        .collect::<Vec<_>>();
-
-    let ally = all.iter()
-        .filter(|&ally| s.distance_to(ally) > COMBAT_RADIUS)
-        .min_by(|&a, &b| s.distance_to(a).partial_cmp(&s.distance_to(b)).unwrap());
-
-    if let Some(ally) = ally {
-        return navigate_to_ally(grid, s, ally)
-    }
-
-    let ally = all.iter()
-        .filter(|&ally| s.distance_to(ally) < COMBAT_RADIUS)
-        .max_by(|&a, &b| s.distance_to(a).partial_cmp(&s.distance_to(b)).unwrap());
-
-    if let Some(ally) = ally {
-        navigate_to_ally(grid, s, ally)
-    } else {
-        navigate_from_enemies(grid, s, e)
-    }
 }
 
 pub fn navigate_from_enemies(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Command {
@@ -122,12 +76,5 @@ pub fn navigate_from_enemies(grid: &mut Grid, s: &Ship, e: &Vec<&Ship>) -> Comma
 
 pub fn navigate_to_planet(grid: &mut Grid, s: &Ship, p: &Planet) -> Command {
     let (x, y) = offset((s.x, s.y), (p.x, p.y), DOCK_RADIUS + p.rad - 1.0, 0.0);
-    navigate(grid, s, (x, y))
-}
-
-pub fn navigate_to_defend(grid: &mut Grid, s: &Ship, d: &Ship, e: &Ship) -> Command {
-    let angle = f64::atan2(e.y - d.y, e.y - d.y).to_degrees().round();
-    let (x, y) = (d.x + (COVER_RADIUS*angle.to_radians().cos()),
-                  d.y + (COVER_RADIUS*angle.to_radians().sin()));
     navigate(grid, s, (x, y))
 }
