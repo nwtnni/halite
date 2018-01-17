@@ -139,6 +139,17 @@ pub fn step(s: &mut State, turn: i32) {
             }
             s.scout.assist(&ally, n);
         }
+
+        // Keep going without assisting ships
+        let ships = ships.into_iter()
+            .filter(|ship| !resolved.contains(&ship.id))
+            .collect::<Vec<_>>();
+        if ships.len() == 0 { continue }
+
+        // Last resort: attack the nearest enemy
+        for ship in ships {
+            s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &s.scout.nearest_enemy(&ship)));
+        }
     }
 
     s.queue.flush();
