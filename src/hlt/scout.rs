@@ -128,12 +128,17 @@ impl Scout {
             .min_by(|a, b| {
                 ship.distance_to(a).partial_cmp(
                 &ship.distance_to(b)).unwrap()
+            }).and_then(|planet| {
+                if ship.distance_to(&self.nearest_enemy(ship)) < 70.0 {
+                    None
+                } else { Some(planet) }
             })
     }
 
     pub fn nearest_distress(&self, ship: &Ship, d: f64) -> Option<(Ship, usize)> {
         self.ships[&ship.id].iter()
             .take_while(|other| ship.distance_to(other) < d)
+            .filter(|other| other.id == ship.id)
             .filter(|other| other.owner == ship.owner)
             .filter(|other| self.distress.contains(&self.assign[&other.id]))
             .filter(|other| self.assist[&self.assign[&other.id]] > 0)

@@ -17,6 +17,12 @@ pub fn step(s: &mut State, turn: i32) {
             .collect::<Vec<_>>();
         if ships.len() == 0 { continue }
 
+        /*
+         *
+         * Close Range Tactics
+         *
+         */
+
         // Retreat to ally, or away from enemy
         if s.scout.is_distressed(group) {
             info!("Distress signal on turn {} for group {:?}", turn, ships);
@@ -79,7 +85,13 @@ pub fn step(s: &mut State, turn: i32) {
             .collect::<Vec<_>>();
         if ships.len() == 0 { continue }
 
-        // Nearby docking site
+        /*
+         *
+         * Long Range Tactics
+         *
+         */
+
+        // Farther docking sites
         if let Some(planet) = s.scout.nearest_planet(&ships[0], 70.0) {
             info!("Traveling to {} on turn {} for group {:?}", planet.id, turn, ships);
             for ship in ships {
@@ -88,16 +100,32 @@ pub fn step(s: &mut State, turn: i32) {
             continue
         }
 
-        // Check distance of distress signal
+        // Any distress signal
         if let Some((ally, required)) = s.scout.nearest_distress(&ships[0], 500.0) {
             info!("Responding to distress signal on turn {} for group {:?}", turn, ships);
             let mut n = 0;
-            for ship in ships {
+            for ship in &ships {
                 if n >= required { break }
+                resolved.insert(ship.id);
                 s.queue.push(&navigate_to_ally(&mut s.grid, &ship, &ally));
                 n += 1;
             }
             s.scout.assist(&ally, n);
+        }
+
+        // Keep going without assisting ships
+        let ships = ships.into_iter()
+            .filter(|ship| !resolved.contains(&ship.id))
+            .collect::<Vec<_>>();
+        if ships.len() == 0 { continue }
+
+        // Any docked enemy
+        if let Some(enemy) = s.scout.nearest_target(&ships[0], 500.0) {
+            info!("Attacking docked enemy {} on turn {} for group {:?}", enemy.id, turn, ships);
+            for ship in ships {
+                s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemy));
+            }
+            continue
         }
     }
 
