@@ -17,7 +17,7 @@ impl Scout {
         let mut assign = FnvHashMap::default();
         let mut groups = Vec::new();
         let mut nearby = Vec::new();
-        for ship in ships.values().filter(|ship| !ship.is_docked()) {
+        for ship in ships.values() {
 
             // Planets in order of distance
             let mut p = planets.values()
@@ -107,7 +107,11 @@ impl Scout {
 
     pub fn nearest_dock(&self, ship: &Ship) -> Option<&Planet> {
         self.planets[&ship.id].iter()
-            .filter(|planet| ship.distance_to(planet) < DOCK_RADIUS - EPSILON)
+            .filter(|planet| {
+                ship.distance_to(planet) < planet.rad + DOCK_RADIUS - EPSILON
+            })
+            .filter(|planet| planet.has_spots())
+            .filter(|planet| !planet.is_enemy(ship.owner))
             .min_by(|a, b| {
                 ship.distance_to(a).partial_cmp(
                 &ship.distance_to(b)).unwrap()

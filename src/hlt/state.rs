@@ -157,6 +157,7 @@ impl State {
             }
         }
         self.ships = ships;
+        self.scout = Scout::new(self.id, &self.ships, &self.planets);
     }
 
     pub fn send_ready(name: &str) {

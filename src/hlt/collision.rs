@@ -30,13 +30,6 @@ impl Entity {
             Planet(_, _, _, id) => "p".to_string() + &id.to_string(),
         }
     }
-
-    pub fn id(&self) -> ID {
-        use hlt::collision::Entity::*;
-        match *self {
-            Ship(_, _, _, id) | Planet(_, _, _, id) => id,
-        }
-    }
 }
 
 pub trait ToEntity {
@@ -134,10 +127,6 @@ impl Grid {
         cells.sort_unstable();
         cells.dedup();
         cells
-    }
-
-    fn intersects((x1, y1): Point, r1: f64, (x2, y2): Point, r2: f64) -> bool {
-        (y2 - y1).hypot(x2 - x1) <= r1 + r2
     }
 
     fn intersects_line((ax1, ay1): Point, (ax2, ay2): Point,

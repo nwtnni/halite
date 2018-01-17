@@ -19,6 +19,7 @@ pub fn step(s: &mut State, turn: i32) {
 
         // Retreat to ally, or away from enemy
         if s.scout.is_distressed(group) {
+            info!("Distress signal on turn {} for group {:?}", turn, ships);
             for ship in ships {
                 let ally = s.scout.nearest_ally(&ship);
                 if let Some(ally) = ally {
@@ -33,6 +34,7 @@ pub fn step(s: &mut State, turn: i32) {
 
         // Check distance of distress signal
         if let Some(ally) = s.scout.nearest_distress(&ships[0], 35.0) {
+            info!("Responding to distress signal on turn {} for group {:?}", turn, ships);
             for ship in ships {
                 s.queue.push(&navigate_to_ally(&mut s.grid, &ship, &ally));
             }
@@ -41,9 +43,10 @@ pub fn step(s: &mut State, turn: i32) {
 
         // Dock if we can
         if let Some(planet) = s.scout.nearest_dock(&ships[0]) {
+            info!("Docking on turn {} for group {:?}", turn, ships);
             let mut n = 0;
             for ship in &ships {
-                if n + planet.spots() > planet.spots {
+                if n < planet.spots() {
                     docking.insert(ship.id);
                     s.queue.push(&dock(&ship, &planet));
                     n += 1;
@@ -59,6 +62,7 @@ pub fn step(s: &mut State, turn: i32) {
 
         // Nearby docked enemy
         if let Some(enemy) = s.scout.nearest_target(&ships[0], 35.0) {
+            info!("Attacking docked enemy {} on turn {} for group {:?}", enemy.id, turn, ships);
             for ship in ships {
                 s.queue.push(&navigate_to_enemy(&mut s.grid, &ship, &enemy));
             }
@@ -67,14 +71,16 @@ pub fn step(s: &mut State, turn: i32) {
 
         // Nearby docking site
         if let Some(planet) = s.scout.nearest_planet(&ships[0], 70.0) {
+            info!("Traveling to {} on turn {} for group {:?}", planet.id, turn, ships);
             for ship in ships {
-                s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet)); 
-            } 
+                s.queue.push(&navigate_to_planet(&mut s.grid, &ship, &planet));
+            }
             continue
         }
 
         // Otherwise reinforce distress signal
         if let Some(ally) = s.scout.nearest_distress(&ships[0], 500.0) {
+            info!("Responding to distress signal on turn {} for group {:?}", turn, ships);
             for ship in ships {
                 s.queue.push(&navigate_to_ally(&mut s.grid, &ship, &ally));
             }
