@@ -129,7 +129,7 @@ impl Scout {
                 ship.distance_to(a).partial_cmp(
                 &ship.distance_to(b)).unwrap()
             }).and_then(|planet| {
-                if ship.distance_to(&self.nearest_enemy(ship)) < 70.0 {
+                if ship.distance_to(&self.nearest_enemy(ship)) < 35.0 {
                     None
                 } else { Some(planet) }
             })

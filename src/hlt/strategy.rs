@@ -39,7 +39,7 @@ pub fn step(s: &mut State, turn: i32) {
         }
 
         // Check distance of distress signal
-        if let Some((ally, required)) = s.scout.nearest_distress(&ships[0], 21.0) {
+        if let Some((ally, required)) = s.scout.nearest_distress(&ships[0], 35.0) {
             info!("Responding to distress signal on turn {} for group {:?}", turn, ships);
             let mut n = 0;
             for ship in &ships {
@@ -90,6 +90,16 @@ pub fn step(s: &mut State, turn: i32) {
          * Long Range Tactics
          *
          */
+
+        // Nearby enemy to fight
+        if ships[0].distance_to(&s.scout.nearest_enemy(&ships[0])) < 35.0 {
+            for ship in &ships {
+                s.queue.push(
+                    &navigate_to_enemy(&mut s.grid, &ship, &s.scout.nearest_enemy(&ships[0]))
+                );
+            }
+            continue
+        }
 
         // Farther docking sites
         if let Some(planet) = s.scout.nearest_planet(&ships[0], 70.0) {
