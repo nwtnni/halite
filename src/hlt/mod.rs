@@ -5,3 +5,4 @@ pub mod parse;
 pub mod scout;
 pub mod state;
 pub mod strategy;
+pub mod tactic;
