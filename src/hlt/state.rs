@@ -27,8 +27,6 @@ pub struct Player {
 #[derive(Debug, Clone)]
 pub struct Ship {
     pub id: ID,
-    pub xp: f64,
-    pub yp: f64,
     pub x: f64,
     pub y: f64,
     pub hp: i32,
@@ -50,12 +48,6 @@ impl Ship {
     pub fn distance_to<T: ToEntity>(&self, e: &T) -> f64 {
         let (x, y) = e.to_entity().pos();
         (y - self.y).hypot(x - self.x)
-    }
-
-    pub fn is_facing(&self, s: &Ship) -> bool {
-        let theta = f64::atan2(s.yp - self.yp, s.xp - self.xp);
-        let phi = f64::atan2(self.y - self.yp, self.x - self.xp);
-        (theta - phi).abs() < EPSILON
     }
 }
 
@@ -139,19 +131,13 @@ impl State {
         let mut buffer = String::new();
         stdin().read_line(&mut buffer).unwrap();
         let mut stream: Vec<_> = buffer.split_whitespace().rev().collect();
-        let (players, planets, mut ships, grid) = take(&mut stream);
+        let (players, planets, ships, grid) = take(&mut stream);
         self.players = players;
         self.planets = planets;
         self.grid = grid;
         self.grid.owner = self.id;
         self.grid.width = self.width;
         self.grid.height = self.height;
-        for ship in &mut ships.values_mut() {
-            if let Some(previous) = self.ships.get(&ship.id) {
-                ship.xp = previous.x;
-                ship.yp = previous.y;
-            }
-        }
         self.ships = ships;
         self.scout = Scout::new(self.id, &self.ships, &self.planets);
     }

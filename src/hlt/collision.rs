@@ -91,6 +91,10 @@ impl Grid {
         }
     }
 
+    pub fn moved(&self, ship: &Ship) -> Option<Point> {
+        self.moved.get(&ship.to_entity().key()).map(|&(_, end)| end)
+    }
+
     fn to_cell(x: f64, y: f64) -> Cell {
         ((x / GRID_SCALE) as i32, (y / GRID_SCALE) as i32)
     }

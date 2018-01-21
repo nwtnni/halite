@@ -7,7 +7,7 @@ pub const SHIP_RADIUS: f64 = 0.5;
 pub const SHIP_SPEED: i32 = 7;
 
 // Weapon AoE
-pub const WEAPON_RADIUS: f64 = 6.0;
+pub const WEAPON_RADIUS: f64 = 5.5;
 
 // Damage per turn
 pub const WEAPON_DAMAGE: i32 = 64;

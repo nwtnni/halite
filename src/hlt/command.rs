@@ -57,7 +57,7 @@ fn navigate(grid: &mut Grid, ship: &Ship, (x, y): Point) -> Command {
 }
 
 pub fn navigate_to_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
-    let (x, y) = offset((s.x, s.y), (e.x, e.y), WEAPON_RADIUS, 90.0);
+    let (x, y) = offset((s.x, s.y), (e.x, e.y), WEAPON_RADIUS - EPSILON, 0.0);
     navigate(grid, s, (x, y))
 }
 
@@ -70,7 +70,8 @@ pub fn navigate_from_enemy(grid: &mut Grid, s: &Ship, e: &Ship) -> Command {
 }
 
 pub fn navigate_to_ally(grid: &mut Grid, s: &Ship, a: &Ship) -> Command {
-    let (x, y) = offset((s.x, s.y), (a.x, a.y), SHIP_RADIUS + EPSILON, 90.0);
+    let end = if let Some(end) = grid.moved(a) { end } else { (a.x, a.y) };
+    let (x, y) = offset((s.x, s.y), end, SHIP_RADIUS*2.0 + EPSILON, 90.0);
     navigate(grid, s, (x, y))
 }
 
