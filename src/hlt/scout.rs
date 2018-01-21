@@ -1,16 +1,15 @@
 use fnv::{FnvHashMap, FnvHashSet};
-use std::collections::BinaryHeap;
 use hlt::constants::*;
 use hlt::state::*;
-use hlt::tactic::*;
 
 pub struct Scout {
     ships: FnvHashMap<ID, Vec<Ship>>,
-    planets: FnvHashMap<ID, Vec<Planet>>,
-    assign: FnvHashMap<ID, ID>,
     groups: Vec<Vec<Ship>>,
     distress: FnvHashSet<ID>,
-    objectives: FnvHashMap<ID, BinaryHeap<Tactic>>,
+    assist: FnvHashMap<ID, usize>,
+    attack: FnvHashMap<ID, usize>,
+    assign: FnvHashMap<ID, ID>,
+    planets: FnvHashMap<ID, Vec<Planet>>,
 }
 
 impl Scout {
@@ -18,7 +17,8 @@ impl Scout {
         let mut ordered_ships = FnvHashMap::default();
         let mut ordered_planets = FnvHashMap::default();
         let mut assign = FnvHashMap::default();
-        let mut objectives = FnvHashMap::default();
+        let mut attack = FnvHashMap::default();
+        let mut assist = FnvHashMap::default();
         let mut groups = Vec::new();
         let mut nearby = Vec::new();
         for ship in ships.values() {
@@ -66,6 +66,7 @@ impl Scout {
 
             let group = groups.len();
             for ship in &unassigned { assign.insert(ship.id, group); }
+            attack.insert(group, unassigned.len());
             groups.push(unassigned);
         }
 
@@ -87,41 +88,29 @@ impl Scout {
                 let radius = if ship.is_docked() { DEFEND_RADIUS } else { COMBAT_RADIUS };
                 if ship.distance_to(&enemy) < radius && enemies >= allies {
                     distress.insert(assign[&ship.id]);
+                    assist.insert(assign[&ship.id], enemies - allies);
                 }
-            }
-        }
-
-        // Assign all objectives
-        for (ship, ships) in ordered_ships {
-            let mut resolved = FnvHashSet::default();
-            let mut priority = BinaryHeap::new();
-            let ship = ships[ship];
-            if ship.owner != id { continue }
-            for other in ships {
-                if resolved.contains(&assign[&other.id]) { continue }
-                else if ship.owner == other.owner {
-                    priority.push(Tactic::Aid(ship.clone(), other.clone()));
-                } else {
-                    priority.push(Tactic::Attack(ship.clone(), other.clone()));
-                }
-                resolved.insert(assign[&other.id]);
-            }
-            objectives.insert(ship.id, priority);
-        }
-
-        for (ship, planets) in ordered_planets {
-            let ship = ships[&ship];
-            for planet in planets {
-                objectives[&ship.id].push(Tactic::Dock(ship.clone(), planet.clone()));
             }
         }
 
         Scout { ships: ordered_ships, planets: ordered_planets,
-                distress, groups, assign, objectives }
+                distress, groups, assign, assist, attack }
     }
 
     pub fn is_distressed(&self, group: ID) -> bool {
         self.distress.contains(&group)
+    }
+
+    pub fn assist(&mut self, ship: &Ship, n: usize) {
+        let group = self.assign[&ship.id];
+        let m = self.assist[&group];
+        self.assist.insert(group, m - n);
+    }
+
+    pub fn attack(&mut self, ship: &Ship, n: usize) {
+        let group = self.assign[&ship.id];
+        let m = self.attack[&group];
+        self.attack.insert(group, m - n);
     }
 
     pub fn nearest_ally(&self, ship: &Ship) -> Option<&Ship> {
@@ -136,6 +125,63 @@ impl Scout {
         self.ships[&ship.id].iter()
             .filter(|other| other.owner != ship.owner)
             .nth(0).expect("No enemies remaining")
+    }
+
+    pub fn nearest_dock(&self, ship: &Ship) -> Option<&Planet> {
+        self.planets[&ship.id].iter()
+            .filter(|planet| {
+                ship.distance_to(planet) < planet.rad + DOCK_RADIUS - EPSILON
+            })
+            .filter(|planet| planet.has_spots())
+            .filter(|planet| !planet.is_enemy(ship.owner))
+            .filter(|planet| {
+                let (allies, enemies): (Vec<_>, Vec<_>) = self.ships[&ship.id]
+                    .iter()
+                    .filter(|other| other.distance_to(planet) < 70.0)
+                    .filter(|other| !other.is_docked())
+                    .partition(|other| other.owner == ship.owner);
+                enemies.len() == 0 || allies.len() > enemies.len() * 2
+            })
+            .min_by(|a, b| {
+                ship.distance_to(a).partial_cmp(
+                &ship.distance_to(b)).unwrap()
+            })
+    }
+
+    pub fn nearest_distress(&self, ship: &Ship, d: f64) -> Option<(Ship, usize)> {
+        self.ships[&ship.id].iter()
+            .take_while(|other| ship.distance_to(other) < d)
+            .filter(|other| other.id == ship.id)
+            .filter(|other| other.owner == ship.owner)
+            .filter(|other| self.distress.contains(&self.assign[&other.id]))
+            .filter(|other| self.assist[&self.assign[&other.id]] > 0)
+            .map(|other| (other.clone(), self.assist[&self.assign[&other.id]]))
+            .nth(0)
+    }
+
+    pub fn nearest_target(&self, ship: &Ship, d: f64) -> Option<&Ship> {
+        self.ships[&ship.id].iter()
+            .take_while(|other| ship.distance_to(other) < d)
+            .filter(|other| other.owner != ship.owner)
+            .filter(|other| other.is_docked())
+            .nth(0)
+    }
+
+    pub fn nearest_planet(&self, ship: &Ship, d: f64) -> Option<&Planet> {
+        self.planets[&ship.id].iter()
+            .take_while(|planet| ship.distance_to(planet) < d)
+            .filter(|planet| planet.has_spots())
+            .filter(|planet| !planet.is_enemy(ship.owner))
+            .nth(0)
+    }
+
+    pub fn near_groups(&self, ship: &Ship, d: f64) -> Vec<(Ship, usize)> {
+        self.ships[&ship.id].iter()
+            .filter(|other| other.owner != ship.owner)
+            .filter(|other| ship.distance_to(other) < d)
+            .filter(|other| self.attack[&self.assign[&other.id]] > 0)
+            .map(|other| (other.clone(), self.attack[&self.assign[&other.id]]))
+            .collect::<Vec<_>>()
     }
 
     pub fn groups(&self, id: ID) -> Vec<(usize, Vec<Ship>)> {

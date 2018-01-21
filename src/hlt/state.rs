@@ -1,6 +1,5 @@
 use fnv::FnvHashMap;
 use std::f64;
-use std::cmp::*;
 use std::io::stdin;
 use hlt::parse::*;
 use hlt::command::Queue;
@@ -39,32 +38,6 @@ pub struct Ship {
     pub owner: ID,
 }
 
-#[derive(Debug, Clone)]
-pub struct Planet {
-    pub id: ID,
-    pub x: f64,
-    pub y: f64,
-    pub hp: i32,
-    pub rad: f64,
-    pub spots: usize,
-    pub spawn: i32,
-    pub owner: Option<ID>,
-    pub ships: Vec<usize>,
-}
-
-pub struct State {
-    pub id: ID,
-    pub width: f64,
-    pub height: f64,
-    pub grid: Grid,
-    pub players: Vec<Player>,
-    pub planets: Planets,
-    pub scout: Scout,
-    pub ships: Ships,
-    pub queue: Queue,
-    pub docked: Docked,
-}
-
 impl Ship {
     pub fn is_docked(&self) -> bool {
         self.status != Status::Undocked
@@ -86,11 +59,18 @@ impl Ship {
     }
 }
 
-impl PartialEq for Ship {
-    fn eq(&self, other: &Ship) -> bool { self.id == other.id }
+#[derive(Debug, Clone)]
+pub struct Planet {
+    pub id: ID,
+    pub x: f64,
+    pub y: f64,
+    pub hp: i32,
+    pub rad: f64,
+    pub spots: usize,
+    pub spawn: i32,
+    pub owner: Option<ID>,
+    pub ships: Vec<usize>,
 }
-
-impl Eq for Ship {}
 
 impl Planet {
     pub fn is_owned(&self, id: ID) -> bool {
@@ -124,11 +104,18 @@ impl Planet {
     }
 }
 
-impl PartialEq for Planet {
-    fn eq(&self, other: &Planet) -> bool { self.id == other.id }
+pub struct State {
+    pub id: ID,
+    pub width: f64,
+    pub height: f64,
+    pub grid: Grid,
+    pub players: Vec<Player>,
+    pub planets: Planets,
+    pub scout: Scout,
+    pub ships: Ships,
+    pub queue: Queue,
+    pub docked: Docked,
 }
-
-impl Eq for Planet {}
 
 impl State {
     pub fn new() -> Self {
