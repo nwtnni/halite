@@ -1,2 +1,3 @@
 # halite
-Bot for Halite 2 (https://halite.io/) written in Rust
+
+Bots for Halite II and III (https://halite.io/) written in Rust
