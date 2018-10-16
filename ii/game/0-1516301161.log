@@ -1,0 +1,100 @@
+[
+ {
+  "Error": {
+   "Message": "ERRORED! Got Exception (if any): ERROR: Bot #0: Timeout reading commands for bot; select() result: 0 (max time: 2000 milliseconds).\nNo input received from bot.; Response received (if any): ",
+   "Turn": 1
+  },
+  "Frames": [
+   {
+    "Time": 3,
+    "Turn": 0
+   },
+   null
+  ],
+  "PlayerID": 0,
+  "PlayerName": "nwtnni"
+ },
+ {
+  "Error": {},
+  "Frames": [
+   {
+    "Time": 4,
+    "Turn": 0
+   },
+   {
+    "Commands": [
+     {
+      "angle": 259,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "thrust"
+     },
+     {
+      "angle": 258,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "thrust"
+     },
+     {
+      "angle": 259,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 166.66433703236419,
+      "y": 164.12860971586636
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 166.54461816427568,
+      "y": 158.15296679486337
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 166.66433703236419,
+      "y": 161.12860971586636
+     }
+    ],
+    "Time": 5,
+    "Turn": 1
+   }
+  ],
+  "PlayerID": 1,
+  "PlayerName": "nwtnni"
+ }
+]

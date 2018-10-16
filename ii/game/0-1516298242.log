@@ -1,0 +1,102 @@
+[
+ {
+  "Error": {
+   "Message": "ERRORED! Got Exception (if any): ERROR: Bot #0: Received invalid character 'thread 'main' panicked at 'index out of bounds: the len is 5 but the index is 5', /checkout/src/liballoc/vec.rs:1555:10h'. (at character 2.)\nInput received from bot:\nthread 'main' panicked at 'index out of bounds: the len is 5 but the index is 5', /checkout/src/liballoc/vec.rs:1555:10\n ^; Response received (if any): thread 'main' panicked at 'index out of bounds: the len is 5 but the index is 5', /checkout/src/liballoc/vec.rs:1555:10note: Run with `RUST_BACKTRACE=1` for a backtrace.",
+   "Turn": 1
+  },
+  "Frames": [
+   {
+    "Time": 3,
+    "Turn": 0
+   },
+   {
+    "Time": 0
+   }
+  ],
+  "PlayerID": 0,
+  "PlayerName": "nwtnni"
+ },
+ {
+  "Error": {},
+  "Frames": [
+   {
+    "Time": 3,
+    "Turn": 0
+   },
+   {
+    "Commands": [
+     {
+      "angle": 212,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "thrust"
+     },
+     {
+      "angle": 257,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "thrust"
+     },
+     {
+      "angle": 258,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.06366332690502,
+      "y": 155.29056515036757
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 154.42534261959295,
+      "y": 146.17940954650336
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 154.54461816427568,
+      "y": 149.15296679486337
+     }
+    ],
+    "Time": 4,
+    "Turn": 1
+   }
+  ],
+  "PlayerID": 1,
+  "PlayerName": "nwtnni"
+ }
+]

@@ -1,0 +1,4229 @@
+[
+ {
+  "Error": {
+   "Message": "ERRORED! Got Exception (if any): ERROR: Bot #0: Received invalid character 'thread 'main' panicked at 'no entry found for key', /checkout/src/libcore/option.rs:819:4h'. (at character 2.)\nInput received from bot:\nthread 'main' panicked at 'no entry found for key', /checkout/src/libcore/option.rs:819:4\n ^; Response received (if any): thread 'main' panicked at 'no entry found for key', /checkout/src/libcore/option.rs:819:4note: Run with `RUST_BACKTRACE=1` for a backtrace.",
+   "Turn": 24
+  },
+  "Frames": [
+   {
+    "Time": 3,
+    "Turn": 0
+   },
+   {
+    "Commands": [
+     {
+      "angle": 0,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 2,
+      "type": "thrust"
+     },
+     {
+      "angle": 11,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 1,
+      "type": "thrust"
+     },
+     {
+      "angle": 6,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 0,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 163.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 162.87139028413364,
+      "y": 50.335662967635812
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 162.9616532675779,
+      "y": 52.731699242873574
+     }
+    ],
+    "Time": 1,
+    "Turn": 1
+   },
+   {
+    "Commands": [
+     {
+      "angle": 0,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 2,
+      "type": "thrust"
+     },
+     {
+      "angle": 11,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 1,
+      "type": "thrust"
+     },
+     {
+      "angle": 5,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 0,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 169.74278056826731,
+      "y": 51.671325935271625
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 169.93501615422014,
+      "y": 53.341789442107178
+     }
+    ],
+    "Time": 0,
+    "Turn": 2
+   },
+   {
+    "Commands": [
+     {
+      "owner": 0,
+      "planet_id": 8,
+      "queue_number": 0,
+      "shipId": 2,
+      "type": "dock"
+     },
+     {
+      "angle": 11,
+      "magnitude": 1,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 1,
+      "type": "thrust"
+     },
+     {
+      "angle": 7,
+      "magnitude": 1,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 0,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       2
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 3
+   },
+   {
+    "Commands": [
+     {
+      "owner": 0,
+      "planet_id": 8,
+      "queue_number": 0,
+      "shipId": 1,
+      "type": "dock"
+     },
+     {
+      "owner": 0,
+      "planet_id": 8,
+      "queue_number": 0,
+      "shipId": 0,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 4
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 5
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 6
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 7
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 6,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 8
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 24,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 9
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 42,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 10
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 60,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 11
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 6,
+      "docked_ships": [
+       2,
+       1,
+       0
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 12
+   },
+   {
+    "Commands": [
+     {
+      "owner": 0,
+      "planet_id": 8,
+      "queue_number": 0,
+      "shipId": 6,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 24,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 13
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 42,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 14
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 60,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     }
+    ],
+    "Time": 0,
+    "Turn": 15
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 6,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 16
+   },
+   {
+    "Commands": [
+     {
+      "owner": 0,
+      "planet_id": 8,
+      "queue_number": 0,
+      "shipId": 8,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 24,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6,
+       8
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 17
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 48,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6,
+       8
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 18
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6,
+       8
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 10,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 173.84113590316298,
+      "y": 62.601050910729441
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 19
+   },
+   {
+    "Commands": [
+     {
+      "angle": 104,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 10,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 24,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6,
+       8
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 10,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 172.1476826339653,
+      "y": 69.393120994661416
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 20
+   },
+   {
+    "Commands": [
+     {
+      "angle": 103,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 10,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 48,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6,
+       8
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 10,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.57302525355826,
+      "y": 76.213711448158065
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 21
+   },
+   {
+    "Commands": [
+     {
+      "angle": 104,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 10,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 6,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6,
+       8
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 10,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 168.87957198436058,
+      "y": 83.00578153209004
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 12,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 173.84113590316298,
+      "y": 62.601050910729441
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 22
+   },
+   {
+    "Commands": [
+     {
+      "owner": 0,
+      "planet_id": 3,
+      "queue_number": 0,
+      "shipId": 10,
+      "type": "dock"
+     },
+     {
+      "angle": 104,
+      "magnitude": 7,
+      "owner": 0,
+      "queue_number": 0,
+      "shipId": 12,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       10
+      ],
+      "health": 1764,
+      "id": 3,
+      "owner": 0,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 36,
+      "docked_ships": [
+       2,
+       1,
+       0,
+       6,
+       8
+      ],
+      "health": 3590,
+      "id": 8,
+      "owner": 0,
+      "remaining_production": 2027
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 3,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 10,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 168.87957198436058,
+      "y": 83.00578153209004
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 8,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 181.13890625188139,
+      "y": 69.898821259447857
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 0,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.92756230586144,
+      "y": 53.46365878551233
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 12,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 172.1476826339653,
+      "y": 69.393120994661416
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 1,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.72440775171495,
+      "y": 51.862134930648175
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 6,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 176.47902735928827,
+      "y": 67.260929803322554
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 8,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 2,
+      "owner": 0,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 170.0,
+      "y": 55.0
+     }
+    ],
+    "Time": 0,
+    "Turn": 23
+   },
+   {
+    "Time": 0
+   }
+  ],
+  "PlayerID": 0,
+  "PlayerName": "nwtnni"
+ },
+ {
+  "Error": {},
+  "Frames": [
+   {
+    "Time": 7,
+    "Turn": 0
+   },
+   {
+    "Commands": [
+     {
+      "angle": 257,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "thrust"
+     },
+     {
+      "angle": 255,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "thrust"
+     },
+     {
+      "angle": 256,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 154.42534261959295,
+      "y": 152.17940954650336
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 154.18826668428235,
+      "y": 146.23851921597651
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 154.30654673080232,
+      "y": 149.20792991606803
+     }
+    ],
+    "Time": 3,
+    "Turn": 1
+   },
+   {
+    "Commands": [
+     {
+      "angle": 257,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "thrust"
+     },
+     {
+      "angle": 255,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "thrust"
+     },
+     {
+      "angle": 256,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 152.85068523918588,
+      "y": 145.3588190930067
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 152.37653336856471,
+      "y": 139.47703843195305
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 152.61309346160465,
+      "y": 142.41585983213605
+     }
+    ],
+    "Time": 1,
+    "Turn": 2
+   },
+   {
+    "Commands": [
+     {
+      "angle": 256,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "thrust"
+     },
+     {
+      "angle": 254,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "thrust"
+     },
+     {
+      "angle": 256,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 151.1572319699882,
+      "y": 138.56674900907473
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.44707187784573,
+      "y": 132.7482065603848
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.91964019240697,
+      "y": 135.62378974820408
+     }
+    ],
+    "Time": 1,
+    "Turn": 3
+   },
+   {
+    "Commands": [
+     {
+      "angle": 257,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "thrust"
+     },
+     {
+      "angle": 255,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "thrust"
+     },
+     {
+      "angle": 255,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 149.58257458958116,
+      "y": 131.74615855557809
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.63533856212808,
+      "y": 125.98672577636134
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 149.10790687668933,
+      "y": 128.86230896418058
+     }
+    ],
+    "Time": 1,
+    "Turn": 4
+   },
+   {
+    "Commands": [
+     {
+      "angle": 274,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "thrust"
+     },
+     {
+      "angle": 254,
+      "magnitude": 1,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "thrust"
+     },
+     {
+      "angle": 238,
+      "magnitude": 4,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "thrust"
+     }
+    ],
+    "Planets": null,
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 5
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 6
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 7
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 8
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 9
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 10
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 18,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 11
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 36,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 12
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 54,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 13
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 5,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 4,
+      "type": "dock"
+     },
+     {
+      "owner": 1,
+      "planet_id": 1,
+      "queue_number": 0,
+      "shipId": 3,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 152.39941265119455,
+      "y": 107.60058734880546
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 1,
+    "Turn": 14
+   },
+   {
+    "Commands": [
+     {
+      "angle": 26,
+      "magnitude": 5,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 7,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 18,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 0,
+    "Turn": 15
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 0,
+      "queue_number": 0,
+      "shipId": 7,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       7
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 36,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 0,
+    "Turn": 16
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       7
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 54,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     }
+    ],
+    "Time": 0,
+    "Turn": 17
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       7
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 9,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 152.39941265119455,
+      "y": 107.60058734880546
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     }
+    ],
+    "Time": 0,
+    "Turn": 18
+   },
+   {
+    "Commands": [
+     {
+      "angle": 44,
+      "magnitude": 5,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 9,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       7
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 18,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 9,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 155.99611165288781,
+      "y": 111.07387920110044
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     }
+    ],
+    "Time": 0,
+    "Turn": 19
+   },
+   {
+    "Commands": [
+     {
+      "owner": 1,
+      "planet_id": 0,
+      "queue_number": 0,
+      "shipId": 9,
+      "type": "dock"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 0,
+      "docked_ships": [
+       7,
+       9
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 36,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 5
+      },
+      "health": 255,
+      "id": 9,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 155.99611165288781,
+      "y": 111.07387920110044
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     }
+    ],
+    "Time": 0,
+    "Turn": 20
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 6,
+      "docked_ships": [
+       7,
+       9
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 54,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 4
+      },
+      "health": 255,
+      "id": 9,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 155.99611165288781,
+      "y": 111.07387920110044
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     }
+    ],
+    "Time": 0,
+    "Turn": 21
+   },
+   {
+    "Commands": null,
+    "Planets": [
+     {
+      "current_production": 12,
+      "docked_ships": [
+       7,
+       9
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 0,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 11,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 152.39941265119455,
+      "y": 107.60058734880546
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 3
+      },
+      "health": 255,
+      "id": 9,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 155.99611165288781,
+      "y": 111.07387920110044
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     }
+    ],
+    "Time": 0,
+    "Turn": 22
+   },
+   {
+    "Commands": [
+     {
+      "angle": 8,
+      "magnitude": 5,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 11,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 18,
+      "docked_ships": [
+       7,
+       9
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 18,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 11,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 157.35075299490239,
+      "y": 108.29645285360579
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 2
+      },
+      "health": 255,
+      "id": 9,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 155.99611165288781,
+      "y": 111.07387920110044
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     }
+    ],
+    "Time": 0,
+    "Turn": 23
+   },
+   {
+    "Commands": [
+     {
+      "angle": 294,
+      "magnitude": 7,
+      "owner": 1,
+      "queue_number": 0,
+      "shipId": 11,
+      "type": "thrust"
+     }
+    ],
+    "Planets": [
+     {
+      "current_production": 24,
+      "docked_ships": [
+       7,
+       9
+      ],
+      "health": 1764,
+      "id": 0,
+      "owner": 1,
+      "remaining_production": 996
+     },
+     {
+      "current_production": 36,
+      "docked_ships": [
+       5,
+       4,
+       3
+      ],
+      "health": 1764,
+      "id": 1,
+      "owner": 1,
+      "remaining_production": 996
+     }
+    ],
+    "Ships": [
+     {
+      "cooldown": 0,
+      "docking": {
+       "status": "undocked"
+      },
+      "health": 255,
+      "id": 11,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 160.197909496433,
+      "y": 101.90163465010758
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docking",
+       "turns_left": 1
+      },
+      "health": 255,
+      "id": 9,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 155.99611165288781,
+      "y": 111.07387920110044
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 3,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 146.98822981975653,
+      "y": 125.4701165795549
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 4,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 148.35970120631109,
+      "y": 125.02546408042302
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 1,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 5,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 150.07086990579003,
+      "y": 124.76321020375931
+     },
+     {
+      "cooldown": 0,
+      "docking": {
+       "planet_id": 0,
+       "status": "docked"
+      },
+      "health": 255,
+      "id": 7,
+      "owner": 1,
+      "vel_x": 0.0,
+      "vel_y": 0.0,
+      "x": 156.89338288269039,
+      "y": 109.79244308275085
+     }
+    ],
+    "Time": 0,
+    "Turn": 24
+   }
+  ],
+  "PlayerID": 1,
+  "PlayerName": "nwtnni"
+ }
+]

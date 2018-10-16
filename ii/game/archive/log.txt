@@ -1,0 +1,29 @@
+04.0: First Rust implementation--very different
+05.0: Rewrote and debugged most collision detection code
+06.0: Fixed all ships trying to dock whenever a spot opens up
+06.1: Stopped sending more ships than docking spots to a free planet
+06.2: No longer docking when there are enemies nearby
+07.0: Improved defense code: go toward attacking enemy
+07.1: Enemy detection radius of 7.0; find closest docked target when attacking
+07.2: Magic number is 12.0
+08.0: Now hunts down close ships at the end; doesn't change victory rate much
+09.0: No more docking overshoot, more wiggling precision, more docking separation,
+specialized navigation functions
+09.1: Actual dynamic circle-circle collision detection implemented
+10.0: Heuristic changes (pressing the attack, swarming to defend, fleeing farther)
+11.0: Significant refactoring (plan::execute, twos, fours)
+11.1: Fixed anti-rush code
+12.0: Stuff
+13.0: Rewrite from 0, focus on closest first and go from there
+14.0: Now exhibits cowardice
+15.0: More pessimistic, better defense
+16.0: Fixed defense again, added enemy extrapolation, more aggressive towards docked enemies
+17.0: Farther combat radius, retreat towards enemies
+
+// STARTING OVER
+
+0.00: Doesn't dock properly
+0.01: Docks properly
+0.02: Focus docked enemy ships
+0.03: Don't overcommit
+0.04: Fixed keeping track of docked ships
