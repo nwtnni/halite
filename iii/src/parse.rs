@@ -11,7 +11,7 @@ fn parse_usize<'a, S: Iterator<Item = &'a str>>(stream: &mut S) -> usize {
 
 impl data::State {
 
-    fn initialize<'a, S: Iterator<Item = &'a str>>(stream: &mut S) -> Self {
+    pub fn initialize<'a, S: Iterator<Item = &'a str>>(stream: &mut S) -> Self {
         let num_players = parse_usize(stream);
         let id = parse_usize(stream);
         let drops = Vec::with_capacity(0);
@@ -40,7 +40,7 @@ impl data::State {
         data::State { id, width, height, round, scores, drops, ships, yards, halite }
     }
 
-    fn update<'a, S: Iterator<Item = &'a str>>(&mut self, stream: &mut S) {
+    pub fn update<'a, S: Iterator<Item = &'a str>>(&mut self, stream: &mut S) {
 
         // Clear outdated ships and dropoffs
         self.ships = Vec::new();
