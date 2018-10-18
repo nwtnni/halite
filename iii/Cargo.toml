@@ -3,4 +3,9 @@ name = "halite-iii"
 version = "0.1.0"
 authors = ["Newton Ni <nwtnni@gmail.com>"]
 
+[profile.dev]
+opt-level = 3
+debug = true
+overflow-checks = false
+
 [dependencies]
