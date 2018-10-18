@@ -2,16 +2,12 @@ pub struct State {
     pub id: usize,
     pub width: usize,  
     pub height: usize,
-    pub players: Vec<Player>,
-    pub halite: Vec<usize>,
-}
-
-pub struct Player {
-    pub id: usize,
-    pub yard: Shipyard, 
+    pub round: usize,
+    pub scores: Vec<usize>,
     pub drops: Vec<Dropoff>,
     pub ships: Vec<Ship>,
-    pub halite: usize,
+    pub yards: Vec<Shipyard>, 
+    pub halite: Vec<usize>,
 }
 
 pub struct Ship {
@@ -24,14 +20,12 @@ pub struct Ship {
 
 pub struct Shipyard {
     pub owner: usize,
-    pub id: usize,
     pub x: usize,
     pub y: usize,
 }
 
 pub struct Dropoff {
     pub owner: usize,
-    pub id: usize,
     pub x: usize,
     pub y: usize,
 }
