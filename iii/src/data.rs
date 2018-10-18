@@ -1,3 +1,4 @@
+#[derive(Debug, Clone)]
 pub struct State {
     pub id: usize,
     pub width: usize,  
@@ -10,6 +11,7 @@ pub struct State {
     pub halite: Vec<usize>,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Ship {
     pub owner: usize,
     pub id: usize,
@@ -18,12 +20,14 @@ pub struct Ship {
     pub halite: usize,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Shipyard {
     pub owner: usize,
     pub x: usize,
     pub y: usize,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Dropoff {
     pub owner: usize,
     pub x: usize,

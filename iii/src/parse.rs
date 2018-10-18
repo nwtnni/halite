@@ -10,7 +10,6 @@ fn parse_usize<'a, S: Iterator<Item = &'a str>>(stream: &mut S) -> usize {
 }
 
 impl data::State {
-
     pub fn initialize<'a, S: Iterator<Item = &'a str>>(stream: &mut S) -> Self {
         let num_players = parse_usize(stream);
         let id = parse_usize(stream);
