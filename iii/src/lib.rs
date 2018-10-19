@@ -1,3 +1,6 @@
+extern crate fixedbitset;
+extern crate fnv;
+
 mod constants;
 mod command;
 mod data;

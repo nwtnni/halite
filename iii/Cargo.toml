@@ -12,3 +12,5 @@ overflow-checks = false
 log = "0.4"
 simplelog = "0.5.0"
 failure = "0.1.2"
+fixedbitset = "0.1.9"
+fnv = "1.0.6"
