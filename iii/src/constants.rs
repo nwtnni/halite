@@ -1,4 +1,3 @@
-pub const CAPTURE_ENABLED: bool = false;
 pub const CAPTURE_RADIUS: usize = 3;
 pub const DEFAULT_MAP_HEIGHT: usize = 48;
 pub const DEFAULT_MAP_WIDTH: usize = 48;
@@ -16,7 +15,7 @@ pub const INSPIRED_EXTRACT_RATIO: usize = 4;
 pub const INSPIRED_MOVE_COST_RATIO: usize = 10;
 pub const MAX_CELL_PRODUCTION: usize = 1000;
 pub const MAX_ENERGY: usize = 1000;
-pub const MAX_PLAYERS: usize = 16
+pub const MAX_PLAYERS: usize = 16;
 pub const MAX_TURNS: usize = 400;
 pub const MAX_TURN_THRESHOLD: usize = 64;
 pub const MIN_CELL_PRODUCTION: usize = 900;

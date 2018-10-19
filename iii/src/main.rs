@@ -1,29 +1,51 @@
-extern crate halite_iii;
+#[macro_use]
+extern crate log; 
+extern crate simplelog;
+extern crate failure;
 
-use std::io::{BufRead, BufReader, BufWriter};
+extern crate MyBot;
 
-use halite_iii::State;
+use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::fs::File;
 
-fn main() -> Result<(), std::io::Error> {
+use simplelog::*;
+
+use MyBot::State;
+
+fn main() -> Result<(), failure::Error> {
 
     let stdin = std::io::stdin();
     let stdout = std::io::stdout();
 
     let mut reader = BufReader::new(stdin.lock())
         .lines()
-        .filter_map(|line| line.ok());
+        .skip(1)
+        .filter_map(|line| line.ok())
+        .peekable();
 
     let mut writer = BufWriter::new(stdout.lock());
-    let mut state = match reader.next() {
-    | Some(initial) => State::initialize(&mut initial.split_whitespace()),
-    | None => panic!("[INTERNAL ERROR]: missing initial state"),
-    };
+    let mut state = State::initialize(&mut reader);
+    let log = format!("halite-{}.log", state.id);
+
+    WriteLogger::init(
+        LevelFilter::Info,
+        Config::default(),
+        File::create(log)?
+    )?;
+
+    write!(writer, "nwtnni-{}\n", state.id)?;
+    writer.flush()?;
     
-    for line in reader {
+    loop {
+        // Game over
+        if reader.peek().map_or(true, |line| line.is_empty()) {
+            return Ok(())
+        }
+
+        info!("{:?}", reader.peek());
         
-        state.update(&mut line.split_whitespace());
-
+        state.update(&mut reader);
+        write!(writer, "\n")?;
+        writer.flush()?;
     }
-
-    Ok(())
 }
