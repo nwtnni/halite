@@ -1,5 +1,5 @@
 [package]
-name = "halite-iii"
+name = "MyBot"
 version = "0.1.0"
 authors = ["Newton Ni <nwtnni@gmail.com>"]
 
@@ -9,3 +9,6 @@ debug = true
 overflow-checks = false
 
 [dependencies]
+log = "0.4"
+simplelog = "0.5.0"
+failure = "0.1.2"

@@ -1,5 +1,13 @@
+# Cargo-generated
 Cargo.lock
-
-.tags
 target
+
+# Halite-specific
 game
+replays
+
+# Log files
+*.log
+
+# Editor files
+.tags
