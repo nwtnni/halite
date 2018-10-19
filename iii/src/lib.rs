@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate log;
 extern crate fixedbitset;
 extern crate fnv;
 
@@ -6,6 +8,7 @@ mod command;
 mod data;
 mod grid;
 mod parse;
+mod strategy;
 
 pub use data::State;
-pub use command::Command;
+pub use strategy::execute;

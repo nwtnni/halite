@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub const CAPTURE_RADIUS: usize = 3;
 pub const DEFAULT_MAP_HEIGHT: usize = 48;
 pub const DEFAULT_MAP_WIDTH: usize = 48;

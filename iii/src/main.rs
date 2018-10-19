@@ -10,7 +10,7 @@ use std::fs::File;
 
 use simplelog::*;
 
-use MyBot::State;
+use MyBot::{execute, State};
 
 fn main() -> Result<(), failure::Error> {
 
@@ -42,9 +42,12 @@ fn main() -> Result<(), failure::Error> {
             return Ok(())
         }
 
-        info!("{:?}", reader.peek());
-        
         state.update(&mut reader);
+
+        for command in execute(&state) {
+            write!(writer, "{} ", command.to_string())?;
+        }
+
         write!(writer, "\n")?;
         writer.flush()?;
     }

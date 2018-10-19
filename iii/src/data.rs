@@ -11,6 +11,20 @@ pub struct State {
     pub halite: Vec<usize>,
 }
 
+impl State {
+    pub fn halite(&self) -> usize {
+        self.scores[self.id]
+    }
+
+    pub fn allies(&self) -> impl Iterator<Item = &Ship> {
+        self.ships.iter().filter(move |ship| ship.owner == self.id)
+    }
+
+    pub fn enemies(&self) -> impl Iterator<Item = &Ship> {
+        self.ships.iter().filter(move |ship| ship.owner != self.id)
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Ship {
     pub owner: usize,
