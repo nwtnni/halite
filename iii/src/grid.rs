@@ -122,9 +122,9 @@ impl<'round> Grid<'round> {
             for x in 0..self.width {
                 let col = row + x;
                 let halite = self.halite[col];
-                if halite > min && !self.occupied[col] {
+                if halite > min && (Pos(x, y) == pos || !self.occupied[col]) {
                     buffer.push(
-                        ((MAX_CELL_PRODUCTION - usize::min(halite, MAX_CELL_PRODUCTION))/ 100) +
+                        ((MAX_CELL_PRODUCTION - usize::min(halite, MAX_CELL_PRODUCTION)) / 500) +
                         self.dist(pos, Pos(x, y)) +
                         self.dist(Pos(x, y), self.base)
                     );
@@ -222,7 +222,6 @@ impl<'round> Grid<'round> {
             }
         }
 
-        assert!(false);
         return Command::Stay(ship.id)
     }
 }

@@ -28,7 +28,7 @@ impl Executor {
         let mut commands = Vec::new();
         let num_allies = state.allies().count();
 
-        if state.halite() > NEW_ENTITY_ENERGY_COST && state.round < MAX_TURNS / 2  && grid.can_spawn() {
+        if state.halite() > NEW_ENTITY_ENERGY_COST && state.round < MAX_TURNS / 3  && grid.can_spawn() {
             grid.spawn();
             commands.push(Command::Spawn);
         }
