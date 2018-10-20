@@ -1,17 +1,15 @@
-#![allow(non_snake_case)]
-
 extern crate log; 
 extern crate simplelog;
 extern crate failure;
 
-extern crate MyBot;
+extern crate my_bot;
 
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::fs::File;
 
 use simplelog::*;
 
-use MyBot::{Executor, State};
+use my_bot::{Executor, State};
 
 fn main() -> Result<(), failure::Error> {
 

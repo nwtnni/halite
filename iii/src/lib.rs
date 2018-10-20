@@ -1,5 +1,3 @@
-#![allow(non_snake_case)]
-
 extern crate log;
 extern crate fixedbitset;
 extern crate fnv;
