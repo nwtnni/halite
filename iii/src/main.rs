@@ -1,4 +1,5 @@
-#[macro_use]
+#![allow(non_snake_case)]
+
 extern crate log; 
 extern crate simplelog;
 extern crate failure;

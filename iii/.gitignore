@@ -5,6 +5,7 @@ target
 # Halite-specific
 game
 replays
+*.zip
 
 # Log files
 *.log

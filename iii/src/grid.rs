@@ -3,7 +3,7 @@ use std::usize;
 use fixedbitset::FixedBitSet;
 use fnv::FnvHashSet;
 
-use constants::{RETURN, MAX_CELL_PRODUCTION};
+use constants::{MAX_CELL_PRODUCTION};
 use command::Command;
 use data::{Dropoff, Ship, Shipyard};
 
