@@ -99,9 +99,9 @@ impl<'round> Grid<'round> {
                 let halite = self.halite[col];
                 if halite > min && !self.occupied[col] {
                     buffer.push(
-                        ((MAX_CELL_PRODUCTION - halite) / 100) +
+                        ((MAX_CELL_PRODUCTION - usize::min(halite, 0))/ 200) +
                         self.dist(pos, Pos(x, y)) +
-                        self.dist(pos, self.base) * 5
+                        self.dist(Pos(x, y), self.base) * 2
                     );
                 } else {
                     buffer.push(usize::max_value());

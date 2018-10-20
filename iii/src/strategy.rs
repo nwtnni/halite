@@ -35,7 +35,7 @@ impl Executor {
 
         let mut costs = Vec::with_capacity(num_allies * state.width * state.height);
         let allies = state.allies().collect::<Vec<_>>();
-        for ship in &allies { grid.distances_from(Pos(ship.x, ship.y), 20, &mut costs); }
+        for ship in &allies { grid.distances_from(Pos(ship.x, ship.y), 50, &mut costs); }
         let assignment = minimize(&costs, num_allies, state.width * state.height);
         let yard = state.yards[state.id];
 

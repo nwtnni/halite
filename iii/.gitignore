@@ -3,6 +3,7 @@ Cargo.lock
 target
 
 # Halite-specific
+archive
 game
 replays
 *.zip
