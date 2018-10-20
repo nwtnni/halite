@@ -1,5 +1,3 @@
-
-
 use constants::*;
 use command::Command;
 use data::State;

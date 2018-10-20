@@ -2,6 +2,7 @@
 extern crate log;
 extern crate fixedbitset;
 extern crate fnv;
+extern crate hungarian;
 
 mod constants;
 mod command;
