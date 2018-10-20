@@ -45,6 +45,7 @@ fn main() -> Result<(), failure::Error> {
         state.update(&mut reader);
 
         for command in execute(&state) {
+            info!("Executing command {:?}", command);
             write!(writer, "{} ", command.to_string())?;
         }
 
