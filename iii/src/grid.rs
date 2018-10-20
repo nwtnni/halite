@@ -3,6 +3,7 @@ use std::usize;
 use fixedbitset::FixedBitSet;
 use fnv::FnvHashSet;
 
+use constants::{RETURN, MAX_CELL_PRODUCTION};
 use command::Command;
 use data::{Dropoff, Ship, Shipyard};
 
@@ -91,8 +92,9 @@ impl<'round> Grid<'round> {
             let row = y * self.width;
             for x in 0..self.width {
                 let col = row + x;
-                if self.halite[col] >= min && !self.occupied.contains(col) {
-                    buffer.push(self.dist(pos, Pos(x, y)));
+                let halite = self.halite[col];
+                if halite > min && !self.occupied[col] {
+                    buffer.push(((MAX_CELL_PRODUCTION - halite) / 100) + self.dist(pos, Pos(x, y)));
                 } else {
                     buffer.push(usize::max_value());
                 }
@@ -100,7 +102,7 @@ impl<'round> Grid<'round> {
         }
     }
 
-    pub fn navigate(&mut self, ship: Ship, dest: Pos) -> Command {
+    pub fn navigate(&mut self, ship: Ship, dest: Pos, returning: bool) -> Command {
         let pos = Pos(ship.x, ship.y);
         if pos == dest { return Command::Stay(ship.id) }
         let index = ship.y * self.width + ship.x;
@@ -116,11 +118,14 @@ impl<'round> Grid<'round> {
             .min_by_key(|(_, pos)| self.dist(*pos, dest));
 
         if let Some((dir, next)) = closest {
-            self.occupied.set(index, false);
-            self.occupied.put(next.1 * self.width + next.0);
-            Command::Move(ship.id, *dir)
-        } else {
-            Command::Stay(ship.id)
+            let next_index = next.1 * self.width + next.0;
+            if returning || self.halite[index] == 0 || self.halite[next_index] > self.halite[index] {
+                self.occupied.set(index, false);
+                self.occupied.put(next_index);
+                return Command::Move(ship.id, *dir)
+            }
         }
+        
+        Command::Stay(ship.id)
     }
 }

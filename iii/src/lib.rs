@@ -12,4 +12,4 @@ mod parse;
 mod strategy;
 
 pub use data::State;
-pub use strategy::execute;
+pub use strategy::Executor;

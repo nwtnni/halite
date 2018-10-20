@@ -10,7 +10,7 @@ use std::fs::File;
 
 use simplelog::*;
 
-use MyBot::{execute, State};
+use MyBot::{Executor, State};
 
 fn main() -> Result<(), failure::Error> {
 
@@ -35,6 +35,8 @@ fn main() -> Result<(), failure::Error> {
 
     write!(writer, "nwtnni-{}\n", state.id)?;
     writer.flush()?;
+
+    let mut executor = Executor::default();
     
     loop {
         // Game over
@@ -44,7 +46,7 @@ fn main() -> Result<(), failure::Error> {
 
         state.update(&mut reader);
 
-        for command in execute(&state) {
+        for command in executor.execute(&state) {
             write!(writer, "{} ", command.to_string())?;
         }
 
