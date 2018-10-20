@@ -87,6 +87,10 @@ impl<'round> Grid<'round> {
         }
     }
 
+    pub fn distance_from_yard(&self, ship: &Ship) -> usize {
+        self.dist(Pos(ship.x, ship.y), self.base)
+    }
+
     pub fn distances_from(&self, pos: Pos, min: usize, buffer: &mut Vec<usize>) {
         for y in 0..self.height {
             let row = y * self.width;

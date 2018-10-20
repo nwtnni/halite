@@ -42,7 +42,7 @@ impl Executor {
         for (id, dest) in assignment.into_iter().enumerate() {
             let ship = allies[id];
 
-            if ship.halite >= RETURN {
+            if ship.halite >= RETURN || grid.distance_from_yard(ship) + state.round == MAX_TURNS {
                 self.returning.insert(ship.id);
             } else if ship.x == yard.x && ship.y == yard.y {
                 self.returning.remove(&ship.id);
