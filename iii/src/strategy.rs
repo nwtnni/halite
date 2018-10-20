@@ -35,7 +35,7 @@ impl Executor {
 
         let mut costs = Vec::with_capacity(num_allies * state.width * state.height);
         let allies = state.allies().collect::<Vec<_>>();
-        for ship in &allies { grid.distances_from(Pos(ship.x, ship.y), 50, &mut costs); }
+        for ship in &allies { grid.distances_from(Pos(ship.x, ship.y), 100, &mut costs); }
         let assignment = minimize(&costs, num_allies, state.width * state.height);
         let yard = state.yards[state.id];
 
@@ -49,11 +49,11 @@ impl Executor {
             }
 
             if self.returning.contains(&ship.id) {
-                let comm = grid.navigate(*ship, Pos(yard.x, yard.y), true);
+                let comm = grid.navigate(ship, Pos(yard.x, yard.y));
                 commands.push(comm); 
             } else if let Some(dest) = dest {
                 let dest = Pos(dest % state.width, dest / state.width);
-                let comm = grid.navigate(*ship, dest, false);
+                let comm = grid.navigate(ship, dest);
                 commands.push(comm);
             }
         }
