@@ -35,14 +35,14 @@ impl Executor {
 
         let mut costs = Vec::with_capacity(num_allies * state.width * state.height);
         let allies = state.allies().collect::<Vec<_>>();
-        for ship in &allies { grid.distances_from(Pos(ship.x, ship.y), 20, &mut costs); }
+        for ship in &allies { grid.distances_from(Pos(ship.x, ship.y), 50, &mut costs); }
         let assignment = minimize(&costs, num_allies, state.width * state.height);
         let yard = state.yards[state.id];
 
         for (id, dest) in assignment.into_iter().enumerate() {
             let ship = allies[id];
 
-            if ship.halite > RETURN {
+            if ship.halite >= RETURN {
                 self.returning.insert(ship.id);
             } else if ship.x == yard.x && ship.y == yard.y {
                 self.returning.remove(&ship.id);
