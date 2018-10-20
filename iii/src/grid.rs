@@ -55,6 +55,10 @@ impl<'round> Grid<'round> {
         self.occupied.put(self.base.0 + self.width * self.base.1);
     }
 
+    pub fn can_spawn(&self) -> bool {
+        !self.occupied[self.base.0 + self.width * self.base.1]
+    }
+
     pub fn dist(&self, a: Pos, b: Pos) -> usize {
         let min_x = usize::min(a.0, b.0);
         let max_x = usize::max(a.0, b.0);
@@ -108,7 +112,7 @@ impl<'round> Grid<'round> {
 
         let closest = DIRS.iter()
             .map(|dir| (dir, self.step(pos, *dir)))
-            .filter(|(_, pos)| !self.occupied.contains(pos.1 * self.width + pos.0))
+            .filter(|(_, pos)| !self.occupied[pos.1 * self.width + pos.0])
             .min_by_key(|(_, pos)| self.dist(*pos, dest));
 
         if let Some((dir, next)) = closest {
