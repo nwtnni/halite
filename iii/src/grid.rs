@@ -31,7 +31,7 @@ impl Dir {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Pos(pub usize, pub usize);
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Grid<'round> {
     width: usize,
     height: usize,
@@ -41,6 +41,7 @@ pub struct Grid<'round> {
     enemies: FixedBitSet,
     base: Pos,
     drops: FnvHashSet<Pos>,
+    routes: &'round mut [Vec<(usize, usize)>],
 }
 
 impl<'round> Grid<'round> {
@@ -53,6 +54,7 @@ impl<'round> Grid<'round> {
         ships: &[Ship],
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
+        routes: &'round mut [Vec<(usize, usize)>],
     ) -> Self {
         let mut allies = FixedBitSet::with_capacity(width * height);
         let mut enemies = FixedBitSet::with_capacity(width * height);
@@ -71,7 +73,7 @@ impl<'round> Grid<'round> {
         }
         let yard = yards[id];
         let base = Pos(yard.x, yard.y);
-        Grid { width, height, round, halite, allies, enemies, base, drops }
+        Grid { width, height, round, halite, allies, enemies, base, drops, routes }
     }
 
     #[inline(always)]

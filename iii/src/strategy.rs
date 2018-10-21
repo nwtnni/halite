@@ -9,6 +9,7 @@ use grid::{Pos, Grid};
 #[derive(Default, Debug, Clone)]
 pub struct Executor {
     returning: FnvHashSet<usize>,
+    routes: Vec<Vec<(usize, usize)>>,
 }
 
 impl Executor {
@@ -24,6 +25,7 @@ impl Executor {
             &state.ships,
             &state.drops,
             &state.yards,
+            &mut self.routes,
         );
 
         let mut commands = Vec::new();
