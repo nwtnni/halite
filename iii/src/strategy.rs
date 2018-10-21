@@ -39,7 +39,7 @@ impl Executor {
         let yard = state.yards[state.id];
 
         for ally in &allies {
-            grid.fill_cost(&mut costs, |pos, halite, surround, allies, enemies| {
+            grid.fill_cost(&mut costs, |pos, halite, _surround, _allies, _enemies| {
                 if halite > 100 {
                     grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ally.x, ally.y), pos)
                 } else {

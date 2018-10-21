@@ -223,13 +223,6 @@ impl<'round> Grid<'round> {
                 } else {
                     self.allies.set(start_index, false);
                     self.allies.put(step_index);
-                    info!("Ship {} moving from {:?} to {:?} in dir {:?} en route to {:?}",
-                        ship.id,
-                        start,
-                        step,
-                        dir,
-                        end,
-                    );
                     return Command::Move(ship.id, dir);
                 }
             }
