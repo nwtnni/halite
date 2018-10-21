@@ -19,6 +19,7 @@ impl Executor {
             state.id,
             state.width,
             state.height,
+            state.round,
             &state.halite,
             &state.ships,
             &state.drops,
@@ -28,16 +29,26 @@ impl Executor {
         let mut commands = Vec::new();
         let num_allies = state.allies().count();
 
-        if state.halite() > NEW_ENTITY_ENERGY_COST && state.round < MAX_TURNS / 3  && grid.can_spawn() {
-            grid.spawn();
+        if state.halite() > NEW_ENTITY_ENERGY_COST && state.round < MAX_TURNS / 2  && grid.can_spawn() {
+            grid.mark_spawn();
             commands.push(Command::Spawn);
         }
 
         let mut costs = Vec::with_capacity(num_allies * state.width * state.height);
         let allies = state.allies().collect::<Vec<_>>();
-        for ship in &allies { grid.distances_from(Pos(ship.x, ship.y), 100, &mut costs); }
-        let assignment = minimize(&costs, num_allies, state.width * state.height);
         let yard = state.yards[state.id];
+
+        for ally in &allies {
+            grid.fill_cost(&mut costs, |pos, halite, surround, allies, enemies| {
+                if halite > 100 {
+                    grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ally.x, ally.y), pos)
+                } else {
+                    usize::max_value()
+                }
+            });
+        }
+
+        let assignment = minimize(&costs, num_allies, state.width * state.height);
 
         for (id, dest) in assignment.into_iter().enumerate() {
             let ship = allies[id];
