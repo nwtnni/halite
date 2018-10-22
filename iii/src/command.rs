@@ -5,7 +5,6 @@ pub enum Command {
     Spawn,
     Transform(usize),
     Move(usize, Dir),
-    Stay(usize),
 }
 
 impl ToString for Command {
@@ -14,7 +13,6 @@ impl ToString for Command {
         | Command::Spawn         => "g".to_string(),
         | Command::Transform(id) => format!("c {}", id),
         | Command::Move(id, dir) => format!("m {} {}", id, dir.to_string()),
-        | Command::Stay(id)      => format!("m {} o", id),
         }
     }
 }
@@ -26,6 +24,7 @@ impl ToString for Dir {
         | Dir::S => "s",
         | Dir::E => "e",
         | Dir::W => "w",
+        | Dir::O => "o",
         }.to_string()
     }
 }

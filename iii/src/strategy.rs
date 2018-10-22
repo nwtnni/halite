@@ -4,7 +4,7 @@ use hungarian::minimize;
 use constants::{Constants, RETURN};
 use command::Command;
 use data::State;
-use grid::{Pos, Grid};
+use grid::{Dir, Pos, Grid};
 
 #[derive(Default, Debug, Clone)]
 pub struct Executor {
@@ -77,7 +77,7 @@ impl Executor {
                 let dest = Pos(dest % state.width, dest / state.width);
                 grid.navigate(ship, dest, false)
             } else {
-                Command::Stay(ship.id)    
+                Command::Move(ship.id, Dir::O)    
             };
 
             commands.push(comm);

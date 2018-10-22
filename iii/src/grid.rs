@@ -10,22 +10,11 @@ use constants::HALITE_TIME_RATIO;
 use command::Command;
 use data::{Dropoff, Ship, Shipyard};
 
-pub const DIRS: [Dir; 4] = [Dir::N, Dir::S, Dir::E, Dir::W];
+pub const DIRS: [Dir; 5] = [Dir::N, Dir::S, Dir::E, Dir::W, Dir::O];
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Dir {
-    N, S, E, W
-}
-
-impl Dir {
-    pub fn reflect(self) -> Self {
-        match self {
-        | Dir::N => Dir::S,
-        | Dir::S => Dir::N,
-        | Dir::E => Dir::W,
-        | Dir::W => Dir::E,
-        }
-    }
+    N, S, E, W, O
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -135,6 +124,7 @@ impl<'round> Grid<'round> {
         | Dir::S => Pos(p.0, (p.1 + 1) % self.height),
         | Dir::E => Pos((p.0 + 1) % self.width, p.1),
         | Dir::W => Pos((p.0 + self.width - 1) % self.width, p.1),
+        | Dir::O => p,
         }
     }
 
@@ -210,7 +200,7 @@ impl<'round> Grid<'round> {
         let start_index = self.index(start);
 
         if self.halite[start_index] / 10 > ship.halite || start == end {
-            return Command::Stay(ship.id)
+            return Command::Move(ship.id, Dir::O)
         }
 
         let mut queue = BinaryHeap::default();
@@ -235,7 +225,7 @@ impl<'round> Grid<'round> {
                 let step_index = self.index(step);
                 if (self.allies[step_index] && !(step == self.base && crash))
                 || (self.enemies[step_index] && step != self.base) {
-                    return Command::Stay(ship.id)
+                    return Command::Move(ship.id, Dir::O)
                 } else {
                     self.allies.set(start_index, false);
                     self.allies.put(step_index);
@@ -272,6 +262,6 @@ impl<'round> Grid<'round> {
             }
         }
 
-        Command::Stay(ship.id)    
+        Command::Move(ship.id, Dir::O)    
     }
 }
