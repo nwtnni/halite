@@ -189,7 +189,7 @@ impl<'round> Grid<'round> {
         }
     }
 
-    pub fn navigate(&mut self, ship: &Ship, end: Pos) -> Command {
+    pub fn navigate(&mut self, ship: &Ship, end: Pos, crash: bool) -> Command {
 
         #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
         struct Node(Pos, usize);
@@ -233,7 +233,8 @@ impl<'round> Grid<'round> {
                 }
 
                 let step_index = self.index(step);
-                if self.allies[step_index] || (self.enemies[step_index] && step != self.base) {
+                if (self.allies[step_index] && !(step == self.base && crash))
+                || (self.enemies[step_index] && step != self.base) {
                     return Command::Stay(ship.id)
                 } else {
                     self.allies.set(start_index, false);
