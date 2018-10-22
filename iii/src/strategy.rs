@@ -37,10 +37,11 @@ impl Executor {
         let mut costs = Vec::with_capacity(num_allies * state.width * state.height);
         let allies = state.allies().collect::<Vec<_>>();
         let yard = state.yards[state.id];
+        let cutoff = if grid.average_halite() > 100 { 100 } else { 50 };
 
         for ally in &allies {
             grid.fill_cost(&mut costs, constants.INSPIRATION_RADIUS, |pos, halite, _surround, _allies, _enemies| {
-                if halite > 100 {
+                if halite > cutoff {
                     grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ally.x, ally.y), pos)
                 } else {
                     usize::max_value()
@@ -50,7 +51,13 @@ impl Executor {
 
         let assignment = minimize(&costs, num_allies, state.width * state.height);
 
-        for (id, dest) in assignment.into_iter().enumerate() {
+        let mut sorted = assignment.into_iter()
+            .enumerate()
+            .collect::<Vec<_>>();
+
+        sorted.sort_by_key(|(id, _)| allies[*id].halite);
+
+        for (id, dest) in sorted {
             let ship = allies[id];
 
             if ship.halite >= RETURN || grid.distance_from_yard(ship) + state.round == constants.MAX_TURNS {

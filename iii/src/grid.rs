@@ -168,6 +168,10 @@ impl<'round> Grid<'round> {
             .sum()
     }
 
+    pub fn average_halite(&self) -> usize {
+        self.halite.iter().sum::<usize>() / self.halite.len()
+    }
+
     pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, radius: usize, f: F)
         where F: Fn(Pos, usize, usize, usize, usize) -> usize,
     {
