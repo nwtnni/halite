@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use fnv::FnvHashSet;
 use hungarian::minimize;
 
@@ -11,8 +9,6 @@ use grid::{Pos, Grid};
 #[derive(Default, Debug, Clone)]
 pub struct Executor {
     returning: FnvHashSet<usize>,
-    routes: Vec<VecDeque<Pos>>,
-    reservations: FnvHashSet<(Pos, usize)>,
 }
 
 impl Executor {
@@ -28,8 +24,6 @@ impl Executor {
             &state.ships,
             &state.drops,
             &state.yards,
-            &mut self.routes,
-            &mut self.reservations,
         );
 
         let mut commands = Vec::new();

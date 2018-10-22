@@ -1,11 +1,12 @@
 use std::cmp;
 use std::iter;
 use std::usize;
-use std::collections::{BinaryHeap, VecDeque};
+use std::collections::BinaryHeap;
 
 use fixedbitset::FixedBitSet;
 use fnv::{FnvHashSet, FnvHashMap};
 
+use constants::HALITE_TIME_RATIO;
 use command::Command;
 use data::{Dropoff, Ship, Shipyard};
 
@@ -40,8 +41,6 @@ pub struct Grid<'round> {
     enemies: FixedBitSet,
     base: Pos,
     drops: FnvHashSet<Pos>,
-    routes: &'round mut [VecDeque<Pos>],
-    reservations: &'round mut FnvHashSet<(Pos, usize)>,
 }
 
 impl<'round> Grid<'round> {
@@ -54,8 +53,6 @@ impl<'round> Grid<'round> {
         ships: &[Ship],
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
-        routes: &'round mut [VecDeque<Pos>],
-        reservations: &'round mut FnvHashSet<(Pos, usize)>,
     ) -> Self {
         let mut allies = FixedBitSet::with_capacity(width * height);
         let mut enemies = FixedBitSet::with_capacity(width * height);
@@ -87,8 +84,6 @@ impl<'round> Grid<'round> {
             enemies,
             base,
             drops,
-            routes,
-            reservations
         }
     }
 
@@ -257,7 +252,9 @@ impl<'round> Grid<'round> {
                 }
 
                 let node_index = self.index(node);
-                let next_cost = costs[&node] + self.halite[node_index] / 10;
+                let next_cost = costs[&node] +
+                    (self.halite[node_index] / 10) / HALITE_TIME_RATIO +
+                    1;
 
                 if let Some(prev_cost) = costs.get(&next) {
                     if *prev_cost <= next_cost {
@@ -272,6 +269,6 @@ impl<'round> Grid<'round> {
             }
         }
 
-        return Command::Stay(ship.id)
+        Command::Stay(ship.id)    
     }
 }
