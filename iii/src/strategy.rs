@@ -61,7 +61,7 @@ impl Executor {
         for (id, dest) in sorted {
             let ship = allies[id];
 
-            if grid.distance_from_yard(ship) + state.round + 5 == constants.MAX_TURNS {
+            if grid.distance_from_yard(ship) + state.round + 5 >= constants.MAX_TURNS {
                 self.crashing.insert(ship.id);
             } else if ship.x == yard.x && ship.y == yard.y {
                 self.returning.remove(&ship.id);
