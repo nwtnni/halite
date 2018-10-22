@@ -1,7 +1,11 @@
-extern crate log;
 extern crate fixedbitset;
 extern crate fnv;
+extern crate log;
 extern crate hungarian;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 
 mod constants;
 mod command;

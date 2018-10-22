@@ -6,7 +6,6 @@ use std::collections::{BinaryHeap, VecDeque};
 use fixedbitset::FixedBitSet;
 use fnv::{FnvHashSet, FnvHashMap};
 
-use constants::INSPIRATION_RADIUS;
 use command::Command;
 use data::{Dropoff, Ship, Shipyard};
 
@@ -176,7 +175,7 @@ impl<'round> Grid<'round> {
             .sum()
     }
 
-    pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, f: F)
+    pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, radius: usize, f: F)
         where F: Fn(Pos, usize, usize, usize, usize) -> usize,
     {
         for y in 0..self.height {
@@ -185,9 +184,9 @@ impl<'round> Grid<'round> {
                 let index = row + x;
                 let pos = Pos(x, y);
                 let halite = self.halite[index];
-                let surround = self.halite_around(pos, INSPIRATION_RADIUS);
-                let allies = self.allies_around(pos, INSPIRATION_RADIUS);
-                let enemies = self.enemies_around(pos, INSPIRATION_RADIUS);
+                let surround = self.halite_around(pos, radius);
+                let allies = self.allies_around(pos, radius);
+                let enemies = self.enemies_around(pos, radius);
                 costs.push(f(pos, halite, surround, allies, enemies));
             }
         }

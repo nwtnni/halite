@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use fnv::FnvHashSet;
 use hungarian::minimize;
 
-use constants::*;
+use constants::{Constants, RETURN};
 use command::Command;
 use data::State;
 use grid::{Pos, Grid};
@@ -17,7 +17,7 @@ pub struct Executor {
 
 impl Executor {
 
-    pub fn execute(&mut self, state: &State) -> Vec<Command> {
+    pub fn execute(&mut self, constants: &Constants, state: &State) -> Vec<Command> {
 
         let mut grid = Grid::new(
             state.id,
@@ -35,7 +35,7 @@ impl Executor {
         let mut commands = Vec::new();
         let num_allies = state.allies().count();
 
-        if state.halite() > NEW_ENTITY_ENERGY_COST && state.round < MAX_TURNS / 2  && grid.can_spawn() {
+        if state.halite() > constants.NEW_ENTITY_ENERGY_COST && state.round < constants.MAX_TURNS / 2  && grid.can_spawn() {
             grid.mark_spawn();
             commands.push(Command::Spawn);
         }
@@ -45,7 +45,7 @@ impl Executor {
         let yard = state.yards[state.id];
 
         for ally in &allies {
-            grid.fill_cost(&mut costs, |pos, halite, _surround, _allies, _enemies| {
+            grid.fill_cost(&mut costs, constants.INSPIRATION_RADIUS, |pos, halite, _surround, _allies, _enemies| {
                 if halite > 100 {
                     grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ally.x, ally.y), pos)
                 } else {
@@ -59,7 +59,7 @@ impl Executor {
         for (id, dest) in assignment.into_iter().enumerate() {
             let ship = allies[id];
 
-            if ship.halite >= RETURN || grid.distance_from_yard(ship) + state.round == MAX_TURNS {
+            if ship.halite >= RETURN || grid.distance_from_yard(ship) + state.round == constants.MAX_TURNS {
                 self.returning.insert(ship.id);
             } else if ship.x == yard.x && ship.y == yard.y {
                 self.returning.remove(&ship.id);

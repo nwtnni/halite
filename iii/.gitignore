@@ -6,6 +6,7 @@ target
 archive
 game
 replays
+fluorine
 *.zip
 
 # Log files

@@ -1,7 +1,7 @@
-#[macro_use]
 extern crate log; 
-extern crate simplelog;
 extern crate failure;
+extern crate simplelog;
+extern crate serde_json;
 
 extern crate my_bot;
 
@@ -19,10 +19,11 @@ fn main() -> Result<(), failure::Error> {
 
     let mut reader = BufReader::new(stdin.lock())
         .lines()
-        .skip(1)
         .filter_map(|line| line.ok())
         .peekable();
 
+    let initial = reader.next().expect("[INTERNAL ERROR]: missing constants");
+    let constants = serde_json::from_str(&initial)?;
     let mut writer = BufWriter::new(stdout.lock());
     let mut state = State::initialize(&mut reader);
     let log = format!("halite-{}.log", state.id);
@@ -46,9 +47,7 @@ fn main() -> Result<(), failure::Error> {
 
         state.update(&mut reader);
 
-        info!("Round {}", state.round);
-
-        for command in executor.execute(&state) {
+        for command in executor.execute(&constants, &state) {
             write!(writer, "{} ", command.to_string())?;
         }
 
