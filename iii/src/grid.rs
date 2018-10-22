@@ -1,7 +1,7 @@
 use std::cmp;
 use std::iter;
 use std::usize;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, VecDeque};
 
 use fixedbitset::FixedBitSet;
 use fnv::{FnvHashSet, FnvHashMap};
@@ -41,7 +41,8 @@ pub struct Grid<'round> {
     enemies: FixedBitSet,
     base: Pos,
     drops: FnvHashSet<Pos>,
-    routes: &'round mut [Vec<(usize, usize)>],
+    routes: &'round mut [VecDeque<Pos>],
+    reservations: &'round mut FnvHashSet<(Pos, usize)>,
 }
 
 impl<'round> Grid<'round> {
@@ -54,11 +55,13 @@ impl<'round> Grid<'round> {
         ships: &[Ship],
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
-        routes: &'round mut [Vec<(usize, usize)>],
+        routes: &'round mut [VecDeque<Pos>],
+        reservations: &'round mut FnvHashSet<(Pos, usize)>,
     ) -> Self {
         let mut allies = FixedBitSet::with_capacity(width * height);
         let mut enemies = FixedBitSet::with_capacity(width * height);
         let mut drops = FnvHashSet::default();
+
         for ship in ships {
             if ship.owner == id {
                 allies.put(ship.y * width + ship.x);
@@ -66,14 +69,28 @@ impl<'round> Grid<'round> {
                 enemies.put(ship.y * width + ship.x);
             }
         }
+
         for drop in dropoffs {
             if drop.owner == id {
                 drops.insert(Pos(drop.x, drop.y));
             }
         }
+
         let yard = yards[id];
         let base = Pos(yard.x, yard.y);
-        Grid { width, height, round, halite, allies, enemies, base, drops, routes }
+
+        Grid {
+            width,
+            height,
+            round,
+            halite,
+            allies,
+            enemies,
+            base,
+            drops,
+            routes,
+            reservations
+        }
     }
 
     #[inline(always)]
