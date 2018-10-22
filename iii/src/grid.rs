@@ -140,16 +140,14 @@ impl<'round> Grid<'round> {
 
     fn around(&self, pos: Pos, radius: usize) -> impl Iterator<Item = Pos> {
         let (w, h) = (self.width, self.height);
-        iter::once(pos).chain(
-            (1..radius).flat_map(move |y| {
-            (1..radius).flat_map(move |x| {
-                iter::once(Pos((pos.0 + w - x) % w, (pos.1 + h - y) % h))
-                    .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + h - y) % h)))
-                    .chain(iter::once(Pos((pos.0 + w - x) % w, (pos.1 + y) % h)))
-                    .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + y) % h)))
-            })
-            })
-        )
+        (0..radius).flat_map(move |y| {
+        (0..radius).flat_map(move |x| {
+            iter::once(Pos((pos.0 + w - x) % w, (pos.1 + h - y) % h))
+                .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + h - y) % h)))
+                .chain(iter::once(Pos((pos.0 + w - x) % w, (pos.1 + y) % h)))
+                .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + y) % h)))
+        })
+        })
     }
 
     pub fn allies_around(&self, pos: Pos, radius: usize) -> usize {
