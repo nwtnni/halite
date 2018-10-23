@@ -57,8 +57,10 @@ impl Executor {
         let mut costs = Vec::with_capacity(outgoing.len() * state.width * state.height);
         for ship in &outgoing {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                if halite > 50 && !grid.is_stuck(pos) {
-                    grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ship.x, ship.y), pos)
+                if halite > 40 && !grid.is_stuck(pos) {
+                    grid.dist(pos, Pos(yard.x, yard.y)) +
+                    grid.dist(Pos(ship.x, ship.y), pos) +
+                    (constants.MAX_CELL_PRODUCTION - usize::min(halite, constants.MAX_CELL_PRODUCTION)) / 200
                 } else {
                     usize::max_value()
                 }
