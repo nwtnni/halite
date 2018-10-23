@@ -44,6 +44,14 @@ impl Executor {
         let mut allies = state.allies().collect::<Vec<_>>();
         allies.sort_by_key(|ship| constants.MAX_ENERGY - ship.halite);
 
+        for i in 0..allies.len() {
+            if allies[i].x == yard.x && allies[i].y == yard.y {
+                let ship = allies.remove(i);
+                allies.insert(0, ship);
+                break
+            }
+        }
+
         let mut incoming = Vec::new();
         let mut outgoing = Vec::new();
 
