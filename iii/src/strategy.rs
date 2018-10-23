@@ -4,15 +4,24 @@ use hungarian::minimize;
 use constants::{Constants, RETURN};
 use command::Command;
 use data::State;
-use grid::{Dir, Pos, Grid};
+use grid::{Pos, Grid};
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Executor {
+    total: usize,
     crashing: FnvHashSet<usize>,
     returning: FnvHashSet<usize>,
 }
 
 impl Executor {
+
+    pub fn new(total: usize) -> Self {
+        Executor {
+            total,
+            crashing: FnvHashSet::default(),
+            returning: FnvHashSet::default(),
+        }
+    }
 
     pub fn execute(&mut self, constants: &Constants, state: &State) -> Vec<Command> {
 
@@ -30,6 +39,7 @@ impl Executor {
         info!("{}", state.round);
 
         let yard = state.yards[state.id];
+        let remaining = state.halite.iter().sum::<usize>();
 
         let mut allies = state.allies().collect::<Vec<_>>();
         allies.sort_by_key(|ship| ship.halite);
@@ -89,7 +99,7 @@ impl Executor {
 
         let (spawnable, mut commands) = grid.resolve_routes();
 
-        if state.halite() >= constants.NEW_ENTITY_ENERGY_COST && state.round < constants.MAX_TURNS / 2  && spawnable {
+        if state.halite() >= constants.NEW_ENTITY_ENERGY_COST && (remaining >= self.total / 2) && spawnable {
             commands.push(Command::Spawn);
         }
 

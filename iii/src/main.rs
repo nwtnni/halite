@@ -37,7 +37,10 @@ fn main() -> Result<(), failure::Error> {
     write!(writer, "nwtnni-{}\n", state.id)?;
     writer.flush()?;
 
-    let mut executor = Executor::default();
+    let total = state.halite.iter()
+        .sum::<usize>();
+
+    let mut executor = Executor::new(total);
     
     loop {
         // Game over
