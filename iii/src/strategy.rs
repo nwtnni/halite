@@ -27,53 +27,61 @@ impl Executor {
             &state.yards,
         );
 
-        let num_allies = state.allies().count();
+        info!("{}", state.round);
+
         let yard = state.yards[state.id];
 
-        let mut costs = Vec::with_capacity(num_allies * state.width * state.height);
         let mut allies = state.allies().collect::<Vec<_>>();
         allies.sort_by_key(|ship| ship.halite);
 
+        let mut incoming = Vec::new();
+        let mut outgoing = Vec::new();
+
         for ship in &allies {
-            if ship.x == yard.x && ship.y == yard.y {
-                info!("Round {}: {:?}", state.round, ship);
+            if grid.distance_from_yard(ship) + state.round + 5 >= constants.MAX_TURNS {
+                self.crashing.insert(ship.id);
+                incoming.push(ship);
+            } else if ship.x == yard.x && ship.y == yard.y {
+                self.returning.remove(&ship.id);
+                outgoing.push(ship);
+            } else if ship.halite >= RETURN {
+                self.returning.insert(ship.id);
+                incoming.push(ship);
+            } else if self.returning.contains(&ship.id) {
+                incoming.push(ship);
+            } else {
+                outgoing.push(ship);
             }
         }
 
-        let cutoff = if grid.average_halite() > 50 { 50 } else { 25 };
-
-        for ally in &allies {
+        let mut costs = Vec::with_capacity(outgoing.len() * state.width * state.height);
+        for ship in &outgoing {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                if halite > cutoff && !grid.is_stuck(pos) {
-                    grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ally.x, ally.y), pos)
+                if halite > 50 && !grid.is_stuck(pos) {
+                    grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ship.x, ship.y), pos)
                 } else {
                     usize::max_value()
                 }
             });
         }
 
-        let assignment = minimize(&costs, num_allies, state.width * state.height)
+        let assignment = minimize(&costs, outgoing.len(), state.width * state.height)
             .into_iter()
             .enumerate();
 
         for (id, dest) in assignment {
-            let ship = allies[id];
-
-            if grid.distance_from_yard(ship) + state.round + 5 >= constants.MAX_TURNS {
-                self.crashing.insert(ship.id);
-            } else if ship.x == yard.x && ship.y == yard.y {
-                self.returning.remove(&ship.id);
-            } else if ship.halite >= RETURN {
-                self.returning.insert(ship.id);
+            if let Some(dest) = dest {
+                let ship = outgoing[id];
+                let dest = Pos(dest % state.width, dest / state.width);
+                grid.plan_route(ship, dest);
             }
+        }
 
+        for ship in incoming {
             if self.crashing.contains(&ship.id) {
                 grid.plan_route(ship, Pos(yard.x, yard.y));
             } else if self.returning.contains(&ship.id) {
                 grid.plan_route(ship, Pos(yard.x, yard.y));
-            } else if let Some(dest) = dest {
-                let dest = Pos(dest % state.width, dest / state.width);
-                grid.plan_route(ship, dest);
             }
         }
 
