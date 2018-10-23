@@ -158,11 +158,11 @@ impl<'round> Grid<'round> {
         })
     }
 
-    pub fn allies_around(&self, pos: Pos, radius: usize) -> usize {
-        self.around(pos, radius)
-            .filter(|pos| self.allies[self.index(*pos)])
-            .count()
-    }
+    // pub fn allies_around(&self, pos: Pos, radius: usize) -> usize {
+    //     self.around(pos, radius)
+    //         .filter(|pos| self.allies[self.index(*pos)])
+    //         .count()
+    // }
 
     pub fn enemies_around(&self, pos: Pos, radius: usize) -> usize {
         self.around(pos, radius)
@@ -170,15 +170,15 @@ impl<'round> Grid<'round> {
             .count()
     }
 
-    pub fn halite_around(&self, pos: Pos, radius: usize) -> usize {
-        self.around(pos, radius)
-            .map(|pos| self.halite[self.index(pos)])
-            .sum()
-    }
+//     pub fn halite_around(&self, pos: Pos, radius: usize) -> usize {
+//         self.around(pos, radius)
+//             .map(|pos| self.halite[self.index(pos)])
+//             .sum()
+//     }
 
-    pub fn average_halite(&self) -> usize {
-        self.halite.iter().sum::<usize>() / self.halite.len()
-    }
+//     pub fn average_halite(&self) -> usize {
+//         self.halite.iter().sum::<usize>() / self.halite.len()
+//     }
 
     pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, f: F)
         where F: Fn(&Self, Pos, usize) -> usize,
