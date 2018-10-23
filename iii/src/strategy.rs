@@ -106,7 +106,8 @@ impl Executor {
         let (spawnable, mut commands) = grid.resolve_routes();
 
         if state.halite() >= constants.NEW_ENTITY_ENERGY_COST
-        && (remaining >= self.total / 2 || state.round <= constants.MAX_TURNS / 2)
+        && remaining >= self.total / 2
+        && state.round <= constants.MAX_TURNS / 2
         && spawnable {
             commands.push(Command::Spawn);
         }
