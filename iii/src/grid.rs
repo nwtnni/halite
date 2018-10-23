@@ -251,7 +251,7 @@ impl<'round> Grid<'round> {
                 let next_index = self.index(next);
 
                 if seen.contains(&next) || self.stuck[next_index]
-                || (self.enemies_around(next, 2) > 0 && next != self.base) {
+                || (self.enemies_around(next, 1) > 0 && next != self.base) {
                     continue
                 }
 
@@ -279,6 +279,7 @@ impl<'round> Grid<'round> {
             }
         }
 
+        warn!("[{}]: unable to path to {:?}", ship.id, end);
         self.planned.push((ship.id, Dir::O, start, crash));
     }
 

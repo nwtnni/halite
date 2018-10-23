@@ -1,7 +1,7 @@
 use fnv::FnvHashSet;
 use hungarian::minimize;
 
-use constants::{Constants, RETURN};
+use constants::Constants;
 use command::Command;
 use data::State;
 use grid::{Pos, Grid};
@@ -42,7 +42,7 @@ impl Executor {
         let remaining = state.halite.iter().sum::<usize>();
 
         let mut allies = state.allies().collect::<Vec<_>>();
-        allies.sort_by_key(|ship| ship.halite);
+        allies.sort_by_key(|ship| constants.MAX_ENERGY - ship.halite);
 
         let mut incoming = Vec::new();
         let mut outgoing = Vec::new();
@@ -54,7 +54,7 @@ impl Executor {
             } else if ship.x == yard.x && ship.y == yard.y {
                 self.returning.remove(&ship.id);
                 outgoing.push(ship);
-            } else if ship.halite >= RETURN {
+            } else if ship.halite >= 1000 {
                 self.returning.insert(ship.id);
                 incoming.push(ship);
             } else if self.returning.contains(&ship.id) {
@@ -67,10 +67,16 @@ impl Executor {
         let mut costs = Vec::with_capacity(outgoing.len() * state.width * state.height);
         for ship in &outgoing {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                if halite > 40 && !grid.is_stuck(pos) {
-                    grid.dist(pos, Pos(yard.x, yard.y)) +
-                    grid.dist(Pos(ship.x, ship.y), pos) +
-                    (constants.MAX_CELL_PRODUCTION - usize::min(halite, constants.MAX_CELL_PRODUCTION)) / 200
+                let cost = (constants.MAX_CELL_PRODUCTION - usize::min(halite, constants.MAX_CELL_PRODUCTION)) / 200
+                         + grid.dist(pos, Pos(yard.x, yard.y))
+                         + grid.dist(Pos(ship.x, ship.y), pos);
+
+                if pos == Pos(yard.x, yard.y) {
+                    usize::max_value()
+                } else if halite >= 100 && !grid.is_stuck(pos) && !(grid.enemies_around(pos, 1) > 0)  {
+                    cost
+                } else if halite >= 12 && halite < 100 {
+                    cost + 100000
                 } else {
                     usize::max_value()
                 }
@@ -99,7 +105,9 @@ impl Executor {
 
         let (spawnable, mut commands) = grid.resolve_routes();
 
-        if state.halite() >= constants.NEW_ENTITY_ENERGY_COST && (remaining >= self.total / 2) && spawnable {
+        if state.halite() >= constants.NEW_ENTITY_ENERGY_COST
+        && (remaining >= self.total / 2 || state.round <= constants.MAX_TURNS / 2)
+        && spawnable {
             commands.push(Command::Spawn);
         }
 
