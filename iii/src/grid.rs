@@ -44,7 +44,7 @@ pub struct Grid<'round> {
     stuck: FixedBitSet,
     base: Pos,
     drops: FnvHashSet<Pos>,
-    planned: Vec<(usize, Dir, Pos)>,
+    planned: Vec<(usize, Dir, Pos, bool)>,
 }
 
 impl<'round> Grid<'round> {
@@ -194,7 +194,7 @@ impl<'round> Grid<'round> {
         }
     }
 
-    pub fn plan_route(&mut self, ship: &Ship, end: Pos) {
+    pub fn plan_route(&mut self, ship: &Ship, end: Pos, crash: bool) {
 
         #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
         struct Node(Pos, usize);
@@ -215,7 +215,7 @@ impl<'round> Grid<'round> {
         let start_index = self.index(start);
 
         if self.halite[start_index] / 10 > ship.halite || start == end {
-            self.planned.push((ship.id, Dir::O, start));
+            self.planned.push((ship.id, Dir::O, start, crash));
             return
         }
 
@@ -239,7 +239,7 @@ impl<'round> Grid<'round> {
                 }
 
                 let next = self.step(start, dir);
-                self.planned.push((ship.id, dir, next));
+                self.planned.push((ship.id, dir, next, crash));
                 return
             }
 
@@ -278,7 +278,7 @@ impl<'round> Grid<'round> {
             }
         }
 
-        self.planned.push((ship.id, Dir::O, start));
+        self.planned.push((ship.id, Dir::O, start, crash));
     }
 
     pub fn resolve_routes(&mut self) -> (bool, Vec<Command>) {
@@ -293,11 +293,13 @@ impl<'round> Grid<'round> {
             change = None;
 
             'outer: for i in 0..routes {
-                let (id_a, dir_a, next_a) = planned[i];
+                let (id_a, dir_a, next_a, crash_a) = planned[i];
                 for j in i + 1..routes {
-                    let (id_b, dir_b, next_b) = planned[j];
+                    let (id_b, dir_b, next_b, crash_b) = planned[j];
                     if next_a == next_b {
-                        if dir_a == Dir::O {
+                        if next_a == self.base && (crash_a || crash_b) {
+                            continue
+                        } else if dir_a == Dir::O {
                             change = Some(id_b);
                         } else if dir_b == Dir::O {
                             change = Some(id_a);
@@ -323,7 +325,7 @@ impl<'round> Grid<'round> {
         }
 
         let mut spawnable = true;
-        for (id, dir, next) in planned {
+        for (id, dir, next, _) in planned {
             if next == self.base { spawnable = false; }
             resolved.push(Command::Move(id, dir));
         }

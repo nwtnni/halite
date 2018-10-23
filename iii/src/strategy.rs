@@ -38,7 +38,7 @@ impl Executor {
         let mut outgoing = Vec::new();
 
         for ship in &allies {
-            if grid.distance_from_yard(ship) + state.round + 5 >= constants.MAX_TURNS {
+            if grid.distance_from_yard(ship) + state.round + 10 >= constants.MAX_TURNS {
                 self.crashing.insert(ship.id);
                 incoming.push(ship);
             } else if ship.x == yard.x && ship.y == yard.y {
@@ -73,15 +73,15 @@ impl Executor {
             if let Some(dest) = dest {
                 let ship = outgoing[id];
                 let dest = Pos(dest % state.width, dest / state.width);
-                grid.plan_route(ship, dest);
+                grid.plan_route(ship, dest, false);
             }
         }
 
         for ship in incoming {
             if self.crashing.contains(&ship.id) {
-                grid.plan_route(ship, Pos(yard.x, yard.y));
+                grid.plan_route(ship, Pos(yard.x, yard.y), true);
             } else if self.returning.contains(&ship.id) {
-                grid.plan_route(ship, Pos(yard.x, yard.y));
+                grid.plan_route(ship, Pos(yard.x, yard.y), false);
             }
         }
 
