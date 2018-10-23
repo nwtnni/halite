@@ -1,5 +1,6 @@
 use std::cmp;
 use std::iter;
+use std::mem;
 use std::usize;
 use std::collections::BinaryHeap;
 
@@ -17,6 +18,18 @@ pub enum Dir {
     N, S, E, W, O
 }
 
+impl Dir {
+    pub fn reflect(self) -> Self {
+        match self {
+        | Dir::N => Dir::S,
+        | Dir::S => Dir::N,
+        | Dir::E => Dir::W,
+        | Dir::W => Dir::E,
+        | Dir::O => Dir::O,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Pos(pub usize, pub usize);
 
@@ -28,8 +41,10 @@ pub struct Grid<'round> {
     halite: &'round [usize],
     allies: FixedBitSet,
     enemies: FixedBitSet,
+    stuck: FixedBitSet,
     base: Pos,
     drops: FnvHashSet<Pos>,
+    planned: Vec<(usize, Dir, Pos)>,
 }
 
 impl<'round> Grid<'round> {
@@ -45,11 +60,16 @@ impl<'round> Grid<'round> {
     ) -> Self {
         let mut allies = FixedBitSet::with_capacity(width * height);
         let mut enemies = FixedBitSet::with_capacity(width * height);
+        let mut stuck = FixedBitSet::with_capacity(width * height);
         let mut drops = FnvHashSet::default();
 
         for ship in ships {
             if ship.owner == id {
-                allies.put(ship.y * width + ship.x);
+                let ship_index = ship.y * width + ship.x;
+                if ship.halite < halite[ship_index] / 10 {
+                    stuck.put(ship_index);
+                }
+                allies.put(ship_index);
             } else {
                 enemies.put(ship.y * width + ship.x);
             }
@@ -63,6 +83,7 @@ impl<'round> Grid<'round> {
 
         let yard = yards[id];
         let base = Pos(yard.x, yard.y);
+        let planned = Vec::new();
 
         Grid {
             width,
@@ -71,8 +92,10 @@ impl<'round> Grid<'round> {
             halite,
             allies,
             enemies,
+            stuck,
             base,
             drops,
+            planned,
         }
     }
 
@@ -81,13 +104,8 @@ impl<'round> Grid<'round> {
         self.width * pos.1 + pos.0
     }
 
-    pub fn mark_spawn(&mut self) {
-        let index = self.index(self.base);
-        self.allies.put(index);
-    }
-
-    pub fn can_spawn(&self) -> bool {
-        !self.allies[self.index(self.base)]
+    pub fn is_stuck(&self, pos: Pos) -> bool {
+        self.stuck.contains(self.index(pos))
     }
 
     pub fn distance_from_yard(&self, ship: &Ship) -> usize {
@@ -163,7 +181,7 @@ impl<'round> Grid<'round> {
     }
 
     pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, radius: usize, f: F)
-        where F: Fn(Pos, usize, usize, usize, usize) -> usize,
+        where F: Fn(&Self, Pos, usize) -> usize,
     {
         for y in 0..self.height {
             let row = y * self.width;
@@ -171,15 +189,12 @@ impl<'round> Grid<'round> {
                 let index = row + x;
                 let pos = Pos(x, y);
                 let halite = self.halite[index];
-                let surround = self.halite_around(pos, radius);
-                let allies = self.allies_around(pos, radius);
-                let enemies = self.enemies_around(pos, radius);
-                costs.push(f(pos, halite, surround, allies, enemies));
+                costs.push(f(self, pos, halite));
             }
         }
     }
 
-    pub fn navigate(&mut self, ship: &Ship, end: Pos, crash: bool) -> Command {
+    pub fn plan_route(&mut self, ship: &Ship, end: Pos) {
 
         #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
         struct Node(Pos, usize);
@@ -200,7 +215,9 @@ impl<'round> Grid<'round> {
         let start_index = self.index(start);
 
         if self.halite[start_index] / 10 > ship.halite || start == end {
-            return Command::Move(ship.id, Dir::O)
+            info!("Round {}: ship {:?} stuck en route to {:?}", self.round, ship, end);
+            self.planned.push((ship.id, Dir::O, start));
+            return
         }
 
         let mut queue = BinaryHeap::default();
@@ -215,22 +232,17 @@ impl<'round> Grid<'round> {
 
             if node == end {
                 let mut step = end;
-                let mut dir = Dir::N;
+                let mut dir = Dir::O;
                 while let Some((prev, prev_dir)) = trace.get(&step) {
                     dir = *prev_dir;
                     if *prev == start { break }
                     step = *prev;
                 }
 
-                let step_index = self.index(step);
-                if (self.allies[step_index] && !(step == self.base && crash))
-                || (self.enemies[step_index] && step != self.base) {
-                    return Command::Move(ship.id, Dir::O)
-                } else {
-                    self.allies.set(start_index, false);
-                    self.allies.put(step_index);
-                    return Command::Move(ship.id, dir);
-                }
+                let next = self.step(start, dir);
+                info!("Round {}: ship {:?} found path to {:?} going {:?}", self.round, ship, end, dir);
+                self.planned.push((ship.id, dir, next));
+                return
             }
 
             seen.insert(node);
@@ -240,7 +252,7 @@ impl<'round> Grid<'round> {
                 let next = self.step(node, *dir);
                 let next_index = self.index(next);
 
-                if (self.allies[next_index] || self.enemies[next_index]) && next != end {
+                if seen.contains(&next) || self.stuck[next_index] || self.enemies_around(next, 1) > 0 {
                     continue
                 }
 
@@ -262,6 +274,58 @@ impl<'round> Grid<'round> {
             }
         }
 
-        Command::Move(ship.id, Dir::O)    
+        info!("Round {}: ship {:?} could not find path to {:?}", self.round, ship, end);
+        self.planned.push((ship.id, Dir::O, start));
+    }
+
+    pub fn resolve_routes(&mut self) -> (bool, Vec<Command>) {
+
+        let mut planned = mem::replace(&mut self.planned, Vec::with_capacity(0));
+        let routes = planned.len();
+        let mut resolved = Vec::with_capacity(routes);
+        let mut change;
+
+        loop {
+
+            change = None;
+
+            'outer: for i in 0..routes {
+                let (id_a, dir_a, next_a) = planned[i];
+                for j in i + 1..routes {
+                    let (id_b, dir_b, next_b) = planned[j];
+                    if next_a == next_b {
+                        if dir_a == Dir::O {
+                            change = Some(id_b);
+                        } else if dir_b == Dir::O {
+                            change = Some(id_a);
+                        } else {
+                            change = Some(id_b);
+                        }
+                        break 'outer;
+                    }
+                }
+            }
+
+            if let Some(id) = change {
+                for plan in &mut planned {
+                    if id == plan.0 {
+                        info!("Preventing {:?} from colliding", plan);
+                        plan.2 = self.step(plan.2, plan.1.reflect());
+                        plan.1 = Dir::O;
+                        break
+                    }
+                }
+            } else {
+                break
+            }
+        }
+
+        let mut spawnable = true;
+        for (id, dir, next) in planned {
+            if next == self.base { spawnable = false; }
+            resolved.push(Command::Move(id, dir));
+        }
+
+        (spawnable, resolved)
     }
 }

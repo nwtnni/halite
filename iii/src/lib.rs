@@ -1,5 +1,6 @@
 extern crate fixedbitset;
 extern crate fnv;
+#[macro_use]
 extern crate log;
 extern crate hungarian;
 extern crate serde;
