@@ -250,7 +250,8 @@ impl<'round> Grid<'round> {
                 let next = self.step(node, *dir);
                 let next_index = self.index(next);
 
-                if seen.contains(&next) || self.stuck[next_index] || self.enemies_around(next, 1) > 0 {
+                if seen.contains(&next) || self.stuck[next_index]
+                || (self.enemies_around(next, 2) > 0 && next != self.base) {
                     continue
                 }
 
