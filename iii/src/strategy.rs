@@ -43,7 +43,7 @@ impl Executor {
         let cutoff = if grid.average_halite() > 50 { 50 } else { 25 };
 
         for ally in &allies {
-            grid.fill_cost(&mut costs, constants.INSPIRATION_RADIUS, |grid, pos, halite| {
+            grid.fill_cost(&mut costs, |grid, pos, halite| {
                 if halite > cutoff && !grid.is_stuck(pos) {
                     grid.dist(pos, Pos(yard.x, yard.y)) + grid.dist(Pos(ally.x, ally.y), pos)
                 } else {

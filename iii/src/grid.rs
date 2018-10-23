@@ -180,7 +180,7 @@ impl<'round> Grid<'round> {
         self.halite.iter().sum::<usize>() / self.halite.len()
     }
 
-    pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, radius: usize, f: F)
+    pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, f: F)
         where F: Fn(&Self, Pos, usize) -> usize,
     {
         for y in 0..self.height {
@@ -215,7 +215,6 @@ impl<'round> Grid<'round> {
         let start_index = self.index(start);
 
         if self.halite[start_index] / 10 > ship.halite || start == end {
-            info!("Round {}: ship {:?} stuck en route to {:?}", self.round, ship, end);
             self.planned.push((ship.id, Dir::O, start));
             return
         }
@@ -240,7 +239,6 @@ impl<'round> Grid<'round> {
                 }
 
                 let next = self.step(start, dir);
-                info!("Round {}: ship {:?} found path to {:?} going {:?}", self.round, ship, end, dir);
                 self.planned.push((ship.id, dir, next));
                 return
             }
@@ -257,9 +255,15 @@ impl<'round> Grid<'round> {
                 }
 
                 let node_index = self.index(node);
-                let next_cost = costs[&node] +
-                    (self.halite[node_index] / 10) / HALITE_TIME_RATIO +
-                    1;
+                let crowd_cost = if self.allies[next_index] {
+                    // Don't even think about trying anything fancy
+                    if start == self.base { 1000000 } else { 1 }
+                } else {
+                    0
+                };
+                let halite_cost = (self.halite[node_index] / 10) / HALITE_TIME_RATIO;
+                let time_cost = 1;
+                let next_cost = costs[&node] + crowd_cost + halite_cost + time_cost;
 
                 if let Some(prev_cost) = costs.get(&next) {
                     if *prev_cost <= next_cost {
@@ -274,7 +278,6 @@ impl<'round> Grid<'round> {
             }
         }
 
-        info!("Round {}: ship {:?} could not find path to {:?}", self.round, ship, end);
         self.planned.push((ship.id, Dir::O, start));
     }
 
@@ -309,7 +312,6 @@ impl<'round> Grid<'round> {
             if let Some(id) = change {
                 for plan in &mut planned {
                     if id == plan.0 {
-                        info!("Preventing {:?} from colliding", plan);
                         plan.2 = self.step(plan.2, plan.1.reflect());
                         plan.1 = Dir::O;
                         break
