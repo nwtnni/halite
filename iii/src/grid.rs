@@ -158,11 +158,11 @@ impl<'round> Grid<'round> {
         })
     }
 
-    // pub fn allies_around(&self, pos: Pos, radius: usize) -> usize {
-    //     self.around(pos, radius)
-    //         .filter(|pos| self.allies[self.index(*pos)])
-    //         .count()
-    // }
+    pub fn allies_around(&self, pos: Pos, radius: usize) -> usize {
+        self.around(pos, radius)
+            .filter(|pos| self.allies[self.index(*pos)])
+            .count()
+    }
 
     pub fn enemies_around(&self, pos: Pos, radius: usize) -> usize {
         self.around(pos, radius)

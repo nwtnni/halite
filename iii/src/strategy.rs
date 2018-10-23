@@ -44,14 +44,6 @@ impl Executor {
         let mut allies = state.allies().collect::<Vec<_>>();
         allies.sort_by_key(|ship| constants.MAX_ENERGY - ship.halite);
 
-        for i in 0..allies.len() {
-            if allies[i].x == yard.x && allies[i].y == yard.y {
-                let ship = allies.remove(i);
-                allies.insert(0, ship);
-                break
-            }
-        }
-
         let mut incoming = Vec::new();
         let mut outgoing = Vec::new();
 
@@ -81,7 +73,7 @@ impl Executor {
 
                 if pos == Pos(yard.x, yard.y) {
                     usize::max_value()
-                } else if halite >= 100 && !grid.is_stuck(pos) && !(grid.enemies_around(pos, 1) > 0)  {
+                } else if halite >= 100 && !grid.is_stuck(pos) && !(grid.enemies_around(pos, 2) > 0)  {
                     cost
                 } else if halite >= 12 && halite < 100 {
                     cost + 100000
@@ -107,7 +99,14 @@ impl Executor {
             if self.crashing.contains(&ship.id) {
                 grid.plan_route(ship, Pos(yard.x, yard.y), true);
             } else if self.returning.contains(&ship.id) {
-                grid.plan_route(ship, Pos(yard.x, yard.y), false);
+                let crowd = grid.allies_around(Pos(yard.x, yard.y), 1);
+                let distance = grid.distance_from_yard(ship);
+
+                if crowd >= 6 && distance <= 5 && distance >= 2 {
+                    grid.plan_route(ship, Pos(ship.x, ship.y), false);
+                } else {
+                    grid.plan_route(ship, Pos(yard.x, yard.y), false);
+                }
             }
         }
 
