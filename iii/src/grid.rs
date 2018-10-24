@@ -146,4 +146,70 @@ impl<'round> Grid<'round> {
             }
         }
     }
+
+    /// A route is invalid if:
+    /// - The ship no longer exists
+    /// - The ship is stuck this turn
+    /// - The ship's next step is blocked by an enemy
+    /// - The ship's new destination no longer matches its route
+    pub fn invalidate_routes(&mut self, ships: &[Ship], destinations: &[Pos]) -> Vec<ID> {
+        let alive = ships.iter()
+            .map(|ship| ship.id)
+            .collect::<FnvHashSet<_>>();
+
+        // Ships that no longer exist
+        let dead = self.routes.keys()
+            .filter(|id| !alive.contains(id))
+            .cloned()
+            .collect::<Vec<_>>();
+
+        let mut invalid = Vec::new();
+
+        // Check that ships aren't stuck, blocked, or re-routed
+        for (i, ship) in ships.iter().enumerate() {
+            let idx = self.idx(ship.into());
+            let cost = self.halite[idx] / 10;
+            let enemies = self.enemies_around(ship.into(), 1);
+            if ship.halite >= cost && enemies == 0 {
+                if let Some(last) = self.peek_last(ship.id) {
+                    if last == destinations[i] {
+                        continue
+                    }
+                }
+            }
+            invalid.push(ship.id);
+        }
+
+        // Clean up reservations
+        for id in dead.iter().chain(&invalid) {
+            self.clear_route(*id);
+        }
+
+        invalid
+    }
+
+    fn peek_last(&self, id: ID) -> Option<Pos> {
+        self.routes.get(&id)
+            .and_then(|route| route.last())
+            .cloned()
+    }
+
+    // Should be called for current round?
+    pub fn clear_route(&mut self, id: ID) {
+        let route = self.routes.remove(&id);
+        if let Some(route) = route {
+            let mut round = self.round;
+            for pos in route {
+                self.reserved.remove(&(pos, round));
+                round += 1;
+            }
+        }
+    }
+
+    pub fn plan_route(&mut self, ship: &Ship, end: Pos) -> Command {
+
+
+
+        unimplemented!()
+    }
 }

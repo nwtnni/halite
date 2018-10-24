@@ -43,6 +43,12 @@ pub struct Ship {
     pub halite: Halite,
 }
 
+impl <'a> Into<Pos> for &'a Ship {
+    fn into(self) -> Pos {
+        Pos(self.x, self.y)
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Shipyard {
     pub owner: u8,
