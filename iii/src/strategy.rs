@@ -81,6 +81,8 @@ impl Executor {
                 .find(|(_, ship)| ship.id == id)
                 .expect("[INTERNAL ERROR]: missing repathing ship");
 
+            info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
+
             commands.push(grid.plan_route(ship, assignment[index]));
         }
 

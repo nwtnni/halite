@@ -225,9 +225,11 @@ impl<'round> Grid<'round> {
                 let last = self.peek_last(ship.id);
                 if first == Some(ship.into())
                 && last == Some(destinations[i]) {
+                    info!("{}: ship {} has a valid route: {:?} en route to {:?}", self.round, ship.id, first, last);
                     continue
                 }
             }
+            info!("{}: ship {} has an invalidated route", self.round, ship.id);
             invalid.push(ship.id);
         }
 
@@ -363,6 +365,7 @@ impl<'round> Grid<'round> {
                     .cloned()
                     .expect("[INTERNAL ERROR]: no next position in path");
 
+                info!("{}: reserving route for {:?} to {:?}: {:?}", self.round, ship, end_pos, route);
                 self.routes.insert(ship.id, route);
 
                 return Command::Move(ship.id, self.inv_step(start_pos, next))
