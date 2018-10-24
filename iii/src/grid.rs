@@ -151,6 +151,7 @@ impl<'round> Grid<'round> {
     /// - The ship no longer exists
     /// - The ship is stuck this turn
     /// - The ship's next step is blocked by an enemy
+    /// - The ship's current location doesn't match its route
     /// - The ship's new destination no longer matches its route
     pub fn invalidate_routes(&mut self, ships: &[Ship], destinations: &[Pos]) -> Vec<ID> {
         let alive = ships.iter()
@@ -171,10 +172,11 @@ impl<'round> Grid<'round> {
             let cost = self.halite[idx] / 10;
             let enemies = self.enemies_around(ship.into(), 1);
             if ship.halite >= cost && enemies == 0 {
-                if let Some(last) = self.peek_last(ship.id) {
-                    if last == destinations[i] {
-                        continue
-                    }
+                let first = self.peek_first(ship.id);
+                let last = self.peek_last(ship.id);
+                if first == Some(ship.into())
+                && last == Some(destinations[i]) {
+                    continue
                 }
             }
             invalid.push(ship.id);
@@ -185,7 +187,14 @@ impl<'round> Grid<'round> {
             self.clear_route(*id);
         }
 
+        // Return ships that need to repath
         invalid
+    }
+
+    fn peek_first(&self, id: ID) -> Option<Pos> {
+        self.routes.get(&id)
+            .and_then(|route| route.first())
+            .cloned()
     }
 
     fn peek_last(&self, id: ID) -> Option<Pos> {
