@@ -36,6 +36,8 @@ pub struct Grid<'round> {
     height: Dist,
     round: Time,
     halite: &'round [Halite],
+    reserved: &'round mut FnvHashSet<(Pos, Time)>,
+    routes: &'round mut FnvHashMap<ID, Vec<Pos>>,
     allies: FixedBitSet,
     enemies: FixedBitSet,
     drops: FixedBitSet,
@@ -101,6 +103,16 @@ impl<'round> Grid<'round> {
         | Dir::E => Pos((p.0 + 1) % self.width, p.1),
         | Dir::W => Pos((p.0 + self.width - 1) % self.width, p.1),
         | Dir::O => p,
+        }
+    }
+
+    pub fn inv_step(&self, p1: Pos, p2: Pos) -> Dir {
+        match (p2.0 - p1.0, p2.1 - p1.1) {
+        | (0, dy) if dy == -1 || dy ==  self.height - 1 => Dir::N,
+        | (0, dy) if dy == 1  || dy == -self.height + 1 => Dir::S,
+        | (dx, 0) if dx == -1 || dx ==  self.width - 1  => Dir::W,
+        | (dx, 0) if dx == 1  || dx == -self.width + 1  => Dir::E,
+        | _ => unreachable!(),
         }
     }
 
