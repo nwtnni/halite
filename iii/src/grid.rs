@@ -2,7 +2,7 @@ use std::cmp;
 use std::iter;
 use std::mem;
 use std::usize;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, VecDeque};
 
 use fixedbitset::FixedBitSet;
 use fnv::{FnvHashSet, FnvHashMap};
@@ -37,7 +37,7 @@ pub struct Grid<'round> {
     round: Time,
     halite: &'round [Halite],
     reserved: &'round mut FnvHashSet<(Pos, Time)>,
-    routes: &'round mut FnvHashMap<ID, Vec<Pos>>,
+    routes: &'round mut FnvHashMap<ID, VecDeque<Pos>>,
     allies: FixedBitSet,
     enemies: FixedBitSet,
     drops: FixedBitSet,
@@ -151,6 +151,7 @@ impl<'round> Grid<'round> {
     /// - The ship no longer exists
     /// - The ship is stuck this turn
     /// - The ship's next step is blocked by an enemy
+    /// - The ship doesn't have a route
     /// - The ship's current location doesn't match its route
     /// - The ship's new destination no longer matches its route
     pub fn invalidate_routes(&mut self, ships: &[Ship], destinations: &[Pos]) -> Vec<ID> {
@@ -193,13 +194,13 @@ impl<'round> Grid<'round> {
 
     fn peek_first(&self, id: ID) -> Option<Pos> {
         self.routes.get(&id)
-            .and_then(|route| route.first())
+            .and_then(|route| route.front())
             .cloned()
     }
 
     fn peek_last(&self, id: ID) -> Option<Pos> {
         self.routes.get(&id)
-            .and_then(|route| route.last())
+            .and_then(|route| route.back())
             .cloned()
     }
 
@@ -213,6 +214,31 @@ impl<'round> Grid<'round> {
                 round += 1;
             }
         }
+    }
+
+    /// Returns cached commands
+    /// Should be called after invalidating routes
+    pub fn execute_routes(&mut self) -> Vec<Command> {
+        let mut commands = Vec::new();
+        let mut routes = mem::replace(self.routes, FnvHashMap::default());
+        for (id, route) in routes.iter_mut() {
+            let start = route.pop_front();
+            let end = route.front();
+            match (start, end) {
+            | (Some(s), Some(e)) => {
+                let dir = self.inv_step(s, *e);
+                self.reserved.remove(&(s, self.round));
+                commands.push(Command::Move(*id, dir));
+            }
+            | (Some(s), None) => {
+                self.reserved.remove(&(s, self.round));
+                commands.push(Command::Move(*id, Dir::O));
+            }
+            | _ => panic!("[INTERNAL ERROR]: no route left"),
+            }
+        }
+        mem::replace(self.routes, routes);
+        commands
     }
 
     pub fn plan_route(&mut self, ship: &Ship, end: Pos) -> Command {
