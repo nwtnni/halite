@@ -108,7 +108,7 @@ impl<'round> Grid<'round> {
     }
 
     #[inline(always)]
-    fn inv_idx(&self, idx: usize) -> Pos {
+    pub fn inv_idx(&self, idx: usize) -> Pos {
         let x = (idx % (self.width as usize)) as Dist;
         let y = (idx / (self.width as usize)) as Dist;
         Pos(x, y)

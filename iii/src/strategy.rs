@@ -44,7 +44,46 @@ impl Executor {
             &mut self.routes,
         );
 
-        unimplemented!()
+        let yard = state.yards[state.id as usize];
+        let allies = state.ships.iter()
+            .filter(|ship| ship.owner == state.id)
+            .cloned()
+            .collect::<Vec<_>>();
 
+        let mut costs = Vec::with_capacity(
+            allies.len() * (state.width as usize) * (state.height as usize)
+        );
+
+        for ally in &allies {
+            grid.fill_cost(&mut costs, |grid, pos, halite| {
+                if halite > 40 {
+                    grid.dist(Pos(yard.x, yard.y), pos) as Halite
+                    + grid.dist(ally.into(), pos) as Halite
+                } else {
+                    Halite::max_value()
+                }
+            });
+        }
+
+        let assignment = minimize(&costs, allies.len(), state.width as usize * state.height as usize)
+            .into_iter()
+            .map(|dest| dest.expect("[INTERNAL ERROR]: all ships should have assignment"))
+            .map(|dest| grid.inv_idx(dest))
+            .collect::<Vec<_>>();
+
+        let repath = grid.invalidate_routes(&allies, &assignment);
+
+        let mut commands = grid.execute_routes();
+
+        for id in repath {
+            let (index, ship) = allies.iter()
+                .enumerate()
+                .find(|(_, ship)| ship.id == id)
+                .expect("[INTERNAL ERROR]: missing repathing ship");
+            let command = grid.plan_route(ship, assignment[index]);
+            commands.push(command);
+        }
+
+        commands
     }
 }
