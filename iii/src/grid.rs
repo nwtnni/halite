@@ -54,8 +54,52 @@ impl<'round> Grid<'round> {
         ships: &[Ship],
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
+        reserved: &'round mut FnvHashSet<(Pos, Time)>,
+        routes: &'round mut FnvHashMap<ID, VecDeque<Pos>>,
     ) -> Self {
-        unimplemented!()
+
+        let capacity = (width * height) as usize;
+        let mut allies = FixedBitSet::with_capacity(capacity);
+        let mut enemies = FixedBitSet::with_capacity(capacity);
+        let mut drops = FixedBitSet::with_capacity(capacity);
+
+        for ship in ships {
+            let ship_idx = (ship.y as usize)
+                * (width as usize)
+                + (ship.x as usize);
+            if ship.owner == id {
+                allies.put(ship_idx);
+            } else {
+                enemies.put(ship_idx);
+            }
+        }
+
+        for drop in dropoffs {
+            if drop.owner == id {
+                let drop_idx = (drop.y as usize)
+                    * (width as usize)
+                    + (drop.x as usize);
+                drops.put(drop_idx);
+            }
+        }
+
+        let yard = yards[id as usize];
+        let spawn = Pos(yard.x, yard.y);
+        let spawn_idx = (yard.y as usize) * (width as usize) + (yard.x as usize);
+        drops.put(spawn_idx); 
+
+        Grid {
+            width,
+            height,
+            round,
+            halite,
+            allies,
+            enemies,
+            spawn,
+            drops,
+            reserved,
+            routes,
+        }
     }
 
     #[inline(always)]

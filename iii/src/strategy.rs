@@ -1,4 +1,6 @@
-use fnv::FnvHashSet;
+use std::collections::VecDeque;
+
+use fnv::{FnvHashMap, FnvHashSet};
 use hungarian::minimize;
 
 use constants::Constants;
@@ -11,6 +13,8 @@ pub struct Executor {
     total: Halite,
     crashing: FnvHashSet<ID>,
     returning: FnvHashSet<ID>,
+    reserved: FnvHashSet<(Pos, Time)>,
+    routes: FnvHashMap<ID, VecDeque<Pos>>,
 }
 
 impl Executor {
@@ -20,10 +24,27 @@ impl Executor {
             total,
             crashing: FnvHashSet::default(),
             returning: FnvHashSet::default(),
+            reserved: FnvHashSet::default(),
+            routes: FnvHashMap::default(),
         }
     }
 
-    pub fn execute(&mut self, _constants: &Constants, _state: &State) -> Vec<Command> {
+    pub fn execute(&mut self, constants: &Constants, state: &State) -> Vec<Command> {
+
+        let mut grid = Grid::new(
+            state.id,   
+            state.width,
+            state.height,
+            state.round,
+            &state.halite,
+            &state.ships,
+            &state.drops,
+            &state.yards,
+            &mut self.reserved,
+            &mut self.routes,
+        );
+
         unimplemented!()
+
     }
 }
