@@ -1,10 +1,11 @@
+use data::ID;
 use grid::Dir;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Command {
     Spawn,
-    Transform(usize),
-    Move(usize, Dir),
+    Transform(ID),
+    Move(ID, Dir),
 }
 
 impl ToString for Command {

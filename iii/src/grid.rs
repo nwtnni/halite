@@ -9,7 +9,7 @@ use fnv::{FnvHashSet, FnvHashMap};
 
 use constants::HALITE_TIME_RATIO;
 use command::Command;
-use data::{Dropoff, Ship, Shipyard};
+use data::*;
 
 pub const DIRS: [Dir; 5] = [Dir::N, Dir::S, Dir::E, Dir::W, Dir::O];
 
@@ -30,48 +30,48 @@ impl Dir {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Pos(pub usize, pub usize);
-
 #[derive(Debug)]
 pub struct Grid<'round> {
-    width: usize,
-    height: usize,
-    round: usize,
-    halite: &'round [usize],
+    width: Dist,
+    height: Dist,
+    round: Time,
+    halite: &'round [Halite],
     allies: FixedBitSet,
     enemies: FixedBitSet,
     stuck: FixedBitSet,
     base: Pos,
     drops: FnvHashSet<Pos>,
-    planned: Vec<(usize, Dir, Pos, bool)>,
+    planned: Vec<(ID, Dir, Pos, bool)>,
 }
 
 impl<'round> Grid<'round> {
     pub fn new(
-        id: usize,
-        width: usize,
-        height: usize,
-        round: usize,
-        halite: &'round [usize],
+        id: PID,
+        width: Dist,
+        height: Dist,
+        round: Time,
+        halite: &'round [Halite],
         ships: &[Ship],
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
     ) -> Self {
-        let mut allies = FixedBitSet::with_capacity(width * height);
-        let mut enemies = FixedBitSet::with_capacity(width * height);
-        let mut stuck = FixedBitSet::with_capacity(width * height);
+        let capacity = (width * height) as usize;
+        let mut allies = FixedBitSet::with_capacity(capacity);
+        let mut enemies = FixedBitSet::with_capacity(capacity);
+        let mut stuck = FixedBitSet::with_capacity(capacity);
         let mut drops = FnvHashSet::default();
 
         for ship in ships {
+            let ship_index = ship.y as usize
+                * width as usize
+                + ship.x as usize;
             if ship.owner == id {
-                let ship_index = ship.y * width + ship.x;
-                if ship.halite < halite[ship_index] / 10 {
+                if ship.halite < halite[ship_index as usize] / 10 {
                     stuck.put(ship_index);
                 }
                 allies.put(ship_index);
             } else {
-                enemies.put(ship.y * width + ship.x);
+                enemies.put(ship_index);
             }
         }
 
@@ -81,7 +81,7 @@ impl<'round> Grid<'round> {
             }
         }
 
-        let yard = yards[id];
+        let yard = yards[id as usize];
         let base = Pos(yard.x, yard.y);
         let planned = Vec::new();
 
@@ -101,20 +101,20 @@ impl<'round> Grid<'round> {
 
     #[inline(always)]
     fn index(&self, pos: Pos) -> usize {
-        self.width * pos.1 + pos.0
+        self.width as usize * pos.1 as usize + pos.0 as usize
     }
 
     pub fn is_stuck(&self, pos: Pos) -> bool {
         self.stuck.contains(self.index(pos))
     }
 
-    pub fn distance_from_yard(&self, ship: &Ship) -> usize {
+    pub fn distance_from_yard(&self, ship: &Ship) -> Dist {
         self.dist(Pos(ship.x, ship.y), self.base)
     }
 
-    pub fn dx(&self, x1: usize, x2: usize) -> usize {
-        let min_x = usize::min(x1, x2);
-        let max_x = usize::max(x1, x2);
+    pub fn dx(&self, x1: Dist, x2: Dist) -> Dist {
+        let min_x = Dist::min(x1, x2);
+        let max_x = Dist::max(x1, x2);
         if (max_x - min_x) > (self.width / 2) {
             min_x + self.width - max_x
         } else {
@@ -122,9 +122,9 @@ impl<'round> Grid<'round> {
         }
     }
 
-    pub fn dy(&self, y1: usize, y2: usize) -> usize {
-        let min_y = usize::min(y1, y2);
-        let max_y = usize::max(y1, y2);
+    pub fn dy(&self, y1: Dist, y2: Dist) -> Dist {
+        let min_y = Dist::min(y1, y2);
+        let max_y = Dist::max(y1, y2);
         if (max_y - min_y) > (self.height / 2) {
             min_y + self.height - max_y
         } else {
@@ -132,7 +132,7 @@ impl<'round> Grid<'round> {
         }
     }
 
-    pub fn dist(&self, a: Pos, b: Pos) -> usize {
+    pub fn dist(&self, a: Pos, b: Pos) -> Dist {
         self.dx(a.0, b.0) + self.dy(a.1, b.1)
     }
 
@@ -146,7 +146,7 @@ impl<'round> Grid<'round> {
         }
     }
 
-    fn around(&self, pos: Pos, radius: usize) -> impl Iterator<Item = Pos> {
+    fn around(&self, pos: Pos, radius: Dist) -> impl Iterator<Item = Pos> {
         let (w, h) = (self.width, self.height);
         (0..radius).flat_map(move |y| {
         (0..radius).flat_map(move |x| {
@@ -158,13 +158,13 @@ impl<'round> Grid<'round> {
         })
     }
 
-    pub fn allies_around(&self, pos: Pos, radius: usize) -> usize {
+    pub fn allies_around(&self, pos: Pos, radius: Dist) -> usize {
         self.around(pos, radius)
             .filter(|pos| self.allies[self.index(*pos)])
             .count()
     }
 
-    pub fn enemies_around(&self, pos: Pos, radius: usize) -> usize {
+    pub fn enemies_around(&self, pos: Pos, radius: Dist) -> usize {
         self.around(pos, radius)
             .filter(|pos| self.enemies[self.index(*pos)])
             .count()
@@ -180,14 +180,13 @@ impl<'round> Grid<'round> {
 //         self.halite.iter().sum::<usize>() / self.halite.len()
 //     }
 
-    pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, f: F)
-        where F: Fn(&Self, Pos, usize) -> usize,
+    pub fn fill_cost<F>(&self, costs: &mut Vec<Halite>, f: F)
+        where F: Fn(&Self, Pos, Halite) -> Halite,
     {
         for y in 0..self.height {
-            let row = y * self.width;
             for x in 0..self.width {
-                let index = row + x;
                 let pos = Pos(x, y);
+                let index = self.index(pos);
                 let halite = self.halite[index];
                 costs.push(f(self, pos, halite));
             }
@@ -262,7 +261,7 @@ impl<'round> Grid<'round> {
                 } else {
                     0
                 };
-                let halite_cost = (self.halite[node_index] / 10) / HALITE_TIME_RATIO;
+                let halite_cost = (self.halite[node_index] / 10) as usize / HALITE_TIME_RATIO;
                 let time_cost = 1;
                 let next_cost = costs[&node] + crowd_cost + halite_cost + time_cost;
 
@@ -272,7 +271,7 @@ impl<'round> Grid<'round> {
                     }
                 }
 
-                let heuristic = self.dist(next, end);
+                let heuristic = self.dist(next, end) as usize;
                 trace.insert(next, (node, *dir));
                 costs.insert(next, next_cost);
                 queue.push(Node(next, next_cost + heuristic));

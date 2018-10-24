@@ -38,7 +38,7 @@ fn main() -> Result<(), failure::Error> {
     writer.flush()?;
 
     let total = state.halite.iter()
-        .sum::<usize>();
+        .sum::<i32>();
 
     let mut executor = Executor::new(total);
     

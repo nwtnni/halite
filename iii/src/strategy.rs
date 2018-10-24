@@ -3,19 +3,19 @@ use hungarian::minimize;
 
 use constants::Constants;
 use command::Command;
-use data::State;
-use grid::{Pos, Grid};
+use data::*;
+use grid::Grid;
 
 #[derive(Debug, Clone)]
 pub struct Executor {
-    total: usize,
-    crashing: FnvHashSet<usize>,
-    returning: FnvHashSet<usize>,
+    total: Halite,
+    crashing: FnvHashSet<ID>,
+    returning: FnvHashSet<ID>,
 }
 
 impl Executor {
 
-    pub fn new(total: usize) -> Self {
+    pub fn new(total: Halite) -> Self {
         Executor {
             total,
             crashing: FnvHashSet::default(),
@@ -38,17 +38,17 @@ impl Executor {
 
         info!("{}", state.round);
 
-        let yard = state.yards[state.id];
-        let remaining = state.halite.iter().sum::<usize>();
+        let yard = state.yards[state.id as usize];
+        let remaining = state.halite.iter().sum::<Halite>();
 
         let mut allies = state.allies().collect::<Vec<_>>();
-        allies.sort_by_key(|ship| constants.MAX_ENERGY - ship.halite);
+        allies.sort_by_key(|ship| constants.MAX_ENERGY - ship.halite as usize);
 
         let mut incoming = Vec::new();
         let mut outgoing = Vec::new();
 
         for ship in &allies {
-            if grid.distance_from_yard(ship) + state.round + 10 >= constants.MAX_TURNS {
+            if grid.distance_from_yard(ship) as Time + state.round + 10 >= constants.MAX_TURNS as Time {
                 self.crashing.insert(ship.id);
                 incoming.push(ship);
             } else if ship.x == yard.x && ship.y == yard.y {
@@ -64,33 +64,38 @@ impl Executor {
             }
         }
 
-        let mut costs = Vec::with_capacity(outgoing.len() * state.width * state.height);
+        let mut costs = Vec::with_capacity(
+            outgoing.len()
+            * state.width as usize
+            * state.height as usize
+        );
+
         for ship in &outgoing {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                let cost = (constants.MAX_CELL_PRODUCTION - usize::min(halite, constants.MAX_CELL_PRODUCTION)) / 200
-                         + grid.dist(pos, Pos(yard.x, yard.y))
-                         + grid.dist(Pos(ship.x, ship.y), pos);
+                let cost = (constants.MAX_CELL_PRODUCTION as Halite - Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)) / 200
+                         + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
+                         + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
 
                 if pos == Pos(yard.x, yard.y) {
-                    usize::max_value()
+                    Halite::max_value()
                 } else if halite >= 100 && !grid.is_stuck(pos) && !(grid.enemies_around(pos, 2) > 0)  {
                     cost
                 } else if halite >= 12 && halite < 100 {
                     cost + 100000
                 } else {
-                    usize::max_value()
+                    Halite::max_value()
                 }
             });
         }
 
-        let assignment = minimize(&costs, outgoing.len(), state.width * state.height)
+        let assignment = minimize(&costs, outgoing.len(), state.width as usize * state.height as usize)
             .into_iter()
             .enumerate();
 
         for (id, dest) in assignment {
             if let Some(dest) = dest {
                 let ship = outgoing[id];
-                let dest = Pos(dest % state.width, dest / state.width);
+                let dest = Pos(dest as Dist % state.width, dest as Dist / state.width);
                 grid.plan_route(ship, dest, false);
             }
         }
@@ -112,9 +117,9 @@ impl Executor {
 
         let (spawnable, mut commands) = grid.resolve_routes();
 
-        if state.halite() >= constants.NEW_ENTITY_ENERGY_COST
-        && remaining >= self.total / 2
-        && state.round <= constants.MAX_TURNS / 2
+        if state.halite() >= constants.NEW_ENTITY_ENERGY_COST as Halite
+        && remaining as Halite >= self.total / 2
+        && state.round <= (constants.MAX_TURNS / 2) as Time
         && spawnable {
             commands.push(Command::Spawn);
         }
