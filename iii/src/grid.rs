@@ -58,7 +58,7 @@ impl<'round> Grid<'round> {
         routes: &'round mut FnvHashMap<ID, VecDeque<Pos>>,
     ) -> Self {
 
-        let capacity = (width * height) as usize;
+        let capacity = width as usize * height as usize;
         let mut allies = FixedBitSet::with_capacity(capacity);
         let mut enemies = FixedBitSet::with_capacity(capacity);
         let mut drops = FixedBitSet::with_capacity(capacity);
@@ -315,10 +315,9 @@ impl<'round> Grid<'round> {
         let start_pos = ship.into();
         let start_idx = self.idx(start_pos);
         let cost = self.halite[start_idx] / 10;
-        assert!(ship.halite >= cost);
 
-        // Starting position is the same as ending position
-        if start_pos == end_pos {
+        // Starting position is the same as ending position or we're stuck
+        if start_pos == end_pos || ship.halite < cost {
             // TODO: handle case where someone else wants to path through?
             let mut route = VecDeque::with_capacity(1);
             route.push_back(end_pos);

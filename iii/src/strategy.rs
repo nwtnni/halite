@@ -85,6 +85,7 @@ impl Executor {
         }
 
         if grid.can_spawn()
+        && state.scores[state.id as usize] as usize >= constants.NEW_ENTITY_ENERGY_COST
         && state.round <= constants.MAX_TURNS as Time {
             commands.push(Command::Spawn)
         }
