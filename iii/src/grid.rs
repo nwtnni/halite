@@ -59,8 +59,8 @@ impl<'round> Grid<'round> {
     }
 
     #[inline(always)]
-    fn idx(&self, pos: Pos) -> usize {
-        self.width as usize * pos.1 as usize + pos.0 as usize
+    fn idx(&self, Pos(x, y): Pos) -> usize {
+        self.width as usize * y as usize + x as usize
     }
 
     #[inline(always)]
@@ -72,42 +72,34 @@ impl<'round> Grid<'round> {
 
     pub fn dx(&self, x1: Dist, x2: Dist) -> Dist {
         let dx = Dist::abs(x2 - x1);
-        if dx < self.width / 2 {
-            dx
-        } else {
-            self.width - dx
-        }
+        if dx < self.width / 2 { dx } else { self.width - dx }
     }
 
     pub fn dy(&self, y1: Dist, y2: Dist) -> Dist {
         let dy = Dist::abs(y2 - y1);
-        if dy < self.height / 2 {
-            dy
-        } else {
-            self.height - dy
-        }
+        if dy < self.height / 2 { dy } else { self.height - dy }
     }
 
-    pub fn dist(&self, a: Pos, b: Pos) -> Dist {
-        self.dx(a.0, b.0) + self.dy(a.1, b.1)
+    pub fn dist(&self, Pos(x1, y1): Pos, Pos(x2, y2): Pos) -> Dist {
+        self.dx(x1, x2) + self.dy(y1, y2)
     }
 
     pub fn dist_from_yard(&self, ship: &Ship) -> Dist {
         self.dist(Pos(ship.x, ship.y), self.spawn)
     }
 
-    pub fn step(&self, p: Pos, d: Dir) -> Pos {
+    pub fn step(&self, Pos(x, y): Pos, d: Dir) -> Pos {
         match d {
-        | Dir::N => Pos(p.0, (p.1 + self.height - 1) % self.height),
-        | Dir::S => Pos(p.0, (p.1 + 1) % self.height),
-        | Dir::E => Pos((p.0 + 1) % self.width, p.1),
-        | Dir::W => Pos((p.0 + self.width - 1) % self.width, p.1),
-        | Dir::O => p,
+        | Dir::N => Pos(x, (y + self.height - 1) % self.height),
+        | Dir::S => Pos(x, (y + 1) % self.height),
+        | Dir::E => Pos((x + 1) % self.width, y),
+        | Dir::W => Pos((x + self.width - 1) % self.width, y),
+        | Dir::O => Pos(x, y),
         }
     }
 
-    pub fn inv_step(&self, p1: Pos, p2: Pos) -> Dir {
-        match (p2.0 - p1.0, p2.1 - p1.1) {
+    pub fn inv_step(&self, Pos(x1, y1): Pos, Pos(x2, y2): Pos) -> Dir {
+        match (x2 - x1, y2 - y1) {
         | (0, dy) if dy == -1 || dy ==  self.height - 1 => Dir::N,
         | (0, dy) if dy == 1  || dy == -self.height + 1 => Dir::S,
         | (dx, 0) if dx == -1 || dx ==  self.width - 1  => Dir::W,
@@ -116,15 +108,17 @@ impl<'round> Grid<'round> {
         }
     }
 
-    fn around(&self, pos: Pos, radius: Dist) -> impl Iterator<Item = Pos> {
+    fn around(&self, Pos(x, y): Pos, radius: Dist) -> impl Iterator<Item = Pos> {
         let (w, h) = (self.width, self.height);
-        (0..radius).flat_map(move |y| {
-        (0..radius).flat_map(move |x| {
-            iter::once(Pos((pos.0 + w - x) % w, (pos.1 + h - y) % h))
-                .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + h - y) % h)))
-                .chain(iter::once(Pos((pos.0 + w - x) % w, (pos.1 + y) % h)))
-                .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + y) % h)))
-        })
+        (0..radius).flat_map(move |dy| {
+            (0..radius)
+                .filter(move |dx| !(*dx == 0 && dy == 0))
+                .flat_map(move |dx| {
+                    iter::once(Pos((x + w - dx) % w, (y + h - dy) % h))
+                        .chain(iter::once(Pos((x + dx) % w,     (y + h - dy) % h)))
+                        .chain(iter::once(Pos((x + w - dx) % w, (y + dy) % h)))
+                        .chain(iter::once(Pos((x + dx) % w,     (y + dy) % h)))
+            })
         })
     }
 
