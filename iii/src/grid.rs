@@ -243,7 +243,26 @@ impl<'round> Grid<'round> {
 
     pub fn plan_route(&mut self, ship: &Ship, end: Pos) -> Command {
 
+        #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+        struct Node {
+            pos: Pos,
+            halite: Halite,
+            round: Time,
+        }
 
+        impl Ord for Node {
+            fn cmp(&self, rhs: &Self) -> cmp::Ordering {
+                rhs.round.cmp(&self.round)
+                    .then_with(|| rhs.halite.cmp(&self.halite))
+                    .then_with(|| self.pos.cmp(&rhs.pos))
+            }
+        }
+
+        impl PartialOrd for Node {
+            fn partial_cmp(&self, rhs: &Self) -> Option<cmp::Ordering> {
+                Some(self.cmp(rhs))
+            }
+        }
 
         unimplemented!()
     }
