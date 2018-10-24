@@ -80,8 +80,13 @@ impl Executor {
                 .enumerate()
                 .find(|(_, ship)| ship.id == id)
                 .expect("[INTERNAL ERROR]: missing repathing ship");
-            let command = grid.plan_route(ship, assignment[index]);
-            commands.push(command);
+
+            commands.push(grid.plan_route(ship, assignment[index]));
+        }
+
+        if grid.can_spawn()
+        && state.round <= constants.MAX_TURNS as Time {
+            commands.push(Command::Spawn)
         }
 
         commands

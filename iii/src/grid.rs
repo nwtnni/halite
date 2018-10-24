@@ -191,6 +191,10 @@ impl<'round> Grid<'round> {
         }
     }
 
+    pub fn can_spawn(&self) -> bool {
+        !self.reserved.contains(&(self.spawn, self.round + 1))
+    }
+
     /// A route is invalid if:
     /// - The ship no longer exists
     /// - The ship is stuck this turn
