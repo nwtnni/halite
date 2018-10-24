@@ -11,7 +11,7 @@ use constants::HALITE_TIME_RATIO;
 use command::Command;
 use data::*;
 
-pub const DIRS: [Dir; 5] = [Dir::N, Dir::S, Dir::E, Dir::W, Dir::O];
+pub const DIRS: [Dir; 4] = [Dir::N, Dir::S, Dir::E, Dir::W];
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Dir {
@@ -241,18 +241,18 @@ impl<'round> Grid<'round> {
         commands
     }
 
-    pub fn plan_route(&mut self, ship: &Ship, end: Pos) -> Command {
+    pub fn plan_route(&mut self, ship: &Ship, end_pos: Pos) -> Command {
 
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
         struct Node {
             pos: Pos,
             halite: Halite,
-            round: Time,
+            heuristic: Time,
         }
 
         impl Ord for Node {
             fn cmp(&self, rhs: &Self) -> cmp::Ordering {
-                rhs.round.cmp(&self.round)
+                rhs.heuristic.cmp(&self.heuristic)
                     .then_with(|| rhs.halite.cmp(&self.halite))
                     .then_with(|| self.pos.cmp(&rhs.pos))
             }
@@ -264,6 +264,98 @@ impl<'round> Grid<'round> {
             }
         }
 
-        unimplemented!()
+        let start_pos = ship.into();
+        let start_idx = self.idx(start_pos);
+        let cost = self.halite[start_idx] / 10;
+        assert!(ship.halite >= cost);
+
+        // Starting position is the same as ending position
+        if start_pos == end_pos {
+            // TODO: handle case where someone else wants to path through?
+            let mut route = VecDeque::with_capacity(1);
+            route.push_back(end_pos);
+            self.reserved.insert((end_pos, self.round + 1));
+            self.routes.insert(ship.id, route);
+            return Command::Move(ship.id, Dir::O)
+        }
+
+        let mut queue: BinaryHeap<Node> = BinaryHeap::default();
+        let mut distance: FnvHashMap<Pos, Time> = FnvHashMap::default();
+        let mut retrace: FnvHashMap<Node, Node> = FnvHashMap::default();
+        let mut seen: FnvHashSet<Pos> = FnvHashSet::default();
+
+        distance.insert(start_pos, self.round);
+
+        queue.push(Node {
+            pos: start_pos,
+            halite: ship.halite,
+            heuristic: self.round,
+        });
+
+        while let Some(node) = queue.pop() {
+
+            let node_pos = node.pos;
+            let node_idx = self.idx(node_pos);
+            let cost = self.halite[node_idx] / 10;
+
+            // Stuck or found path
+            if node.halite < cost || node.pos == end_pos {
+
+                let mut step = Some(node);
+                let mut route = VecDeque::new();
+
+                while let Some(prev) = step {
+                    if prev.pos != start_pos {
+                        route.push_front(prev.pos);
+                        self.reserved.insert((prev.pos, distance[&prev.pos]));
+                    }
+                    step = retrace.remove(&prev);
+                }
+
+                let next = route.front()
+                    .cloned()
+                    .expect("[INTERNAL ERROR]: no next position in path");
+
+                self.routes.insert(ship.id, route);
+
+                return Command::Move(ship.id, self.inv_step(start_pos, next))
+            }
+
+            seen.insert(node_pos);
+
+            let next_halite = node.halite - cost;
+
+            for dir in &DIRS {
+
+                let next_pos = self.step(node_pos, *dir);
+                let next_round = distance[&node_pos] + 1;
+
+                if self.reserved.contains(&(next_pos, next_round))
+                || self.enemies_around(next_pos, 1) > 0 // TODO: sync this with cost matrix?
+                || seen.contains(&next_pos) {
+                    continue
+                }
+
+                if let Some(prev_round) = distance.get(&next_pos) {
+                    if next_round >= *prev_round {
+                        continue
+                    }
+                }
+
+                let heuristic = self.dist(next_pos, end_pos) as Time;
+
+                let next_node = Node {
+                    pos: next_pos,
+                    halite: next_halite,
+                    heuristic: next_round + heuristic,
+                };
+
+                distance.insert(next_pos, next_round);
+                queue.push(next_node);
+                retrace.insert(next_node, node);
+            }
+        }
+
+        panic!("[INTERNAL ERROR]: pathfinding failed")
     }
 }
