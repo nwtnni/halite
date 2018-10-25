@@ -148,6 +148,7 @@ impl<'round> Grid<'round> {
         | (0, dy) if dy == 1  || dy == -self.height + 1 => Dir::S,
         | (dx, 0) if dx == -1 || dx ==  self.width - 1  => Dir::W,
         | (dx, 0) if dx == 1  || dx == -self.width + 1  => Dir::E,
+        | (0, 0) => Dir::O,
         | _ => unreachable!(),
         }
     }
@@ -197,7 +198,6 @@ impl<'round> Grid<'round> {
 
     /// A route is invalid if:
     /// - The ship no longer exists
-    /// - The ship is stuck this turn
     /// - The ship's next step is blocked by an enemy
     /// - The ship doesn't have a route
     /// - The ship's current location doesn't match its route
@@ -214,18 +214,37 @@ impl<'round> Grid<'round> {
             .collect::<Vec<_>>();
 
         let mut invalid = Vec::new();
+        let mut stuck = FnvHashSet::default();
+
+        for ship in ships {
+            // Ship is stuck
+            let ship_idx = self.idx(ship.into());
+            let cost = self.halite[ship_idx] / 10;
+            if ship.halite < cost {
+                stuck.insert(ship.id);
+                self.reserved.insert((ship.into(), self.round + 1));
+                self.routes.get_mut(&ship.id)
+                    .expect("[INTERNAL ERROR]: missing route")
+                    .push_back(ship.into());
+            }
+        }
 
         // Check that ships aren't stuck, blocked, or re-routed
         for (i, ship) in ships.iter().enumerate() {
-            let idx = self.idx(ship.into());
-            let cost = self.halite[idx] / 10;
+
+            info!("Checking route for ship {}", ship.id); 
+            if stuck.contains(&ship.id) {
+                info!("Ship {} is stuck", ship.id); 
+                continue
+            }
+
             let enemies = self.enemies_around(ship.into(), 1);
-            if ship.halite >= cost && enemies == 0 {
+            info!("Number of enemies: {}", enemies);
+            if enemies == 0 {
                 let first = self.peek_first(ship.id);
-                let last = self.peek_last(ship.id);
-                if first == Some(ship.into())
-                && last == Some(destinations[i]) {
-                    info!("{}: ship {} has a valid route: {:?} en route to {:?}", self.round, ship.id, first, last);
+                info!("First: {:?}, dest: {:?}", first, destinations[i]);
+                if first == Some(ship.into()) {
+                    info!("Ship {} has a valid route: {:?}", ship.id, first);
                     continue
                 }
             }
@@ -237,6 +256,9 @@ impl<'round> Grid<'round> {
         for id in dead.iter().chain(&invalid) {
             self.clear_route(*id);
         }
+
+        info!("{}: {:?}", self.round, self.reserved);
+        info!("{}: {:?}", self.round, self.routes);
 
         // Return ships that need to repath
         invalid
@@ -269,6 +291,7 @@ impl<'round> Grid<'round> {
     /// Returns cached commands
     /// Should be called after invalidating routes
     pub fn execute_routes(&mut self) -> Vec<Command> {
+        let round = self.round;
         let mut commands = Vec::new();
         let mut routes = mem::replace(self.routes, FnvHashMap::default());
         for (id, route) in routes.iter_mut() {
@@ -277,16 +300,18 @@ impl<'round> Grid<'round> {
             match (start, end) {
             | (Some(s), Some(e)) => {
                 let dir = self.inv_step(s, *e);
-                self.reserved.remove(&(s, self.round));
+                self.reserved.remove(&(s, round));
                 commands.push(Command::Move(*id, dir));
             }
             | (Some(s), None) => {
-                self.reserved.remove(&(s, self.round));
+                self.reserved.remove(&(s, round));
                 commands.push(Command::Move(*id, Dir::O));
             }
             | _ => panic!("[INTERNAL ERROR]: no route left"),
             }
         }
+
+        self.reserved.retain(|(_, t)| *t > round);
         mem::replace(self.routes, routes);
         commands
     }
@@ -322,8 +347,8 @@ impl<'round> Grid<'round> {
         if start_pos == end_pos || ship.halite < cost {
             // TODO: handle case where someone else wants to path through?
             let mut route = VecDeque::with_capacity(1);
-            route.push_back(end_pos);
-            self.reserved.insert((end_pos, self.round + 1));
+            route.push_front(start_pos);
+            self.reserved.insert((start_pos, self.round + 1));
             self.routes.insert(ship.id, route);
             return Command::Move(ship.id, Dir::O)
         }

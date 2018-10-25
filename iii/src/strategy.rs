@@ -56,9 +56,11 @@ impl Executor {
 
         for ally in &allies {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                if halite > 40 {
-                    grid.dist(Pos(yard.x, yard.y), pos) as Halite
-                    + grid.dist(ally.into(), pos) as Halite
+                if pos.0 == 0 && pos.1 == ally.id as Dist {
+                    0
+                // if halite > 40 {
+                //     grid.dist(Pos(yard.x, yard.y), pos) as Halite
+                //     + grid.dist(ally.into(), pos) as Halite
                 } else {
                     Halite::max_value()
                 }

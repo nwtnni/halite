@@ -84,7 +84,7 @@ impl State {
         // Clear outdated ships and dropoffs
         self.ships = Vec::new();
         self.drops = Vec::new();
-        self.round = split!(|s| next_time(&mut s));
+        self.round = split!(|s| next_time(&mut s) - 1);
 
         // Player updates
         for _ in 0..self.scores.len() {
