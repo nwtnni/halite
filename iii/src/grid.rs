@@ -202,7 +202,8 @@ impl<'round> Grid<'round> {
     /// - The ship doesn't have a route
     /// - The ship's current location doesn't match its route
     /// - The ship's new destination no longer matches its route
-    pub fn invalidate_routes(&mut self, ships: &[Ship], destinations: &[Pos]) -> Vec<ID> {
+    pub fn execute_routes(&mut self, ships: &[Ship], commands: &mut Vec<Command>) -> Vec<ID> {
+
         let alive = ships.iter()
             .map(|ship| ship.id)
             .collect::<FnvHashSet<_>>();
@@ -213,67 +214,75 @@ impl<'round> Grid<'round> {
             .cloned()
             .collect::<Vec<_>>();
 
-        let mut invalid = Vec::new();
-        let mut stuck = FnvHashSet::default();
-
-        for ship in ships {
-            // Ship is stuck
-            let ship_idx = self.idx(ship.into());
-            let cost = self.halite[ship_idx] / 10;
-            if ship.halite < cost {
-                stuck.insert(ship.id);
-                self.reserved.insert((ship.into(), self.round + 1));
-                self.routes.get_mut(&ship.id)
-                    .expect("[INTERNAL ERROR]: missing route")
-                    .push_back(ship.into());
-            }
+        for id in dead {
+            self.clear_route(id);
         }
 
-        // Check that ships aren't stuck, blocked, or re-routed
-        for (i, ship) in ships.iter().enumerate() {
+        info!("{}: Routes before execution", self.round);
+        info!("{}: {:?}", self.round, self.routes);
+        info!("{}: {:?}", self.round, self.reserved);
 
-            info!("Checking route for ship {}", ship.id); 
-            if stuck.contains(&ship.id) {
-                info!("Ship {} is stuck", ship.id); 
+        let round = self.round;
+        let mut routes = mem::replace(self.routes, FnvHashMap::default());
+        let mut invalid = Vec::new();
+
+        for ship in ships {
+
+            if !routes.contains_key(&ship.id) {
+                invalid.push(ship.id);
                 continue
             }
 
-            let enemies = self.enemies_around(ship.into(), 1);
-            info!("Number of enemies: {}", enemies);
-            if enemies == 0 {
-                let first = self.peek_first(ship.id);
-                info!("First: {:?}, dest: {:?}", first, destinations[i]);
-                if first == Some(ship.into()) {
-                    info!("Ship {} has a valid route: {:?}", ship.id, first);
+            let (start, end) = {
+                let route = routes.get_mut(&ship.id).unwrap();
+                (route.pop_front(), route.front().cloned())
+            };
+
+            let ship_pos = Pos(ship.x, ship.y);
+            let ship_idx = self.idx(ship_pos);
+
+            match (start, end) {
+            | (Some(s), Some(e)) => {
+
+                assert!(s == ship_pos);
+
+                // Invalidate route
+                if self.enemies_around(e, 1) > 0 {
+                    let route = routes.remove(&ship.id).unwrap();
+
+                    let mut round = round;
+                    for pos in route {
+                        self.reserved.remove(&(pos, round));
+                        round += 1;
+                    }
+
+                    invalid.push(ship.id); 
                     continue
                 }
+
+                // Otherwise good to go
+                let dir = self.inv_step(s, e);
+                self.reserved.remove(&(s, round));
+                info!("{}: ship {} moving to cached dir {:?}", round, ship.id, dir);
+                commands.push(Command::Move(ship.id, dir));
             }
-            info!("{}: ship {} has an invalidated route", self.round, ship.id);
-            invalid.push(ship.id);
+            | (Some(s), None) if ship.halite < self.halite[ship_idx] / 10 => {
+                assert!(s == ship_pos);
+                info!("{}: out of halite; ship {} staying still", round, ship.id);
+                self.reserved.insert((s, round + 1));
+                commands.push(Command::Move(ship.id, Dir::O));
+            }
+            | _ => invalid.push(ship.id),
+            }
         }
 
-        // Clean up reservations
-        for id in dead.iter().chain(&invalid) {
-            self.clear_route(*id);
-        }
+        info!("{}: Routes after execution", round);
+        info!("{}: {:?}", round, self.routes);
+        info!("{}: {:?}", round, self.reserved);
 
-        info!("{}: {:?}", self.round, self.reserved);
-        info!("{}: {:?}", self.round, self.routes);
-
-        // Return ships that need to repath
+        mem::replace(self.routes, routes);
+        self.reserved.retain(|(_, t)| *t >= round);
         invalid
-    }
-
-    fn peek_first(&self, id: ID) -> Option<Pos> {
-        self.routes.get(&id)
-            .and_then(|route| route.front())
-            .cloned()
-    }
-
-    fn peek_last(&self, id: ID) -> Option<Pos> {
-        self.routes.get(&id)
-            .and_then(|route| route.back())
-            .cloned()
     }
 
     // Should be called for current round?
@@ -286,34 +295,6 @@ impl<'round> Grid<'round> {
                 round += 1;
             }
         }
-    }
-
-    /// Returns cached commands
-    /// Should be called after invalidating routes
-    pub fn execute_routes(&mut self) -> Vec<Command> {
-        let round = self.round;
-        let mut commands = Vec::new();
-        let mut routes = mem::replace(self.routes, FnvHashMap::default());
-        for (id, route) in routes.iter_mut() {
-            let start = route.pop_front();
-            let end = route.front();
-            match (start, end) {
-            | (Some(s), Some(e)) => {
-                let dir = self.inv_step(s, *e);
-                self.reserved.remove(&(s, round));
-                commands.push(Command::Move(*id, dir));
-            }
-            | (Some(s), None) => {
-                self.reserved.remove(&(s, round));
-                commands.push(Command::Move(*id, Dir::O));
-            }
-            | _ => panic!("[INTERNAL ERROR]: no route left"),
-            }
-        }
-
-        self.reserved.retain(|(_, t)| *t > round);
-        mem::replace(self.routes, routes);
-        commands
     }
 
     pub fn plan_route(&mut self, ship: &Ship, end_pos: Pos) -> Command {
@@ -386,6 +367,10 @@ impl<'round> Grid<'round> {
                     step = retrace.remove(&prev);
                 }
 
+                if node.halite < cost {
+                    self.reserved.insert((node.pos, distance[&node.pos] + 1));
+                }
+
                 let next = route.front()
                     .cloned()
                     .expect("[INTERNAL ERROR]: no next position in path");
@@ -403,11 +388,14 @@ impl<'round> Grid<'round> {
             for dir in &DIRS {
 
                 let next_pos = self.step(node_pos, *dir);
+                let next_idx = self.idx(next_pos);
                 let next_round = distance[&node_pos] + 1;
 
                 if self.reserved.contains(&(next_pos, next_round))
                 || self.enemies_around(next_pos, 1) > 0 // TODO: sync this with cost matrix?
-                || seen.contains(&next_pos) {
+                || seen.contains(&next_pos)
+                || (next_halite < self.halite[next_idx] / 10 && self.reserved.contains(&(next_pos, next_round + 1)))
+                {
                     continue
                 }
 

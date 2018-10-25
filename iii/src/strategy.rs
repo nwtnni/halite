@@ -73,9 +73,8 @@ impl Executor {
             .map(|dest| grid.inv_idx(dest))
             .collect::<Vec<_>>();
 
-        let repath = grid.invalidate_routes(&allies, &assignment);
-
-        let mut commands = grid.execute_routes();
+        let mut commands = Vec::with_capacity(allies.len());
+        let repath = grid.execute_routes(&allies, &mut commands);
 
         for id in repath {
             let (index, ship) = allies.iter()
