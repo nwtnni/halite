@@ -56,13 +56,22 @@ impl Executor {
 
         for ally in &allies {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                if halite > 40 {
-                    grid.dist(Pos(yard.x, yard.y), pos) as Halite
-                    + grid.dist(ally.into(), pos) as Halite
+                let cost = (constants.MAX_CELL_PRODUCTION as Halite -
+                            Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)
+                         ) / 200
+                         + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
+                         + grid.dist(Pos(ally.x, ally.y), pos) as Halite;
+                if pos == Pos(yard.x, yard.y) {
+                    Halite::max_value()
+                } else if halite >= 100 && !(grid.enemies_around(pos, 2) > 0)  {
+                    cost
+                } else if halite >= 12 && halite < 100 {
+                    cost + 100000
                 } else {
                     Halite::max_value()
                 }
             });
+
 
             if ally.halite > 800 {
                 self.returning.insert(ally.id);
