@@ -326,12 +326,20 @@ impl<'round> Grid<'round> {
 
         // Starting position is the same as ending position or we're stuck
         if start_pos == end_pos || ship.halite < cost {
-            // TODO: handle case where someone else wants to path through?
-            let mut route = VecDeque::with_capacity(1);
-            route.push_front(start_pos);
-            self.reserved.insert((start_pos, self.round + 1));
-            self.routes.insert(ship.id, route);
-            return Command::Move(ship.id, Dir::O)
+            for dir in iter::once(&Dir::O).chain(&DIRS) {
+                let end_pos = self.step(start_pos, *dir);
+                let end_round = self.round + 1;
+                if !self.reserved.contains(&(end_pos, end_round)) {
+                    let mut route = VecDeque::with_capacity(1);
+                    route.push_front(end_pos);
+                    self.reserved.insert((end_pos, end_round));
+                    self.routes.insert(ship.id, route);
+                    return Command::Move(ship.id, *dir)
+                }
+            }
+
+            // Doomed to crash
+            return Command::Move(ship.id, Dir::O);
         }
 
         let mut queue: BinaryHeap<Node> = BinaryHeap::default();
