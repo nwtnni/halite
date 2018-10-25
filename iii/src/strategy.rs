@@ -63,7 +63,7 @@ impl Executor {
                          + grid.dist(Pos(ally.x, ally.y), pos) as Halite;
                 if pos == Pos(yard.x, yard.y) {
                     Halite::max_value()
-                } else if halite >= 100 && !(grid.enemies_around(pos, 2) > 0)  {
+                } else if halite >= 100 {
                     cost
                 } else if halite >= 12 && halite < 100 {
                     cost + 100000
@@ -85,6 +85,7 @@ impl Executor {
             .into_iter()
             .map(|dest| dest.expect("[INTERNAL ERROR]: all ships should have assignment"))
             .map(|dest| grid.inv_idx(dest))
+            .inspect(|dest| assert!(*dest != Pos(yard.x, yard.y)))
             .collect::<Vec<_>>();
 
         let mut commands = Vec::with_capacity(allies.len());
@@ -101,7 +102,7 @@ impl Executor {
                 commands.push(grid.plan_route(ship, Pos(yard.x, yard.y), Time::max_value()));
             } else {
                 info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
-                commands.push(grid.plan_route(ship, assignment[index], 6));
+                commands.push(grid.plan_route(ship, assignment[index], Time::max_value()));
             }
         }
 

@@ -165,6 +165,7 @@ impl<'round> Grid<'round> {
                         .chain(iter::once(Pos((x + dx) % w,     (y + dy) % h)))
             })
         })
+        .chain(iter::once(Pos(x, y)))
     }
 
     pub fn allies_around(&self, pos: Pos, radius: Dist) -> usize {
@@ -194,6 +195,10 @@ impl<'round> Grid<'round> {
 
     pub fn can_spawn(&self) -> bool {
         !self.reserved.contains(&(self.spawn, self.round + 1))
+        && DIRS.iter()
+            .map(|dir| self.step(self.spawn, *dir))
+            .filter(|pos| !self.reserved.contains(&(*pos, self.round + 1)))
+            .count() >= 2
     }
 
     /// A route is invalid if:
@@ -247,7 +252,7 @@ impl<'round> Grid<'round> {
                 assert!(s == ship_pos);
 
                 // Invalidate route
-                if self.enemies_around(e, 1) > 0 {
+                if self.enemies_around(e, 2) > 0 && !self.drops[self.idx(e)] {
                     let route = routes.remove(&ship.id).unwrap();
 
                     let mut round = round;
@@ -333,10 +338,10 @@ impl<'round> Grid<'round> {
                 let end_pos = self.step(start_pos, *dir);
                 let end_round = self.round + 1;
                 if !self.reserved.contains(&(end_pos, end_round)) {
-                    let mut route = VecDeque::with_capacity(1);
-                    route.push_front(end_pos);
+                    self.routes.entry(ship.id)
+                        .or_default()
+                        .push_front(end_pos);
                     self.reserved.insert((end_pos, end_round));
-                    self.routes.insert(ship.id, route);
                     return Command::Move(ship.id, *dir)
                 }
             }
@@ -369,29 +374,27 @@ impl<'round> Grid<'round> {
             // Stuck or found path
             if node.halite < cost || node.pos == end_pos || node.round == cutoff {
 
-                let mut step = Some(node);
-                let mut route = VecDeque::new();
+                let next = {
+                    let mut step = Some(node);
+                    let mut route = self.routes.entry(ship.id)
+                        .or_default();
 
-                while let Some(prev) = step {
-                    // assert!(Some(prev.pos) != retrace.get(&prev).map(|p| p.pos));
-                    route.push_front(prev.pos);
-                    self.reserved.insert((prev.pos, prev.round));
-                    step = retrace.remove(&prev);
-                }
+                    while let Some(prev) = step {
+                        if retrace.get(&prev).is_none() { break }
+                        route.push_front(prev.pos);
+                        self.reserved.insert((prev.pos, prev.round));
+                        step = retrace.remove(&prev);
+                    }
 
-                if node.halite < cost {
-                    self.reserved.insert((node.pos, node.round + 1));
-                }
+                    if node.halite < cost {
+                        self.reserved.insert((node.pos, node.round + 1));
+                    }
 
-                route.pop_front()
-                    .map(|start| self.reserved.remove(&(start, self.round)));
-
-                let next = route.front()
-                    .cloned()
-                    .expect("[INTERNAL ERROR]: no next position in path");
-
-                info!("{}: reserving route for {:?} to {:?}: {:?}", self.round, ship, end_pos, route);
-                self.routes.insert(ship.id, route);
+                    info!("{}: reserving route for {:?} to {:?}: {:?}", self.round, ship, end_pos, route);
+                    route.front()
+                        .cloned()
+                        .expect("[INTERNAL ERROR]: no next position in path")
+                };
 
                 return Command::Move(ship.id, self.inv_step(start_pos, next))
             }
@@ -409,7 +412,6 @@ impl<'round> Grid<'round> {
                     + 1;
 
                 if self.reserved.contains(&(next_pos, next_round))
-                || self.enemies_around(next_pos, 1) > 0 // TODO: sync this with cost matrix?
                 || seen.contains(&(next_pos, next_round))
                 || (next_halite < self.halite[next_idx] / 10 && self.reserved.contains(&(next_pos, next_round + 1)))
                 {
@@ -422,7 +424,7 @@ impl<'round> Grid<'round> {
                     }
                 }
 
-                let heuristic = self.dist(next_pos, end_pos) as Time;
+                let heuristic = self.dist(next_pos, end_pos) as Time * 2;
 
                 let next_node = Node {
                     pos: next_pos,
