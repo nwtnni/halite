@@ -98,10 +98,10 @@ impl Executor {
 
             if self.returning.contains(&id) {
                 info!("{}: repathing ship {} to {:?}", state.round, ship.id, Pos(yard.x, yard.y));
-                commands.push(grid.plan_route(ship, Pos(yard.x, yard.y)));
+                commands.push(grid.plan_route(ship, Pos(yard.x, yard.y), Time::max_value()));
             } else {
                 info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
-                commands.push(grid.plan_route(ship, assignment[index]));
+                commands.push(grid.plan_route(ship, assignment[index], 6));
             }
         }
 

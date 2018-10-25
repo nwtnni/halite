@@ -276,12 +276,13 @@ impl<'round> Grid<'round> {
             }
         }
 
+        mem::replace(self.routes, routes);
+        self.reserved.retain(|(_, t)| *t >= round);
+
         info!("{}: Routes after execution", round);
         info!("{}: {:?}", round, self.routes);
         info!("{}: {:?}", round, self.reserved);
 
-        mem::replace(self.routes, routes);
-        self.reserved.retain(|(_, t)| *t >= round);
         invalid
     }
 
@@ -297,19 +298,21 @@ impl<'round> Grid<'round> {
         }
     }
 
-    pub fn plan_route(&mut self, ship: &Ship, end_pos: Pos) -> Command {
+    pub fn plan_route(&mut self, ship: &Ship, end_pos: Pos, depth: Time) -> Command {
 
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
         struct Node {
             pos: Pos,
             halite: Halite,
             heuristic: Time,
+            round: Time,
         }
 
         impl Ord for Node {
             fn cmp(&self, rhs: &Self) -> cmp::Ordering {
                 rhs.heuristic.cmp(&self.heuristic)
                     .then_with(|| rhs.halite.cmp(&self.halite))
+                    .then_with(|| rhs.round.cmp(&self.round))
                     .then_with(|| self.pos.cmp(&rhs.pos))
             }
         }
@@ -342,17 +345,19 @@ impl<'round> Grid<'round> {
             return Command::Move(ship.id, Dir::O);
         }
 
+        let cutoff = self.round + depth;
         let mut queue: BinaryHeap<Node> = BinaryHeap::default();
-        let mut distance: FnvHashMap<Pos, Time> = FnvHashMap::default();
+        let mut costs: FnvHashMap<(Pos, Time), Time> = FnvHashMap::default();
         let mut retrace: FnvHashMap<Node, Node> = FnvHashMap::default();
-        let mut seen: FnvHashSet<Pos> = FnvHashSet::default();
+        let mut seen: FnvHashSet<(Pos, Time)> = FnvHashSet::default();
 
-        distance.insert(start_pos, self.round);
+        costs.insert((start_pos, self.round), 0);
 
         queue.push(Node {
             pos: start_pos,
             halite: ship.halite,
-            heuristic: self.round,
+            heuristic: 0,
+            round: self.round,
         });
 
         while let Some(node) = queue.pop() {
@@ -362,22 +367,24 @@ impl<'round> Grid<'round> {
             let cost = self.halite[node_idx] / 10;
 
             // Stuck or found path
-            if node.halite < cost || node.pos == end_pos {
+            if node.halite < cost || node.pos == end_pos || node.round == cutoff {
 
                 let mut step = Some(node);
                 let mut route = VecDeque::new();
 
                 while let Some(prev) = step {
-                    if prev.pos != start_pos {
-                        route.push_front(prev.pos);
-                        self.reserved.insert((prev.pos, distance[&prev.pos]));
-                    }
+                    // assert!(Some(prev.pos) != retrace.get(&prev).map(|p| p.pos));
+                    route.push_front(prev.pos);
+                    self.reserved.insert((prev.pos, prev.round));
                     step = retrace.remove(&prev);
                 }
 
                 if node.halite < cost {
-                    self.reserved.insert((node.pos, distance[&node.pos] + 1));
+                    self.reserved.insert((node.pos, node.round + 1));
                 }
+
+                route.pop_front()
+                    .map(|start| self.reserved.remove(&(start, self.round)));
 
                 let next = route.front()
                     .cloned()
@@ -389,26 +396,28 @@ impl<'round> Grid<'round> {
                 return Command::Move(ship.id, self.inv_step(start_pos, next))
             }
 
-            seen.insert(node_pos);
+            seen.insert((node_pos, node.round));
 
-            let next_halite = node.halite - cost;
-
-            for dir in &DIRS {
+            for dir in DIRS.iter().chain(iter::once(&Dir::O)) {
 
                 let next_pos = self.step(node_pos, *dir);
                 let next_idx = self.idx(next_pos);
-                let next_round = distance[&node_pos] + 1;
+                let next_halite = if dir == &Dir::O { node.halite } else { node.halite - cost };
+                let next_round = node.round + 1;
+                let next_cost = costs[&(node_pos, node.round)]
+                    + if dir == &Dir::O { 0 } else { 1 }
+                    + 1;
 
                 if self.reserved.contains(&(next_pos, next_round))
                 || self.enemies_around(next_pos, 1) > 0 // TODO: sync this with cost matrix?
-                || seen.contains(&next_pos)
+                || seen.contains(&(next_pos, next_round))
                 || (next_halite < self.halite[next_idx] / 10 && self.reserved.contains(&(next_pos, next_round + 1)))
                 {
                     continue
                 }
 
-                if let Some(prev_round) = distance.get(&next_pos) {
-                    if next_round >= *prev_round {
+                if let Some(prev_cost) = costs.get(&(next_pos, next_round)) {
+                    if next_cost >= *prev_cost {
                         continue
                     }
                 }
@@ -418,10 +427,11 @@ impl<'round> Grid<'round> {
                 let next_node = Node {
                     pos: next_pos,
                     halite: next_halite,
-                    heuristic: next_round + heuristic,
+                    heuristic: next_cost + heuristic,
+                    round: next_round, 
                 };
 
-                distance.insert(next_pos, next_round);
+                costs.insert((next_pos, next_round), next_cost);
                 queue.push(next_node);
                 retrace.insert(next_node, node);
             }
