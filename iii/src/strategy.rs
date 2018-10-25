@@ -56,15 +56,20 @@ impl Executor {
 
         for ally in &allies {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                if pos.0 == 0 && pos.1 == ally.id as Dist {
-                    0
-                // if halite > 40 {
-                //     grid.dist(Pos(yard.x, yard.y), pos) as Halite
-                //     + grid.dist(ally.into(), pos) as Halite
+                if halite > 40 {
+                    grid.dist(Pos(yard.x, yard.y), pos) as Halite
+                    + grid.dist(ally.into(), pos) as Halite
                 } else {
                     Halite::max_value()
                 }
             });
+
+            if ally.halite > 800 {
+                self.returning.insert(ally.id);
+                grid.clear_route(ally.id); 
+            } else if Pos(ally.x, ally.y) == Pos(yard.x, yard.y) {
+                self.returning.remove(&ally.id);
+            }
         }
 
         let assignment = minimize(&costs, allies.len(), state.width as usize * state.height as usize)
@@ -82,14 +87,18 @@ impl Executor {
                 .find(|(_, ship)| ship.id == id)
                 .expect("[INTERNAL ERROR]: missing repathing ship");
 
-            info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
-
-            commands.push(grid.plan_route(ship, assignment[index]));
+            if self.returning.contains(&id) {
+                info!("{}: repathing ship {} to {:?}", state.round, ship.id, Pos(yard.x, yard.y));
+                commands.push(grid.plan_route(ship, Pos(yard.x, yard.y)));
+            } else {
+                info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
+                commands.push(grid.plan_route(ship, assignment[index]));
+            }
         }
 
         if grid.can_spawn()
         && state.scores[state.id as usize] as usize >= constants.NEW_ENTITY_ENERGY_COST
-        && state.round <= constants.MAX_TURNS as Time {
+        && state.round <= (constants.MAX_TURNS / 2) as Time {
             commands.push(Command::Spawn)
         }
 
