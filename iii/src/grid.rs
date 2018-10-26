@@ -1,6 +1,5 @@
 use std::cmp;
 use std::iter;
-use std::mem;
 use std::usize;
 use std::collections::{BinaryHeap, VecDeque};
 
@@ -102,7 +101,7 @@ impl<'round> Grid<'round> {
     }
 
     #[inline(always)]
-    fn idx(&self, Pos(x, y): Pos) -> usize {
+    pub fn idx(&self, Pos(x, y): Pos) -> usize {
         self.width as usize * y as usize + x as usize
     }
 
@@ -250,6 +249,7 @@ impl<'round> Grid<'round> {
                 assert!(self.dist(cached_start_pos, cached_end_pos) <= 1);
                 assert!(t1 == round);
                 assert!(t2 == round + 1);
+                assert!(ship.halite >= cost);
 
                 let cached_end_idx = self.idx(cached_end_pos);
 
@@ -329,11 +329,6 @@ impl<'round> Grid<'round> {
 
             for dir in DIRS.iter().chain(iter::once(&Dir::O)) {
 
-                // Don't squat on spawn plz
-                // if node_pos == self.spawn && *dir == Dir::O {
-                //     continue
-                // }
-
                 let next_pos = self.step(node_pos, *dir);
                 let next_halite = if dir == &Dir::O { node.halite } else { node.halite - cost };
                 let next_round = node.round + 1;
@@ -343,8 +338,7 @@ impl<'round> Grid<'round> {
 
                 if (self.reserved.contains_key(&(next_pos, next_round)) && !(crash && next_pos == self.spawn))
                 || self.enemies_around(next_pos, 2) > 0
-                || seen.contains(&(next_pos, next_round))
-                {
+                || seen.contains(&(next_pos, next_round)) {
                     continue
                 }
 

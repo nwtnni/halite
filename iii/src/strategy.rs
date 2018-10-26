@@ -55,12 +55,12 @@ impl Executor {
             ships.len() * (state.width as usize) * (state.height as usize)
         );
 
-        for (idx, ship) in ships.iter().enumerate() {
-            // Returning/crashing logic
+        // Returning and crashing logic
+        for ship in &ships {
             if grid.dist_from_yard(ship) as Time + state.round + 10 >= constants.MAX_TURNS as Time {
                 self.crashing.insert(ship.id);
                 grid.clear_route(ship.id); 
-            } else if ship.halite >= 950 {
+            } else if ship.halite > 950 {
                 self.returning.insert(ship.id);
                 grid.clear_route(ship.id); 
             } else if Pos(ship.x, ship.y) == Pos(yard.x, yard.y) {
