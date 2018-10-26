@@ -34,7 +34,7 @@ impl State {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Ship {
     pub owner: u8,
     pub id: u16,
@@ -49,14 +49,14 @@ impl <'a> Into<Pos> for &'a Ship {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Shipyard {
     pub owner: u8,
     pub x: i8,
     pub y: i8,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Dropoff {
     pub owner: u8,
     pub x: i8,

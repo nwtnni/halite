@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use indexmap::IndexSet;
 use fnv::{FnvHashMap, FnvHashSet};
 use hungarian::minimize;
 
@@ -54,9 +55,6 @@ impl Executor {
             ships.len() * (state.width as usize) * (state.height as usize)
         );
 
-        let mut repath = Vec::new();
-        let mut cached = Vec::new();
-
         for (idx, ship) in ships.iter().enumerate() {
             // Returning/crashing logic
             if grid.dist_from_yard(ship) as Time + state.round + 10 >= constants.MAX_TURNS as Time {
@@ -67,13 +65,6 @@ impl Executor {
                 grid.clear_route(ship.id); 
             } else if Pos(ship.x, ship.y) == Pos(yard.x, yard.y) {
                 self.returning.remove(&ship.id);
-            }
-
-            // Path ordering logic
-            if grid.has_cached_route(ship.id) {
-                cached.push((idx, ship));
-            } else {
-                repath.push((idx, ship));
             }
         }
 
@@ -112,23 +103,41 @@ impl Executor {
             .map(|dest| grid.inv_idx(dest))
             .collect::<Vec<_>>();
 
-        let mut commands = Vec::with_capacity(ships.len());
+        let mut commands = vec![Command::Spawn; ships.len()];
+        let mut repath = ships.iter()
+            .enumerate()
+            .collect::<IndexSet<_>>();
 
-        for (idx, ship) in repath.iter().chain(&cached) {
-            if self.crashing.contains(&ship.id) {
-                commands.push(grid.navigate(ship, Pos(yard.x, yard.y), Time::max_value(), true));
-            } else if self.returning.contains(&ship.id) {
-                // info!("{}: repathing ship {} to {:?}", state.round, ship.id, Pos(yard.x, yard.y));
-                commands.push(grid.navigate(ship, Pos(yard.x, yard.y), Time::max_value(), false));
+        while let Some((idx, ship)) = repath.pop() {
+
+            let crash = self.crashing.contains(&ship.id);
+            let destination = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {
+                Pos(yard.x, yard.y)
             } else {
-                // info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
-                let dist = grid.dist(Pos(ship.x, ship.y), assignment[*idx]) as Time;
-                if dist <= 5 {
-                    commands.push(grid.navigate(ship, assignment[*idx], 1, false));
-                } else {
-                    commands.push(grid.navigate(ship, assignment[*idx], dist - 5, false));
-                }
+                assignment[idx]
+            };
+
+            let depth = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {
+                Time::max_value()
+            } else {
+                let dist = grid.dist(ship.into(), destination) as Time;
+                if dist <= 5 { 1 } else { dist - 5 }
+            };
+
+            let (invalidated, command) = grid.navigate(ship, destination, depth, crash);
+
+            if let Some(id) = invalidated {
+                warn!("Ship {}'s route invalidated", id);
+                grid.clear_route(id);
+                repath.insert( 
+                    ships.iter()
+                        .enumerate()
+                        .find(|(_, ship)| id == ship.id)
+                        .expect("[INTERNAL ERROR]: missing ship")
+                );
             }
+            
+            commands[idx] = command;
         }
 
         if grid.can_spawn()

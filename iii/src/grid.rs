@@ -198,21 +198,11 @@ impl<'round> Grid<'round> {
 
     // Should be called for current round?
     pub fn clear_route(&mut self, id: ID) {
-        let route = self.routes.remove(&id);
-        if let Some(route) = route {
-            for (pos, round) in route {
-                self.reserved.remove(&(pos, round));
-            }
-        }
+        self.routes.remove(&id);
+        self.reserved.retain(|(_, _), reserved| id != *reserved);
     }
 
-    pub fn has_cached_route(&self, id: ID) -> bool {
-        self.routes.get(&id)
-            .map(|route| route.len() > 1)
-            .unwrap_or(false)
-    }
-
-    pub fn navigate(&mut self, ship: &Ship, end_pos: Pos, depth: Time, crash: bool) -> Command {
+    pub fn navigate(&mut self, ship: &Ship, end_pos: Pos, depth: Time, crash: bool) -> (Option<ID>, Command) {
 
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
         struct Node {
@@ -247,7 +237,9 @@ impl<'round> Grid<'round> {
         // Try to follow cached route
         if let Some(mut route) = self.routes.remove(&ship.id) {
 
-            info!("Found cached route: {:?}", route);
+            if route.len() > 1 {
+                info!("Found cached route: {:?}", route);
+            }
 
             let cached_start = route.pop_front();
             let cached_end = route.front().cloned();
@@ -270,11 +262,10 @@ impl<'round> Grid<'round> {
                     self.reserved.remove(&(cached_start_pos, round));
                     let dir = self.inv_step(cached_start_pos, cached_end_pos);
                     info!("Safe to follow cached route; stepping {:?}", dir);
-                    return Command::Move(ship.id, dir)
-                } else {
-                    info!("Route invalidated; beginning repathing");
-                    self.routes.insert(ship.id, route);
+                    return (None, Command::Move(ship.id, dir))
                 }
+
+                info!("Route invalidated; beginning repathing");
             }
         }
 
@@ -283,13 +274,10 @@ impl<'round> Grid<'round> {
 
         // Starting position is the same as ending position or we're stuck
         if start_pos == end_pos || ship.halite < cost {
-            info!("Out of fuel or directed to stay where we are");
+            info!("Out of fuel or start == end; reserving {:?}", (start_pos, round + 1));
             self.routes.insert(ship.id, VecDeque::with_capacity(0));
-            if let Some(id) = self.reserved.get(&(end_pos, round + 1)) {
-                warn!("Overwriting previous reservation by ship {} at point {:?}", id, end_pos);
-            }
-            self.reserved.insert((end_pos, round + 1), ship.id);
-            return Command::Move(ship.id, Dir::O)
+            let repath = self.reserved.insert((start_pos, round + 1), ship.id);
+            return (repath, Command::Move(ship.id, Dir::O))
         }
 
         let cutoff = self.round + depth;
@@ -334,7 +322,7 @@ impl<'round> Grid<'round> {
                         .expect("[INTERNAL ERROR]: no next position in path")
                 };
 
-                return Command::Move(ship.id, self.inv_step(start_pos, next.0))
+                return (None, Command::Move(ship.id, self.inv_step(start_pos, next.0)))
             }
 
             seen.insert((node_pos, node.round));
@@ -342,9 +330,9 @@ impl<'round> Grid<'round> {
             for dir in DIRS.iter().chain(iter::once(&Dir::O)) {
 
                 // Don't squat on spawn plz
-                if node_pos == self.spawn && *dir == Dir::O {
-                    continue
-                }
+                // if node_pos == self.spawn && *dir == Dir::O {
+                //     continue
+                // }
 
                 let next_pos = self.step(node_pos, *dir);
                 let next_halite = if dir == &Dir::O { node.halite } else { node.halite - cost };
@@ -382,6 +370,8 @@ impl<'round> Grid<'round> {
         }
 
         // guess I'll die
-        panic!("[INTERNAL ERROR]: pathfinding failed for ship {} from {:?} to {:?}", ship.id, start_pos, end_pos);
+        warn!("[INTERNAL ERROR]: pathfinding failed for ship {} from {:?} to {:?}", ship.id, start_pos, end_pos);
+        let repath = self.reserved.insert((start_pos, round + 1), ship.id);
+        (repath, Command::Move(ship.id, Dir::O))
     }
 }
