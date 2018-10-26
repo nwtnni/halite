@@ -86,7 +86,7 @@ impl<'round> Grid<'round> {
         let yard = yards[id as usize];
         let spawn = Pos(yard.x, yard.y);
         let spawn_idx = (yard.y as usize) * (width as usize) + (yard.x as usize);
-        drops.put(spawn_idx); 
+        drops.put(spawn_idx);
 
         Grid {
             width,
@@ -128,9 +128,9 @@ impl<'round> Grid<'round> {
         self.dx(x1, x2) + self.dy(y1, y2)
     }
 
-    pub fn dist_from_yard(&self, ship: &Ship) -> Dist {
-        self.dist(Pos(ship.x, ship.y), self.spawn)
-    }
+//     pub fn dist_from_yard(&self, ship: &Ship) -> Dist {
+//         self.dist(Pos(ship.x, ship.y), self.spawn)
+//     }
 
     pub fn step(&self, Pos(x, y): Pos, d: Dir) -> Pos {
         match d {
@@ -168,11 +168,11 @@ impl<'round> Grid<'round> {
         .chain(iter::once(Pos(x, y)))
     }
 
-    pub fn allies_around(&self, pos: Pos, radius: Dist) -> usize {
-        self.around(pos, radius)
-            .filter(|pos| self.allies[self.idx(*pos)])
-            .count()
-    }
+//     pub fn allies_around(&self, pos: Pos, radius: Dist) -> usize {
+//         self.around(pos, radius)
+//             .filter(|pos| self.allies[self.idx(*pos)])
+//             .count()
+//     }
 
     pub fn enemies_around(&self, pos: Pos, radius: Dist) -> usize {
         self.around(pos, radius)
@@ -261,7 +261,7 @@ impl<'round> Grid<'round> {
                         round += 1;
                     }
 
-                    invalid.push(ship.id); 
+                    invalid.push(ship.id);
                     continue
                 }
 
@@ -403,6 +403,11 @@ impl<'round> Grid<'round> {
 
             for dir in DIRS.iter().chain(iter::once(&Dir::O)) {
 
+                // Don't squat on spawn plz
+                if node_pos == self.spawn && *dir == Dir::O {
+                    continue
+                }
+
                 let next_pos = self.step(node_pos, *dir);
                 let next_idx = self.idx(next_pos);
                 let next_halite = if dir == &Dir::O { node.halite } else { node.halite - cost };
@@ -430,7 +435,7 @@ impl<'round> Grid<'round> {
                     pos: next_pos,
                     halite: next_halite,
                     heuristic: next_cost + heuristic,
-                    round: next_round, 
+                    round: next_round,
                 };
 
                 costs.insert((next_pos, next_round), next_cost);
@@ -439,6 +444,8 @@ impl<'round> Grid<'round> {
             }
         }
 
-        panic!("[INTERNAL ERROR]: pathfinding failed")
+        // guess I'll die
+        error!("[INTERNAL ERROR]: pathfinding failed");
+        Command::Move(ship.id, Dir::O)
     }
 }
