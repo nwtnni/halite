@@ -45,11 +45,22 @@ impl Executor {
             &mut self.routes,
         );
 
+        grid.clear_round(state.round);
+
         let yard = state.yards[state.id as usize];
-        let ships = state.ships.iter()
+        let mut ships = state.ships.iter()
             .filter(|ship| ship.owner == state.id)
             .cloned()
             .collect::<Vec<_>>();
+
+        // Repath less often by putting stuck ships first
+        ships.sort_by_key(|ship|
+            if ship.halite < state.halite[grid.idx(ship.into())] / 10 {
+                1
+            } else {
+                0
+            }
+        );
 
         let mut costs = Vec::with_capacity(
             ships.len() * (state.width as usize) * (state.height as usize)
@@ -68,36 +79,32 @@ impl Executor {
             }
         }
 
+        let mut outgoing = FnvHashMap::default();
+        let mut idx = 0;
+
         for ship in &ships {
-            if self.returning.contains(&ship.id) || self.crashing.contains(&ship.id) {
-                grid.fill_cost(&mut costs, |_, pos, _| {
-                    if pos == Pos(yard.x, yard.y) {
-                        0
-                    } else {
-                        Halite::max_value()
-                    }
-                })
-            } else {
-                grid.fill_cost(&mut costs, |grid, pos, halite| {
-                    let cost = (constants.MAX_CELL_PRODUCTION as Halite -
-                                Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)
-                            ) / 200
-                            + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
-                            + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
-                    if pos == Pos(yard.x, yard.y) {
-                        Halite::max_value()
-                    } else if halite >= 100 && grid.enemies_around(pos, 2) == 0 {
-                        cost
-                    } else if halite >= 12 && halite < 100 {
-                        cost + 100000
-                    } else {
-                        Halite::max_value()
-                    }
-                });
-            }
+            if self.returning.contains(&ship.id) || self.crashing.contains(&ship.id) { continue }
+            outgoing.insert(ship.id, idx);
+            idx += 1;
+            grid.fill_cost(&mut costs, |grid, pos, halite| {
+                let cost = (constants.MAX_CELL_PRODUCTION as Halite -
+                            Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)
+                        ) / 200
+                        + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
+                        + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
+                if pos == Pos(yard.x, yard.y) {
+                    Halite::max_value()
+                } else if halite >= 100 && grid.enemies_around(pos, 2) == 0 {
+                    cost
+                } else if halite >= 12 && halite < 100 {
+                    cost + 100000
+                } else {
+                    Halite::max_value()
+                }
+            });
         }
 
-        let assignment = minimize(&costs, ships.len(), state.width as usize * state.height as usize)
+        let assignment = minimize(&costs, outgoing.len(), state.width as usize * state.height as usize)
             .into_iter()
             .map(|dest| dest.expect("[INTERNAL ERROR]: all ships should have assignment"))
             .map(|dest| grid.inv_idx(dest))
@@ -114,7 +121,7 @@ impl Executor {
             let destination = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {
                 Pos(yard.x, yard.y)
             } else {
-                assignment[idx]
+                assignment[outgoing[&ship.id]]
             };
 
             let depth = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {

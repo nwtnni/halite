@@ -201,6 +201,11 @@ impl<'round> Grid<'round> {
         self.reserved.retain(|(_, _), reserved| id != *reserved);
     }
 
+    // Call to clean up after pathfinding a round
+    pub fn clear_round(&mut self, round: Time) {
+        self.reserved.retain(|(_, t), _| *t > round);
+    }
+
     pub fn navigate(&mut self, ship: &Ship, end_pos: Pos, depth: Time, crash: bool) -> (Option<ID>, Command) {
 
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
