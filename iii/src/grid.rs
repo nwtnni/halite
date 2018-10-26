@@ -36,7 +36,7 @@ pub struct Grid<'round> {
     round: Time,
     halite: &'round [Halite],
     reserved: &'round mut FnvHashMap<(Pos, Time), ID>,
-    routes: &'round mut FnvHashMap<ID, VecDeque<Pos>>,
+    routes: &'round mut FnvHashMap<ID, VecDeque<(Pos, Time)>>,
     allies: FixedBitSet,
     enemies: FixedBitSet,
     drops: FixedBitSet,
@@ -54,7 +54,7 @@ impl<'round> Grid<'round> {
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
         reserved: &'round mut FnvHashMap<(Pos, Time), ID>,
-        routes: &'round mut FnvHashMap<ID, VecDeque<Pos>>,
+        routes: &'round mut FnvHashMap<ID, VecDeque<(Pos, Time)>>,
     ) -> Self {
 
         let capacity = width as usize * height as usize;
@@ -196,109 +196,23 @@ impl<'round> Grid<'round> {
         !self.reserved.contains_key(&(self.spawn, self.round + 1))
     }
 
-    /// A route is invalid if:
-    /// - The ship no longer exists
-    /// - The ship's next step is blocked by an enemy
-    /// - The ship doesn't have a route
-    /// - The ship's current location doesn't match its route
-    /// - The ship's new destination no longer matches its route
-    pub fn execute_routes(&mut self, ships: &[Ship], commands: &mut Vec<Command>) -> Vec<ID> {
-
-        let alive = ships.iter()
-            .map(|ship| ship.id)
-            .collect::<FnvHashSet<_>>();
-
-        // Ships that no longer exist
-        let dead = self.routes.keys()
-            .filter(|id| !alive.contains(id))
-            .cloned()
-            .collect::<Vec<_>>();
-
-        for id in dead {
-            self.clear_route(id);
-        }
-
-        // info!("{}: Routes before execution", self.round);
-        // info!("{}: {:?}", self.round, self.routes);
-        // info!("{}: {:?}", self.round, self.reserved);
-
-        let round = self.round;
-        let mut routes = mem::replace(self.routes, FnvHashMap::default());
-        let mut invalid = Vec::new();
-
-        for ship in ships {
-
-            if !routes.contains_key(&ship.id) {
-                invalid.push(ship.id);
-                continue
-            }
-
-            let (start, end) = {
-                let route = routes.get_mut(&ship.id).unwrap();
-                (route.pop_front(), route.front().cloned())
-            };
-
-            let ship_pos = Pos(ship.x, ship.y);
-            let ship_idx = self.idx(ship_pos);
-
-            match (start, end) {
-            | (Some(s), Some(e)) => {
-
-                assert!(s == ship_pos);
-
-                // Invalidate route
-                if self.enemies_around(e, 2) > 0 && !self.drops[self.idx(e)] {
-                    let route = routes.remove(&ship.id).unwrap();
-
-                    let mut round = round;
-                    for pos in route {
-                        self.reserved.remove(&(pos, round));
-                        round += 1;
-                    }
-
-                    invalid.push(ship.id);
-                    continue
-                }
-
-                // Otherwise good to go
-                let dir = self.inv_step(s, e);
-                self.reserved.remove(&(s, round));
-                // info!("{}: ship {} moving to cached dir {:?}", round, ship.id, dir);
-                commands.push(Command::Move(ship.id, dir));
-            }
-            | (Some(s), None) if ship.halite < self.halite[ship_idx] / 10 => {
-                assert!(s == ship_pos);
-                // info!("{}: out of halite; ship {} staying still", round, ship.id);
-                self.reserved.insert((s, round + 1), ship.id);
-                commands.push(Command::Move(ship.id, Dir::O));
-            }
-            | _ => invalid.push(ship.id),
-            }
-        }
-
-        mem::replace(self.routes, routes);
-        self.reserved.retain(|(_, t), _| *t >= round);
-
-        // info!("{}: Routes after execution", round);
-        // info!("{}: {:?}", round, self.routes);
-        // info!("{}: {:?}", round, self.reserved);
-
-        invalid
-    }
-
     // Should be called for current round?
     pub fn clear_route(&mut self, id: ID) {
         let route = self.routes.remove(&id);
         if let Some(route) = route {
-            let mut round = self.round;
-            for pos in route {
+            for (pos, round) in route {
                 self.reserved.remove(&(pos, round));
-                round += 1;
             }
         }
     }
 
-    pub fn plan_route(&mut self, ship: &Ship, end_pos: Pos, depth: Time, crash: bool) -> Command {
+    pub fn has_cached_route(&self, id: ID) -> bool {
+        self.routes.get(&id)
+            .map(|route| route.len() > 1)
+            .unwrap_or(false)
+    }
+
+    pub fn navigate(&mut self, ship: &Ship, end_pos: Pos, depth: Time, crash: bool) -> Command {
 
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
         struct Node {
@@ -326,24 +240,56 @@ impl<'round> Grid<'round> {
         let start_pos = ship.into();
         let start_idx = self.idx(start_pos);
         let cost = self.halite[start_idx] / 10;
+        let round = self.round;
 
-        // TODO: fix me
-        // Starting position is the same as ending position or we're stuck
-        if start_pos == end_pos || ship.halite < cost {
-            for dir in iter::once(&Dir::O).chain(&DIRS) {
-                let end_pos = self.step(start_pos, *dir);
-                let end_round = self.round + 1;
-                if !self.reserved.contains_key(&(end_pos, end_round)) {
-                    self.routes.entry(ship.id)
-                        .or_default()
-                        .push_front(end_pos);
-                    self.reserved.insert((end_pos, end_round), ship.id);
-                    return Command::Move(ship.id, *dir)
+        info!("Beginning navigation for {:?} from {:?} to {:?}", ship.id, start_pos, end_pos);
+
+        // Try to follow cached route
+        if let Some(mut route) = self.routes.remove(&ship.id) {
+
+            info!("Found cached route: {:?}", route);
+
+            let cached_start = route.pop_front();
+            let cached_end = route.front().cloned();
+
+            if let (Some((cached_start_pos, t1)), Some((cached_end_pos, t2))) = (cached_start, cached_end) {
+
+                assert!(cached_start_pos == start_pos);
+                assert!(self.dist(cached_start_pos, cached_end_pos) <= 1);
+                assert!(t1 == round);
+                assert!(t2 == round + 1);
+
+                let cached_end_idx = self.idx(cached_end_pos);
+
+                // Safe to follow cached route if
+                // 1. No enemies in radius
+                // 2. No ally has overwritten our reservation
+                if (self.enemies_around(cached_end_pos, 2) == 0 || self.drops[cached_end_idx])
+                && (self.reserved.get(&(cached_end_pos, round + 1)) == Some(&ship.id)) {
+                    if route.len() > 1 { self.routes.insert(ship.id, route); }
+                    self.reserved.remove(&(cached_start_pos, round));
+                    let dir = self.inv_step(cached_start_pos, cached_end_pos);
+                    info!("Safe to follow cached route; stepping {:?}", dir);
+                    return Command::Move(ship.id, dir)
+                } else {
+                    info!("Route invalidated; beginning repathing");
+                    self.routes.insert(ship.id, route);
                 }
             }
+        }
 
-            // Doomed to crash
-            return Command::Move(ship.id, Dir::O);
+        // Reset
+        self.clear_route(ship.id);
+
+        // Starting position is the same as ending position or we're stuck
+        if start_pos == end_pos || ship.halite < cost {
+            info!("Out of fuel or directed to stay where we are");
+            self.routes.insert(ship.id, VecDeque::with_capacity(0));
+            if let Some(id) = self.reserved.get(&(end_pos, round + 1)) {
+                warn!("Overwriting previous reservation by ship {} at point {:?}", id, end_pos);
+            }
+            self.reserved.insert((end_pos, round + 1), ship.id);
+            return Command::Move(ship.id, Dir::O)
         }
 
         let cutoff = self.round + depth;
@@ -377,18 +323,18 @@ impl<'round> Grid<'round> {
 
                     while let Some(prev) = step {
                         if retrace.get(&prev).is_none() { break }
-                        route.push_front(prev.pos);
+                        route.push_front((prev.pos, prev.round));
                         self.reserved.insert((prev.pos, prev.round), ship.id);
                         step = retrace.remove(&prev);
                     }
 
-                    // info!("{}: reserving route for {:?} to {:?}: {:?}", self.round, ship, end_pos, route);
+                    info!("Reserving route for ship {} to {:?}: {:?}", ship.id, end_pos, route);
                     route.front()
                         .cloned()
                         .expect("[INTERNAL ERROR]: no next position in path")
                 };
 
-                return Command::Move(ship.id, self.inv_step(start_pos, next))
+                return Command::Move(ship.id, self.inv_step(start_pos, next.0))
             }
 
             seen.insert((node_pos, node.round));
@@ -401,7 +347,6 @@ impl<'round> Grid<'round> {
                 }
 
                 let next_pos = self.step(node_pos, *dir);
-                let next_idx = self.idx(next_pos);
                 let next_halite = if dir == &Dir::O { node.halite } else { node.halite - cost };
                 let next_round = node.round + 1;
                 let next_cost = costs[&(node_pos, node.round)]
@@ -409,6 +354,7 @@ impl<'round> Grid<'round> {
                     + 1;
 
                 if (self.reserved.contains_key(&(next_pos, next_round)) && !(crash && next_pos == self.spawn))
+                || self.enemies_around(next_pos, 2) > 0
                 || seen.contains(&(next_pos, next_round))
                 {
                     continue
@@ -436,7 +382,6 @@ impl<'round> Grid<'round> {
         }
 
         // guess I'll die
-        error!("[INTERNAL ERROR]: pathfinding failed");
-        Command::Move(ship.id, Dir::O)
+        panic!("[INTERNAL ERROR]: pathfinding failed for ship {} from {:?} to {:?}", ship.id, start_pos, end_pos);
     }
 }
