@@ -365,7 +365,7 @@ impl<'round> Grid<'round> {
                     + 1;
 
                 if (self.reserved.contains_key(&(next_pos, next_round)) && !(crash && next_pos == self.spawn))
-                || self.enemies_around(next_pos, 2) > 0
+                || (self.enemies_around(next_pos, 2) > 0 && self.dist(next_pos, self.spawn) > 2)
                 || seen.contains(&(next_pos, next_round)) {
                     continue
                 }
