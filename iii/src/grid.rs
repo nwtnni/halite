@@ -272,12 +272,35 @@ impl<'round> Grid<'round> {
         // Reset
         self.clear_route(ship.id);
 
-        // Starting position is the same as ending position or we're stuck
-        if start_pos == end_pos || ship.halite < cost {
+        // Stuck
+        if ship.halite < cost {
             info!("Out of fuel or start == end; reserving {:?}", (start_pos, round + 1));
             self.routes.insert(ship.id, VecDeque::with_capacity(0));
             let repath = self.reserved.insert((start_pos, round + 1), ship.id);
             return (repath, Command::Move(ship.id, Dir::O))
+        }
+
+        // Starting position is the same as ending position: check for enemies
+        if start_pos == end_pos {
+            let mut min_dir = Dir::O;
+            let mut min_enemies = self.enemies_around(start_pos, 2);
+            if min_enemies > 0 {
+                for dir in &DIRS {
+                    let step = self.step(start_pos, *dir);
+                    let enemies = self.enemies_around(step, 2);
+                    if enemies < min_enemies {
+                        min_dir = *dir;
+                        min_enemies = enemies;
+                    }
+                }
+            }
+
+            let end_pos = self.step(start_pos, min_dir);
+            self.routes.insert(ship.id, VecDeque::with_capacity(0));
+            let repath = self.reserved.insert((end_pos, round + 1), ship.id);
+
+            info!("Start == end; reserving {:?}", (end_pos, round + 1));
+            return (repath, Command::Move(ship.id, min_dir))
         }
 
         let cutoff = self.round + depth;

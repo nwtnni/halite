@@ -86,7 +86,7 @@ impl Executor {
                             + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
                     if pos == Pos(yard.x, yard.y) {
                         Halite::max_value()
-                    } else if halite >= 100 {
+                    } else if halite >= 100 && grid.enemies_around(pos, 2) == 0 {
                         cost
                     } else if halite >= 12 && halite < 100 {
                         cost + 100000
