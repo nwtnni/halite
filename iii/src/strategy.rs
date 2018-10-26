@@ -117,14 +117,14 @@ impl Executor {
                     .enumerate()
                     .find(|(_, ship)| ship.id == id)
                     .expect("[INTERNAL ERROR]: missing repathing ship");
-                info!("{}: repathing ship {} to {:?}", state.round, ship.id, Pos(yard.x, yard.y));
+                // info!("{}: repathing ship {} to {:?}", state.round, ship.id, Pos(yard.x, yard.y));
                 commands.push(grid.plan_route(ship, Pos(yard.x, yard.y), Time::max_value(), false));
             } else {
                 let (index, ship) = outgoing.iter()
                     .enumerate()
                     .find(|(_, ship)| ship.id == id)
                     .expect("[INTERNAL ERROR]: missing repathing ship");
-                info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
+                // info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
                 let dist = grid.dist(Pos(ship.x, ship.y), assignment[index]) as Time;
                 if dist <= 5 {
                     commands.push(grid.plan_route(ship, assignment[index], 1, false));

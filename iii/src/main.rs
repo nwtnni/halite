@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate log; 
 extern crate failure;
 extern crate simplelog;
@@ -49,6 +50,8 @@ fn main() -> Result<(), failure::Error> {
         }
 
         state.update(&mut reader);
+
+        info!("{}", state.round);
 
         for command in executor.execute(&constants, &state) {
             write!(writer, "{} ", command.to_string())?;

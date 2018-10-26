@@ -1,8 +1,5 @@
 #![allow(dead_code, non_snake_case)]
 
-pub const RETURN: usize = 800;
-pub const HALITE_TIME_RATIO: usize = 100;
-
 fn capture_enabled() -> bool { false }
 fn capture_radius() -> usize { 3 }
 fn default_map_height() -> usize { 48 }

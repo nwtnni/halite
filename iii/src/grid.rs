@@ -7,7 +7,6 @@ use std::collections::{BinaryHeap, VecDeque};
 use fixedbitset::FixedBitSet;
 use fnv::{FnvHashSet, FnvHashMap};
 
-use constants::HALITE_TIME_RATIO;
 use command::Command;
 use data::*;
 
@@ -223,9 +222,9 @@ impl<'round> Grid<'round> {
             self.clear_route(id);
         }
 
-        info!("{}: Routes before execution", self.round);
-        info!("{}: {:?}", self.round, self.routes);
-        info!("{}: {:?}", self.round, self.reserved);
+        // info!("{}: Routes before execution", self.round);
+        // info!("{}: {:?}", self.round, self.routes);
+        // info!("{}: {:?}", self.round, self.reserved);
 
         let round = self.round;
         let mut routes = mem::replace(self.routes, FnvHashMap::default());
@@ -268,12 +267,12 @@ impl<'round> Grid<'round> {
                 // Otherwise good to go
                 let dir = self.inv_step(s, e);
                 self.reserved.remove(&(s, round));
-                info!("{}: ship {} moving to cached dir {:?}", round, ship.id, dir);
+                // info!("{}: ship {} moving to cached dir {:?}", round, ship.id, dir);
                 commands.push(Command::Move(ship.id, dir));
             }
             | (Some(s), None) if ship.halite < self.halite[ship_idx] / 10 => {
                 assert!(s == ship_pos);
-                info!("{}: out of halite; ship {} staying still", round, ship.id);
+                // info!("{}: out of halite; ship {} staying still", round, ship.id);
                 self.reserved.insert((s, round + 1));
                 commands.push(Command::Move(ship.id, Dir::O));
             }
@@ -284,9 +283,9 @@ impl<'round> Grid<'round> {
         mem::replace(self.routes, routes);
         self.reserved.retain(|(_, t)| *t >= round);
 
-        info!("{}: Routes after execution", round);
-        info!("{}: {:?}", round, self.routes);
-        info!("{}: {:?}", round, self.reserved);
+        // info!("{}: Routes after execution", round);
+        // info!("{}: {:?}", round, self.routes);
+        // info!("{}: {:?}", round, self.reserved);
 
         invalid
     }
@@ -390,7 +389,7 @@ impl<'round> Grid<'round> {
                         self.reserved.insert((node.pos, node.round + 1));
                     }
 
-                    info!("{}: reserving route for {:?} to {:?}: {:?}", self.round, ship, end_pos, route);
+                    // info!("{}: reserving route for {:?} to {:?}: {:?}", self.round, ship, end_pos, route);
                     route.front()
                         .cloned()
                         .expect("[INTERNAL ERROR]: no next position in path")
