@@ -35,7 +35,7 @@ pub struct Grid<'round> {
     height: Dist,
     round: Time,
     halite: &'round [Halite],
-    reserved: &'round mut FnvHashSet<(Pos, Time)>,
+    reserved: &'round mut FnvHashMap<(Pos, Time), ID>,
     routes: &'round mut FnvHashMap<ID, VecDeque<Pos>>,
     allies: FixedBitSet,
     enemies: FixedBitSet,
@@ -53,7 +53,7 @@ impl<'round> Grid<'round> {
         ships: &[Ship],
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
-        reserved: &'round mut FnvHashSet<(Pos, Time)>,
+        reserved: &'round mut FnvHashMap<(Pos, Time), ID>,
         routes: &'round mut FnvHashMap<ID, VecDeque<Pos>>,
     ) -> Self {
 
@@ -193,11 +193,7 @@ impl<'round> Grid<'round> {
     }
 
     pub fn can_spawn(&self) -> bool {
-        !self.reserved.contains(&(self.spawn, self.round + 1))
-        && DIRS.iter()
-            .map(|dir| self.step(self.spawn, *dir))
-            .filter(|pos| !self.reserved.contains(&(*pos, self.round + 1)))
-            .count() >= 2
+        !self.reserved.contains_key(&(self.spawn, self.round + 1))
     }
 
     /// A route is invalid if:
@@ -273,7 +269,7 @@ impl<'round> Grid<'round> {
             | (Some(s), None) if ship.halite < self.halite[ship_idx] / 10 => {
                 assert!(s == ship_pos);
                 // info!("{}: out of halite; ship {} staying still", round, ship.id);
-                self.reserved.insert((s, round + 1));
+                self.reserved.insert((s, round + 1), ship.id);
                 commands.push(Command::Move(ship.id, Dir::O));
             }
             | _ => invalid.push(ship.id),
@@ -281,7 +277,7 @@ impl<'round> Grid<'round> {
         }
 
         mem::replace(self.routes, routes);
-        self.reserved.retain(|(_, t)| *t >= round);
+        self.reserved.retain(|(_, t), _| *t >= round);
 
         // info!("{}: Routes after execution", round);
         // info!("{}: {:?}", round, self.routes);
@@ -331,16 +327,17 @@ impl<'round> Grid<'round> {
         let start_idx = self.idx(start_pos);
         let cost = self.halite[start_idx] / 10;
 
+        // TODO: fix me
         // Starting position is the same as ending position or we're stuck
         if start_pos == end_pos || ship.halite < cost {
             for dir in iter::once(&Dir::O).chain(&DIRS) {
                 let end_pos = self.step(start_pos, *dir);
                 let end_round = self.round + 1;
-                if !self.reserved.contains(&(end_pos, end_round)) {
+                if !self.reserved.contains_key(&(end_pos, end_round)) {
                     self.routes.entry(ship.id)
                         .or_default()
                         .push_front(end_pos);
-                    self.reserved.insert((end_pos, end_round));
+                    self.reserved.insert((end_pos, end_round), ship.id);
                     return Command::Move(ship.id, *dir)
                 }
             }
@@ -381,12 +378,8 @@ impl<'round> Grid<'round> {
                     while let Some(prev) = step {
                         if retrace.get(&prev).is_none() { break }
                         route.push_front(prev.pos);
-                        self.reserved.insert((prev.pos, prev.round));
+                        self.reserved.insert((prev.pos, prev.round), ship.id);
                         step = retrace.remove(&prev);
-                    }
-
-                    if node.halite < cost {
-                        self.reserved.insert((node.pos, node.round + 1));
                     }
 
                     // info!("{}: reserving route for {:?} to {:?}: {:?}", self.round, ship, end_pos, route);
@@ -415,9 +408,8 @@ impl<'round> Grid<'round> {
                     + if dir == &Dir::O { 0 } else { 1 }
                     + 1;
 
-                if (self.reserved.contains(&(next_pos, next_round)) && !(crash && next_pos == self.spawn))
+                if (self.reserved.contains_key(&(next_pos, next_round)) && !(crash && next_pos == self.spawn))
                 || seen.contains(&(next_pos, next_round))
-                || (next_halite < self.halite[next_idx] / 10 && self.reserved.contains(&(next_pos, next_round + 1)))
                 {
                     continue
                 }

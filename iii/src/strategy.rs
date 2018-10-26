@@ -13,7 +13,7 @@ pub struct Executor {
     total: Halite,
     crashing: FnvHashSet<ID>,
     returning: FnvHashSet<ID>,
-    reserved: FnvHashSet<(Pos, Time)>,
+    reserved: FnvHashMap<(Pos, Time), ID>,
     routes: FnvHashMap<ID, VecDeque<Pos>>,
 }
 
@@ -24,7 +24,7 @@ impl Executor {
             total,
             crashing: FnvHashSet::default(),
             returning: FnvHashSet::default(),
-            reserved: FnvHashSet::default(),
+            reserved: FnvHashMap::default(),
             routes: FnvHashMap::default(),
         }
     }
