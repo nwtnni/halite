@@ -87,9 +87,7 @@ impl Executor {
             outgoing.insert(ship.id, idx);
             idx += 1;
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                let cost = (constants.MAX_CELL_PRODUCTION as Halite -
-                            Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)
-                        ) / 200
+                let cost = (constants.MAX_CELL_PRODUCTION as Halite - Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)) / 200
                         + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
                         + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
                 if pos == Pos(yard.x, yard.y) {
@@ -125,10 +123,10 @@ impl Executor {
             };
 
             let depth = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {
-                Time::max_value()
+                16
             } else {
                 let dist = grid.dist(ship.into(), destination) as Time;
-                if dist <= 5 { 1 } else { dist - 5 }
+                if dist <= 8 { 1 } else { Time::min(8, dist - 8) }
             };
 
             let (invalidated, command) = grid.navigate(ship, destination, depth, crash);
@@ -150,7 +148,7 @@ impl Executor {
         if grid.can_spawn()
         && state.halite.iter().sum::<Halite>() * 2 > self.total
         && state.scores[state.id as usize] >= constants.NEW_ENTITY_ENERGY_COST as Halite
-        && state.round <= (constants.MAX_TURNS / 2) as Time {
+        && state.round <= (constants.MAX_TURNS / state.scores.len()) as Time {
             commands.push(Command::Spawn)
         }
 

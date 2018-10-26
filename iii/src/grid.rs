@@ -280,7 +280,6 @@ impl<'round> Grid<'round> {
         // Stuck
         if ship.halite < cost {
             // info!("Out of fuel or start == end; reserving {:?}", (start_pos, round + 1));
-            self.routes.insert(ship.id, VecDeque::with_capacity(0));
             let repath = self.reserved.insert((start_pos, round + 1), ship.id);
             return (repath, Command::Move(ship.id, Dir::O))
         }
@@ -301,7 +300,6 @@ impl<'round> Grid<'round> {
             }
 
             let end_pos = self.step(start_pos, min_dir);
-            self.routes.insert(ship.id, VecDeque::with_capacity(0));
             let repath = self.reserved.insert((end_pos, round + 1), ship.id);
 
             // info!("Start == end; reserving {:?}", (end_pos, round + 1));
@@ -393,7 +391,27 @@ impl<'round> Grid<'round> {
 
         // guess I'll die
         warn!("[INTERNAL ERROR]: pathfinding failed for ship {} from {:?} to {:?}", ship.id, start_pos, end_pos);
-        let repath = self.reserved.insert((start_pos, round + 1), ship.id);
-        (repath, Command::Move(ship.id, Dir::O))
+        let mut min_dir = Dir::O;
+        let mut min_enemies = self.enemies_around(start_pos, 2);
+        let mut min_dist = self.dist(start_pos, end_pos);
+
+        if min_enemies > 0 {
+            for dir in &DIRS {
+                let step = self.step(start_pos, *dir);
+                let enemies = self.enemies_around(step, 2);
+                let dist = self.dist(step, end_pos);
+                if (enemies == 0 && dist < min_dist) || enemies < min_enemies {
+                    min_dir = *dir;
+                    min_enemies = enemies;
+                    min_dist = dist;
+                }
+            }
+        }
+
+        let end_pos = self.step(start_pos, min_dir);
+        let repath = self.reserved.insert((end_pos, round + 1), ship.id);
+
+        // info!("Start == end; reserving {:?}", (end_pos, round + 1));
+        (repath, Command::Move(ship.id, min_dir))
     }
 }
