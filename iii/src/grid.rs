@@ -236,13 +236,13 @@ impl<'round> Grid<'round> {
         let cost = self.halite[start_idx] / 10;
         let round = self.round;
 
-        info!("Beginning navigation for {:?} from {:?} to {:?}", ship.id, start_pos, end_pos);
+        // info!("Beginning navigation for {:?} from {:?} to {:?}", ship.id, start_pos, end_pos);
 
         // Try to follow cached route
         if let Some(mut route) = self.routes.remove(&ship.id) {
 
             if route.len() > 1 {
-                info!("Found cached route: {:?}", route);
+                // info!("Found cached route: {:?}", route);
             }
 
             let cached_start = route.pop_front();
@@ -266,11 +266,11 @@ impl<'round> Grid<'round> {
                     if route.len() > 1 { self.routes.insert(ship.id, route); }
                     self.reserved.remove(&(cached_start_pos, round));
                     let dir = self.inv_step(cached_start_pos, cached_end_pos);
-                    info!("Safe to follow cached route; stepping {:?}", dir);
+                    // info!("Safe to follow cached route; stepping {:?}", dir);
                     return (None, Command::Move(ship.id, dir))
                 }
 
-                info!("Route invalidated; beginning repathing");
+                // info!("Route invalidated; beginning repathing");
             }
         }
 
@@ -279,7 +279,7 @@ impl<'round> Grid<'round> {
 
         // Stuck
         if ship.halite < cost {
-            info!("Out of fuel or start == end; reserving {:?}", (start_pos, round + 1));
+            // info!("Out of fuel or start == end; reserving {:?}", (start_pos, round + 1));
             self.routes.insert(ship.id, VecDeque::with_capacity(0));
             let repath = self.reserved.insert((start_pos, round + 1), ship.id);
             return (repath, Command::Move(ship.id, Dir::O))
@@ -304,7 +304,7 @@ impl<'round> Grid<'round> {
             self.routes.insert(ship.id, VecDeque::with_capacity(0));
             let repath = self.reserved.insert((end_pos, round + 1), ship.id);
 
-            info!("Start == end; reserving {:?}", (end_pos, round + 1));
+            // info!("Start == end; reserving {:?}", (end_pos, round + 1));
             return (repath, Command::Move(ship.id, min_dir))
         }
 
@@ -344,7 +344,7 @@ impl<'round> Grid<'round> {
                         step = retrace.remove(&prev);
                     }
 
-                    info!("Reserving route for ship {} to {:?}: {:?}", ship.id, end_pos, route);
+                    // info!("Reserving route for ship {} to {:?}: {:?}", ship.id, end_pos, route);
                     route.front()
                         .cloned()
                         .expect("[INTERNAL ERROR]: no next position in path")

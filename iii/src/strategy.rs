@@ -134,7 +134,7 @@ impl Executor {
             let (invalidated, command) = grid.navigate(ship, destination, depth, crash);
 
             if let Some(id) = invalidated {
-                warn!("Ship {}'s route invalidated", id);
+                // warn!("Ship {}'s route invalidated", id);
                 grid.clear_route(id);
                 repath.insert( 
                     ships.iter()
