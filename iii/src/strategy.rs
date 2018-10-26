@@ -58,14 +58,18 @@ impl Executor {
         let mut outgoing = Vec::new();
 
         for ally in &allies {
-            if ally.halite >= 950 {
+            if grid.dist_from_yard(ally) as Time + state.round + 10 >= constants.MAX_TURNS as Time {
+                self.crashing.insert(ally.id);
+                grid.clear_route(ally.id); 
+                incoming.push(ally);
+            } else if ally.halite >= 950 {
                 self.returning.insert(ally.id);
                 incoming.push(ally);
                 grid.clear_route(ally.id); 
             } else if Pos(ally.x, ally.y) == Pos(yard.x, yard.y) {
                 self.returning.remove(&ally.id);
                 outgoing.push(ally);
-            } else if self.returning.contains(&ally.id) {
+            } else if self.returning.contains(&ally.id) || self.crashing.contains(&ally.id) {
                 incoming.push(ally);
             } else {
                 outgoing.push(ally);
@@ -102,13 +106,19 @@ impl Executor {
         let repath = grid.execute_routes(&allies, &mut commands);
 
         for id in repath {
-            if self.returning.contains(&id) {
+            if self.crashing.contains(&id) {
+                let (_, ship) = incoming.iter()
+                    .enumerate()
+                    .find(|(_, ship)| ship.id == id)
+                    .expect("[INTERNAL ERROR]: missing repathing ship");
+                commands.push(grid.plan_route(ship, Pos(yard.x, yard.y), Time::max_value(), true));
+            } else if self.returning.contains(&id) {
                 let (_, ship) = incoming.iter()
                     .enumerate()
                     .find(|(_, ship)| ship.id == id)
                     .expect("[INTERNAL ERROR]: missing repathing ship");
                 info!("{}: repathing ship {} to {:?}", state.round, ship.id, Pos(yard.x, yard.y));
-                commands.push(grid.plan_route(ship, Pos(yard.x, yard.y), Time::max_value()));
+                commands.push(grid.plan_route(ship, Pos(yard.x, yard.y), Time::max_value(), false));
             } else {
                 let (index, ship) = outgoing.iter()
                     .enumerate()
@@ -117,9 +127,9 @@ impl Executor {
                 info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
                 let dist = grid.dist(Pos(ship.x, ship.y), assignment[index]) as Time;
                 if dist <= 5 {
-                    commands.push(grid.plan_route(ship, assignment[index], 1));
+                    commands.push(grid.plan_route(ship, assignment[index], 1, false));
                 } else {
-                    commands.push(grid.plan_route(ship, assignment[index], dist - 5));
+                    commands.push(grid.plan_route(ship, assignment[index], dist - 5, false));
                 }
             }
         }

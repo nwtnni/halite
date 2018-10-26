@@ -128,9 +128,9 @@ impl<'round> Grid<'round> {
         self.dx(x1, x2) + self.dy(y1, y2)
     }
 
-//     pub fn dist_from_yard(&self, ship: &Ship) -> Dist {
-//         self.dist(Pos(ship.x, ship.y), self.spawn)
-//     }
+    pub fn dist_from_yard(&self, ship: &Ship) -> Dist {
+        self.dist(Pos(ship.x, ship.y), self.spawn)
+    }
 
     pub fn step(&self, Pos(x, y): Pos, d: Dir) -> Pos {
         match d {
@@ -303,7 +303,7 @@ impl<'round> Grid<'round> {
         }
     }
 
-    pub fn plan_route(&mut self, ship: &Ship, end_pos: Pos, depth: Time) -> Command {
+    pub fn plan_route(&mut self, ship: &Ship, end_pos: Pos, depth: Time, crash: bool) -> Command {
 
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
         struct Node {
@@ -416,7 +416,7 @@ impl<'round> Grid<'round> {
                     + if dir == &Dir::O { 0 } else { 1 }
                     + 1;
 
-                if self.reserved.contains(&(next_pos, next_round))
+                if (self.reserved.contains(&(next_pos, next_round)) && !(crash && next_pos == self.spawn))
                 || seen.contains(&(next_pos, next_round))
                 || (next_halite < self.halite[next_idx] / 10 && self.reserved.contains(&(next_pos, next_round + 1)))
                 {
