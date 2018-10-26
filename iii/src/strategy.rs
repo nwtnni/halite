@@ -54,13 +54,31 @@ impl Executor {
             allies.len() * (state.width as usize) * (state.height as usize)
         );
 
+        let mut incoming = Vec::new();
+        let mut outgoing = Vec::new();
+
         for ally in &allies {
+            if ally.halite >= 950 {
+                self.returning.insert(ally.id);
+                incoming.push(ally);
+                grid.clear_route(ally.id); 
+            } else if Pos(ally.x, ally.y) == Pos(yard.x, yard.y) {
+                self.returning.remove(&ally.id);
+                outgoing.push(ally);
+            } else if self.returning.contains(&ally.id) {
+                incoming.push(ally);
+            } else {
+                outgoing.push(ally);
+            }
+        }
+
+        for ship in &outgoing {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
                 let cost = (constants.MAX_CELL_PRODUCTION as Halite -
                             Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)
                          ) / 200
                          + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
-                         + grid.dist(Pos(ally.x, ally.y), pos) as Halite;
+                         + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
                 if pos == Pos(yard.x, yard.y) {
                     Halite::max_value()
                 } else if halite >= 100 {
@@ -71,17 +89,9 @@ impl Executor {
                     Halite::max_value()
                 }
             });
-
-
-            if ally.halite > 800 {
-                self.returning.insert(ally.id);
-                grid.clear_route(ally.id); 
-            } else if Pos(ally.x, ally.y) == Pos(yard.x, yard.y) {
-                self.returning.remove(&ally.id);
-            }
         }
 
-        let assignment = minimize(&costs, allies.len(), state.width as usize * state.height as usize)
+        let assignment = minimize(&costs, outgoing.len(), state.width as usize * state.height as usize)
             .into_iter()
             .map(|dest| dest.expect("[INTERNAL ERROR]: all ships should have assignment"))
             .map(|dest| grid.inv_idx(dest))
@@ -92,17 +102,25 @@ impl Executor {
         let repath = grid.execute_routes(&allies, &mut commands);
 
         for id in repath {
-            let (index, ship) = allies.iter()
-                .enumerate()
-                .find(|(_, ship)| ship.id == id)
-                .expect("[INTERNAL ERROR]: missing repathing ship");
-
             if self.returning.contains(&id) {
+                let (_, ship) = incoming.iter()
+                    .enumerate()
+                    .find(|(_, ship)| ship.id == id)
+                    .expect("[INTERNAL ERROR]: missing repathing ship");
                 info!("{}: repathing ship {} to {:?}", state.round, ship.id, Pos(yard.x, yard.y));
                 commands.push(grid.plan_route(ship, Pos(yard.x, yard.y), Time::max_value()));
             } else {
+                let (index, ship) = outgoing.iter()
+                    .enumerate()
+                    .find(|(_, ship)| ship.id == id)
+                    .expect("[INTERNAL ERROR]: missing repathing ship");
                 info!("{}: repathing ship {} to {:?}", state.round, ship.id, assignment[index]);
-                commands.push(grid.plan_route(ship, assignment[index], Time::max_value()));
+                let dist = grid.dist(Pos(ship.x, ship.y), assignment[index]) as Time;
+                if dist <= 5 {
+                    commands.push(grid.plan_route(ship, assignment[index], 1));
+                } else {
+                    commands.push(grid.plan_route(ship, assignment[index], dist - 5));
+                }
             }
         }
 
