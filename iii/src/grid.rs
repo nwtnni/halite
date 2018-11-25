@@ -241,9 +241,9 @@ impl<'round> Grid<'round> {
         // Try to follow cached route
         if let Some(mut route) = self.routes.remove(&ship.id) {
 
-            if route.len() > 1 {
+            // if route.len() > 1 {
                 // info!("Found cached route: {:?}", route);
-            }
+            // }
 
             let cached_start = route.pop_front();
             let cached_end = route.front().cloned();
@@ -258,11 +258,17 @@ impl<'round> Grid<'round> {
 
                 let cached_end_idx = self.idx(cached_end_pos);
 
-                // Safe to follow cached route if
-                // 1. No enemies in radius
-                // 2. No ally has overwritten our reservation
-                if (self.enemies_around(cached_end_pos, 2) == 0 || self.drops[cached_end_idx])
-                && (self.reserved.get(&(cached_end_pos, round + 1)) == Some(&ship.id)) {
+                // If enemies around, sit and wait
+                if self.enemies_around(cached_end_pos, 1) == 0 && !self.drops[cached_end_idx] {
+                    route.push_front((cached_start_pos, t1)); 
+                    let repath = self.reserved.insert((cached_start_pos, t1 + 1), ship.id);
+                    for (_, t) in &mut route { *t += 1; }
+                    self.routes.insert(ship.id, route);
+                    return (repath, Command::Move(ship.id, Dir::O))
+                }
+
+                // Safe to follow cached route if no ally has overwritten our reservation
+                if self.reserved.get(&(cached_end_pos, round + 1)) == Some(&ship.id) {
                     if route.len() > 1 { self.routes.insert(ship.id, route); }
                     self.reserved.remove(&(cached_start_pos, round));
                     let dir = self.inv_step(cached_start_pos, cached_end_pos);
