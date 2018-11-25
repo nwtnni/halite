@@ -88,8 +88,8 @@ impl Executor {
             idx += 1;
             grid.fill_cost(&mut costs, |grid, pos, halite| {
                 let cost = (constants.MAX_CELL_PRODUCTION as Halite - Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)) / 200
-                        + (grid.dist(pos, Pos(yard.x, yard.y)) as Halite * 2)
-                        + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
+                        + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
+                        + (grid.dist(Pos(ship.x, ship.y), pos) as Halite * 2);
                 if pos == Pos(yard.x, yard.y) {
                     Halite::max_value()
                 } else if halite >= 100 && grid.enemies_around(pos, 2) == 0 {
@@ -123,7 +123,7 @@ impl Executor {
             };
 
             let depth = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {
-                16
+                24
             } else {
                 let dist = grid.dist(ship.into(), destination) as Time;
                 if dist <= 8 { 1 } else { Time::min(8, dist - 8) }
