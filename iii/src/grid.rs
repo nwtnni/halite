@@ -259,7 +259,7 @@ impl<'round> Grid<'round> {
                 let cached_end_idx = self.idx(cached_end_pos);
 
                 // If enemies around, sit and wait
-                if self.enemies_around(cached_end_pos, 1) == 0 && !self.drops[cached_end_idx] {
+                if self.enemies_around(cached_end_pos, 1) > 0 && !self.drops[cached_end_idx] {
                     route.push_front((cached_start_pos, t1)); 
                     let repath = self.reserved.insert((cached_start_pos, t1 + 1), ship.id);
                     for (_, t) in &mut route { *t += 1; }

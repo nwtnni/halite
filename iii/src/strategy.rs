@@ -88,7 +88,7 @@ impl Executor {
             idx += 1;
             grid.fill_cost(&mut costs, |grid, pos, halite| {
                 let cost = (constants.MAX_CELL_PRODUCTION as Halite - Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)) / 200
-                        + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
+                        + (grid.dist(pos, Pos(yard.x, yard.y)) as Halite * 2)
                         + grid.dist(Pos(ship.x, ship.y), pos) as Halite;
                 if pos == Pos(yard.x, yard.y) {
                     Halite::max_value()
