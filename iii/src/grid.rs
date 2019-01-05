@@ -1,15 +1,17 @@
 use std::cmp;
 use std::iter;
+use std::mem;
 use std::usize;
-use std::collections::{BinaryHeap, VecDeque};
+use std::collections::BinaryHeap;
 
 use fixedbitset::FixedBitSet;
 use fnv::{FnvHashSet, FnvHashMap};
 
+use constants::HALITE_TIME_RATIO;
 use command::Command;
-use data::*;
+use data::{Dropoff, Ship, Shipyard};
 
-pub const DIRS: [Dir; 4] = [Dir::N, Dir::S, Dir::E, Dir::W];
+pub const DIRS: [Dir; 5] = [Dir::N, Dir::S, Dir::E, Dir::W, Dir::O];
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Dir {
@@ -28,63 +30,60 @@ impl Dir {
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Pos(pub usize, pub usize);
+
 #[derive(Debug)]
 pub struct Grid<'round> {
-    width: Dist,
-    height: Dist,
-    round: Time,
-    halite: &'round [Halite],
-    reserved: &'round mut FnvHashMap<(Pos, Time), ID>,
-    routes: &'round mut FnvHashMap<ID, VecDeque<(Pos, Time)>>,
+    width: usize,
+    height: usize,
+    round: usize,
+    halite: &'round [usize],
     allies: FixedBitSet,
     enemies: FixedBitSet,
-    drops: FixedBitSet,
-    spawn: Pos,
+    stuck: FixedBitSet,
+    base: Pos,
+    drops: FnvHashSet<Pos>,
+    planned: Vec<(usize, Dir, Pos, bool)>,
 }
 
 impl<'round> Grid<'round> {
     pub fn new(
-        id: PID,
-        width: Dist,
-        height: Dist,
-        round: Time,
-        halite: &'round [Halite],
+        id: usize,
+        width: usize,
+        height: usize,
+        round: usize,
+        halite: &'round [usize],
         ships: &[Ship],
         dropoffs: &[Dropoff],
         yards: &[Shipyard],
-        reserved: &'round mut FnvHashMap<(Pos, Time), ID>,
-        routes: &'round mut FnvHashMap<ID, VecDeque<(Pos, Time)>>,
     ) -> Self {
-
-        let capacity = width as usize * height as usize;
-        let mut allies = FixedBitSet::with_capacity(capacity);
-        let mut enemies = FixedBitSet::with_capacity(capacity);
-        let mut drops = FixedBitSet::with_capacity(capacity);
+        let mut allies = FixedBitSet::with_capacity(width * height);
+        let mut enemies = FixedBitSet::with_capacity(width * height);
+        let mut stuck = FixedBitSet::with_capacity(width * height);
+        let mut drops = FnvHashSet::default();
 
         for ship in ships {
-            let ship_idx = (ship.y as usize)
-                * (width as usize)
-                + (ship.x as usize);
             if ship.owner == id {
-                allies.put(ship_idx);
+                let ship_index = ship.y * width + ship.x;
+                if ship.halite < halite[ship_index] / 10 {
+                    stuck.put(ship_index);
+                }
+                allies.put(ship_index);
             } else {
-                enemies.put(ship_idx);
+                enemies.put(ship.y * width + ship.x);
             }
         }
 
         for drop in dropoffs {
             if drop.owner == id {
-                let drop_idx = (drop.y as usize)
-                    * (width as usize)
-                    + (drop.x as usize);
-                drops.put(drop_idx);
+                drops.insert(Pos(drop.x, drop.y));
             }
         }
 
-        let yard = yards[id as usize];
-        let spawn = Pos(yard.x, yard.y);
-        let spawn_idx = (yard.y as usize) * (width as usize) + (yard.x as usize);
-        drops.put(spawn_idx);
+        let yard = yards[id];
+        let base = Pos(yard.x, yard.y);
+        let planned = Vec::new();
 
         Grid {
             width,
@@ -93,137 +92,112 @@ impl<'round> Grid<'round> {
             halite,
             allies,
             enemies,
-            spawn,
+            stuck,
+            base,
             drops,
-            reserved,
-            routes,
+            planned,
         }
     }
 
     #[inline(always)]
-    pub fn idx(&self, Pos(x, y): Pos) -> usize {
-        self.width as usize * y as usize + x as usize
+    fn index(&self, pos: Pos) -> usize {
+        self.width * pos.1 + pos.0
     }
 
-    #[inline(always)]
-    pub fn inv_idx(&self, idx: usize) -> Pos {
-        let x = (idx % (self.width as usize)) as Dist;
-        let y = (idx / (self.width as usize)) as Dist;
-        Pos(x, y)
+    pub fn is_stuck(&self, pos: Pos) -> bool {
+        self.stuck.contains(self.index(pos))
     }
 
-    pub fn dx(&self, x1: Dist, x2: Dist) -> Dist {
-        let dx = Dist::abs(x2 - x1);
-        if dx < self.width / 2 { dx } else { self.width - dx }
+    pub fn distance_from_yard(&self, ship: &Ship) -> usize {
+        self.dist(Pos(ship.x, ship.y), self.base)
     }
 
-    pub fn dy(&self, y1: Dist, y2: Dist) -> Dist {
-        let dy = Dist::abs(y2 - y1);
-        if dy < self.height / 2 { dy } else { self.height - dy }
+    pub fn dx(&self, x1: usize, x2: usize) -> usize {
+        let min_x = usize::min(x1, x2);
+        let max_x = usize::max(x1, x2);
+        if (max_x - min_x) > (self.width / 2) {
+            min_x + self.width - max_x
+        } else {
+            max_x - min_x
+        }
     }
 
-    pub fn dist(&self, Pos(x1, y1): Pos, Pos(x2, y2): Pos) -> Dist {
-        self.dx(x1, x2) + self.dy(y1, y2)
+    pub fn dy(&self, y1: usize, y2: usize) -> usize {
+        let min_y = usize::min(y1, y2);
+        let max_y = usize::max(y1, y2);
+        if (max_y - min_y) > (self.height / 2) {
+            min_y + self.height - max_y
+        } else {
+            max_y - min_y
+        }
     }
 
-    pub fn dist_from_yard(&self, ship: &Ship) -> Dist {
-        self.dist(Pos(ship.x, ship.y), self.spawn)
+    pub fn dist(&self, a: Pos, b: Pos) -> usize {
+        self.dx(a.0, b.0) + self.dy(a.1, b.1)
     }
 
-    pub fn step(&self, Pos(x, y): Pos, d: Dir) -> Pos {
+    pub fn step(&self, p: Pos, d: Dir) -> Pos {
         match d {
-        | Dir::N => Pos(x, (y + self.height - 1) % self.height),
-        | Dir::S => Pos(x, (y + 1) % self.height),
-        | Dir::E => Pos((x + 1) % self.width, y),
-        | Dir::W => Pos((x + self.width - 1) % self.width, y),
-        | Dir::O => Pos(x, y),
+        | Dir::N => Pos(p.0, (p.1 + self.height - 1) % self.height),
+        | Dir::S => Pos(p.0, (p.1 + 1) % self.height),
+        | Dir::E => Pos((p.0 + 1) % self.width, p.1),
+        | Dir::W => Pos((p.0 + self.width - 1) % self.width, p.1),
+        | Dir::O => p,
         }
     }
 
-    pub fn inv_step(&self, Pos(x1, y1): Pos, Pos(x2, y2): Pos) -> Dir {
-        match (x2 - x1, y2 - y1) {
-        | (0, dy) if dy == -1 || dy ==  self.height - 1 => Dir::N,
-        | (0, dy) if dy == 1  || dy == -self.height + 1 => Dir::S,
-        | (dx, 0) if dx == -1 || dx ==  self.width - 1  => Dir::W,
-        | (dx, 0) if dx == 1  || dx == -self.width + 1  => Dir::E,
-        | (0, 0) => Dir::O,
-        | _ => unreachable!(),
-        }
-    }
-
-    fn around(&self, Pos(x, y): Pos, radius: Dist) -> impl Iterator<Item = Pos> {
+    fn around(&self, pos: Pos, radius: usize) -> impl Iterator<Item = Pos> {
         let (w, h) = (self.width, self.height);
-        (0..radius).flat_map(move |dy| {
-            (0..radius)
-                .filter(move |dx| !(*dx == 0 && dy == 0))
-                .flat_map(move |dx| {
-                    iter::once(Pos((x + w - dx) % w, (y + h - dy) % h))
-                        .chain(iter::once(Pos((x + dx) % w,     (y + h - dy) % h)))
-                        .chain(iter::once(Pos((x + w - dx) % w, (y + dy) % h)))
-                        .chain(iter::once(Pos((x + dx) % w,     (y + dy) % h)))
-            })
+        (0..radius).flat_map(move |y| {
+        (0..radius).flat_map(move |x| {
+            iter::once(Pos((pos.0 + w - x) % w, (pos.1 + h - y) % h))
+                .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + h - y) % h)))
+                .chain(iter::once(Pos((pos.0 + w - x) % w, (pos.1 + y) % h)))
+                .chain(iter::once(Pos((pos.0 + x) % w,     (pos.1 + y) % h)))
         })
-        .chain(iter::once(Pos(x, y)))
+        })
     }
 
-//     pub fn allies_around(&self, pos: Pos, radius: Dist) -> usize {
-//         self.around(pos, radius)
-//             .filter(|pos| self.allies[self.idx(*pos)])
-//             .count()
-//     }
-
-    pub fn enemies_around(&self, pos: Pos, radius: Dist) -> usize {
+    pub fn allies_around(&self, pos: Pos, radius: usize) -> usize {
         self.around(pos, radius)
-            .filter(|pos| self.enemies[self.idx(*pos)])
+            .filter(|pos| self.allies[self.index(*pos)])
             .count()
     }
 
-    pub fn fill_cost<F>(&self, costs: &mut Vec<Halite>, f: F)
-        where F: Fn(&Self, Pos, Halite) -> Halite,
+    pub fn enemies_around(&self, pos: Pos, radius: usize) -> usize {
+        self.around(pos, radius)
+            .filter(|pos| self.enemies[self.index(*pos)])
+            .count()
+    }
+
+//     pub fn halite_around(&self, pos: Pos, radius: usize) -> usize {
+//         self.around(pos, radius)
+//             .map(|pos| self.halite[self.index(pos)])
+//             .sum()
+//     }
+
+//     pub fn average_halite(&self) -> usize {
+//         self.halite.iter().sum::<usize>() / self.halite.len()
+//     }
+
+    pub fn fill_cost<F>(&self, costs: &mut Vec<usize>, f: F)
+        where F: Fn(&Self, Pos, usize) -> usize,
     {
         for y in 0..self.height {
+            let row = y * self.width;
             for x in 0..self.width {
+                let index = row + x;
                 let pos = Pos(x, y);
-                let index = self.idx(pos);
                 let halite = self.halite[index];
                 costs.push(f(self, pos, halite));
             }
         }
     }
 
-    pub fn can_spawn(&self) -> bool {
-        !self.reserved.contains_key(&(self.spawn, self.round + 1))
-    }
+    pub fn plan_route(&mut self, ship: &Ship, end: Pos, crash: bool) {
 
-    // Should be called for current round?
-    pub fn clear_route(&mut self, id: ID) {
-        self.routes.remove(&id);
-        self.reserved.retain(|(_, _), reserved| id != *reserved);
-    }
-
-    // Call to clean up after pathfinding a round
-    pub fn clear_round(&mut self, round: Time) {
-        self.reserved.retain(|(_, t), _| *t > round);
-    }
-
-    pub fn navigate(&mut self, ship: &Ship, end_pos: Pos, depth: Time, crash: bool) -> (Option<ID>, Command) {
-
-        #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-        struct Node {
-            pos: Pos,
-            halite: Halite,
-            heuristic: Time,
-            round: Time,
-        }
-
-        impl Ord for Node {
-            fn cmp(&self, rhs: &Self) -> cmp::Ordering {
-                rhs.heuristic.cmp(&self.heuristic)
-                    .then_with(|| rhs.halite.cmp(&self.halite))
-                    .then_with(|| rhs.round.cmp(&self.round))
-                    .then_with(|| self.pos.cmp(&rhs.pos))
-            }
-        }
+        #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+        struct Node(Pos, usize);
 
         impl PartialOrd for Node {
             fn partial_cmp(&self, rhs: &Self) -> Option<cmp::Ordering> {
@@ -231,194 +205,133 @@ impl<'round> Grid<'round> {
             }
         }
 
-        let start_pos = ship.into();
-        let start_idx = self.idx(start_pos);
-        let cost = self.halite[start_idx] / 10;
-        let round = self.round;
-
-        // info!("Beginning navigation for {:?} from {:?} to {:?}", ship.id, start_pos, end_pos);
-
-        // Try to follow cached route
-        if let Some(mut route) = self.routes.remove(&ship.id) {
-
-            // if route.len() > 1 {
-                // info!("Found cached route: {:?}", route);
-            // }
-
-            let cached_start = route.pop_front();
-            let cached_end = route.front().cloned();
-
-            if let (Some((cached_start_pos, t1)), Some((cached_end_pos, t2))) = (cached_start, cached_end) {
-
-                assert!(cached_start_pos == start_pos);
-                assert!(self.dist(cached_start_pos, cached_end_pos) <= 1);
-                assert!(t1 == round);
-                assert!(t2 == round + 1);
-                assert!(ship.halite >= cost);
-
-                let cached_end_idx = self.idx(cached_end_pos);
-
-                // If enemies around, sit and wait
-                if self.enemies_around(cached_end_pos, 1) > 0 && !self.drops[cached_end_idx] {
-                    route.push_front((cached_start_pos, t1)); 
-                    let repath = self.reserved.insert((cached_start_pos, t1 + 1), ship.id);
-                    for (_, t) in &mut route { *t += 1; }
-                    self.routes.insert(ship.id, route);
-                    return (repath, Command::Move(ship.id, Dir::O))
-                }
-
-                // Safe to follow cached route if no ally has overwritten our reservation
-                if self.reserved.get(&(cached_end_pos, round + 1)) == Some(&ship.id) {
-                    if route.len() > 1 { self.routes.insert(ship.id, route); }
-                    self.reserved.remove(&(cached_start_pos, round));
-                    let dir = self.inv_step(cached_start_pos, cached_end_pos);
-                    // info!("Safe to follow cached route; stepping {:?}", dir);
-                    return (None, Command::Move(ship.id, dir))
-                }
-
-                // info!("Route invalidated; beginning repathing");
+        impl Ord for Node {
+            fn cmp(&self, rhs: &Self) -> cmp::Ordering {
+                rhs.1.cmp(&self.1).then_with(|| self.0.cmp(&rhs.0))
             }
         }
 
-        // Reset
-        self.clear_route(ship.id);
+        let start = Pos(ship.x, ship.y);
+        let start_index = self.index(start);
 
-        // Stuck
-        if ship.halite < cost {
-            // info!("Out of fuel or start == end; reserving {:?}", (start_pos, round + 1));
-            let repath = self.reserved.insert((start_pos, round + 1), ship.id);
-            return (repath, Command::Move(ship.id, Dir::O))
+        if self.halite[start_index] / 10 > ship.halite || start == end {
+            self.planned.push((ship.id, Dir::O, start, crash));
+            return
         }
 
-        // Starting position is the same as ending position: check for enemies
-        if start_pos == end_pos {
-            let mut min_dir = Dir::O;
-            let mut min_enemies = self.enemies_around(start_pos, 2);
-            if min_enemies > 0 {
-                for dir in &DIRS {
-                    let step = self.step(start_pos, *dir);
-                    let enemies = self.enemies_around(step, 2);
-                    if enemies < min_enemies {
-                        min_dir = *dir;
-                        min_enemies = enemies;
-                    }
+        let mut queue = BinaryHeap::default();
+        let mut trace = FnvHashMap::default();
+        let mut costs = FnvHashMap::default();
+        let mut seen = FnvHashSet::default();
+
+        costs.insert(start, 0);
+        queue.push(Node(start, 0));
+
+        while let Some(Node(node, _)) = queue.pop() {
+
+            if node == end {
+                let mut step = end;
+                let mut dir = Dir::O;
+                while let Some((prev, prev_dir)) = trace.get(&step) {
+                    dir = *prev_dir;
+                    if *prev == start { break }
+                    step = *prev;
                 }
+
+                let next = self.step(start, dir);
+                self.planned.push((ship.id, dir, next, crash));
+                return
             }
 
-            let end_pos = self.step(start_pos, min_dir);
-            let repath = self.reserved.insert((end_pos, round + 1), ship.id);
+            seen.insert(node);
 
-            // info!("Start == end; reserving {:?}", (end_pos, round + 1));
-            return (repath, Command::Move(ship.id, min_dir))
-        }
+            for dir in &DIRS {
 
-        let cutoff = self.round + depth;
-        let mut queue: BinaryHeap<Node> = BinaryHeap::default();
-        let mut costs: FnvHashMap<(Pos, Time), Time> = FnvHashMap::default();
-        let mut retrace: FnvHashMap<Node, Node> = FnvHashMap::default();
-        let mut seen: FnvHashSet<(Pos, Time)> = FnvHashSet::default();
+                let next = self.step(node, *dir);
+                let next_index = self.index(next);
 
-        costs.insert((start_pos, self.round), 0);
-
-        queue.push(Node {
-            pos: start_pos,
-            halite: ship.halite,
-            heuristic: 0,
-            round: self.round,
-        });
-
-        while let Some(node) = queue.pop() {
-
-            let node_pos = node.pos;
-            let node_idx = self.idx(node_pos);
-            let cost = self.halite[node_idx] / 10;
-
-            // Stuck or found path
-            if node.halite < cost || node.pos == end_pos || node.round == cutoff {
-
-                let next = {
-                    let mut step = Some(node);
-                    let mut route = self.routes.entry(ship.id)
-                        .or_default();
-
-                    while let Some(prev) = step {
-                        if retrace.get(&prev).is_none() { break }
-                        route.push_front((prev.pos, prev.round));
-                        self.reserved.insert((prev.pos, prev.round), ship.id);
-                        step = retrace.remove(&prev);
-                    }
-
-                    // info!("Reserving route for ship {} to {:?}: {:?}", ship.id, end_pos, route);
-                    route.front()
-                        .cloned()
-                        .expect("[INTERNAL ERROR]: no next position in path")
-                };
-
-                return (None, Command::Move(ship.id, self.inv_step(start_pos, next.0)))
-            }
-
-            seen.insert((node_pos, node.round));
-
-            for dir in DIRS.iter().chain(iter::once(&Dir::O)) {
-
-                let next_pos = self.step(node_pos, *dir);
-                let next_halite = if dir == &Dir::O { node.halite } else { node.halite - cost };
-                let next_round = node.round + 1;
-                let next_cost = costs[&(node_pos, node.round)]
-                    + if dir == &Dir::O { 0 } else { 1 }
-                    + 1;
-
-                if (self.reserved.contains_key(&(next_pos, next_round)) && !(crash && next_pos == self.spawn))
-                || (self.enemies_around(next_pos, 2) > 0 && self.dist(next_pos, self.spawn) >= 2 && self.dist(next_pos, start_pos) >= 2)
-                || (self.enemies_around(next_pos, 0) > 0 && self.dist(next_pos, self.spawn) >= 1 && self.dist(next_pos, start_pos) >= 1)
-                || seen.contains(&(next_pos, next_round)) {
+                if seen.contains(&next) || self.stuck[next_index]
+                || (self.enemies_around(next, 1) > 0 && next != self.base) {
                     continue
                 }
 
-                if let Some(prev_cost) = costs.get(&(next_pos, next_round)) {
-                    if next_cost >= *prev_cost {
+                let node_index = self.index(node);
+                let crowd_cost = if self.allies[next_index] {
+                    // Don't even think about trying anything fancy
+                    if start == self.base { 1000000 } else { 1 }
+                } else {
+                    0
+                };
+                let halite_cost = (self.halite[node_index] / 10) / HALITE_TIME_RATIO;
+                let time_cost = 1;
+                let next_cost = costs[&node] + crowd_cost + halite_cost + time_cost;
+
+                if let Some(prev_cost) = costs.get(&next) {
+                    if *prev_cost <= next_cost {
                         continue
                     }
                 }
 
-                let heuristic = self.dist(next_pos, end_pos) as Time * 2;
-
-                let next_node = Node {
-                    pos: next_pos,
-                    halite: next_halite,
-                    heuristic: next_cost + heuristic,
-                    round: next_round,
-                };
-
-                costs.insert((next_pos, next_round), next_cost);
-                queue.push(next_node);
-                retrace.insert(next_node, node);
+                let heuristic = self.dist(next, end);
+                trace.insert(next, (node, *dir));
+                costs.insert(next, next_cost);
+                queue.push(Node(next, next_cost + heuristic));
             }
         }
 
-        // guess I'll die
-        warn!("[INTERNAL ERROR]: pathfinding failed for ship {} from {:?} to {:?}", ship.id, start_pos, end_pos);
-        let mut min_dir = Dir::O;
-        let mut min_enemies = self.enemies_around(start_pos, 2);
-        let mut min_dist = self.dist(start_pos, end_pos);
+        warn!("[{}]: unable to path to {:?}", ship.id, end);
+        self.planned.push((ship.id, Dir::O, start, crash));
+    }
 
-        if min_enemies > 0 {
-            for dir in &DIRS {
-                let step = self.step(start_pos, *dir);
-                let enemies = self.enemies_around(step, 2);
-                let dist = self.dist(step, end_pos);
-                if (enemies == 0 && dist < min_dist) || enemies < min_enemies {
-                    min_dir = *dir;
-                    min_enemies = enemies;
-                    min_dist = dist;
+    pub fn resolve_routes(&mut self) -> (bool, Vec<Command>) {
+
+        let mut planned = mem::replace(&mut self.planned, Vec::with_capacity(0));
+        let routes = planned.len();
+        let mut resolved = Vec::with_capacity(routes);
+        let mut change;
+
+        loop {
+
+            change = None;
+
+            'outer: for i in 0..routes {
+                let (id_a, dir_a, next_a, crash_a) = planned[i];
+                for j in i + 1..routes {
+                    let (id_b, dir_b, next_b, crash_b) = planned[j];
+                    if next_a == next_b {
+                        if next_a == self.base && (crash_a || crash_b) {
+                            continue
+                        } else if dir_a == Dir::O {
+                            change = Some(id_b);
+                        } else if dir_b == Dir::O {
+                            change = Some(id_a);
+                        } else {
+                            change = Some(id_b);
+                        }
+                        break 'outer;
+                    }
                 }
             }
+
+            if let Some(id) = change {
+                for plan in &mut planned {
+                    if id == plan.0 {
+                        plan.2 = self.step(plan.2, plan.1.reflect());
+                        plan.1 = Dir::O;
+                        break
+                    }
+                }
+            } else {
+                break
+            }
         }
 
-        let end_pos = self.step(start_pos, min_dir);
-        let repath = self.reserved.insert((end_pos, round + 1), ship.id);
+        let mut spawnable = true;
+        for (id, dir, next, _) in planned {
+            if next == self.base { spawnable = false; }
+            resolved.push(Command::Move(id, dir));
+        }
 
-        // info!("Start == end; reserving {:?}", (end_pos, round + 1));
-        (repath, Command::Move(ship.id, min_dir))
+        (spawnable, resolved)
     }
 }

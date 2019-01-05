@@ -1,39 +1,32 @@
-use std::collections::VecDeque;
-
-use indexmap::IndexSet;
-use fnv::{FnvHashMap, FnvHashSet};
+use fnv::FnvHashSet;
 use hungarian::minimize;
 
 use constants::Constants;
 use command::Command;
-use data::*;
-use grid::Grid;
+use data::State;
+use grid::{Pos, Grid};
 
 #[derive(Debug, Clone)]
 pub struct Executor {
-    total: Halite,
-    crashing: FnvHashSet<ID>,
-    returning: FnvHashSet<ID>,
-    reserved: FnvHashMap<(Pos, Time), ID>,
-    routes: FnvHashMap<ID, VecDeque<(Pos, Time)>>,
+    total: usize,
+    crashing: FnvHashSet<usize>,
+    returning: FnvHashSet<usize>,
 }
 
 impl Executor {
 
-    pub fn new(total: Halite) -> Self {
+    pub fn new(total: usize) -> Self {
         Executor {
             total,
             crashing: FnvHashSet::default(),
             returning: FnvHashSet::default(),
-            reserved: FnvHashMap::default(),
-            routes: FnvHashMap::default(),
         }
     }
 
     pub fn execute(&mut self, constants: &Constants, state: &State) -> Vec<Command> {
 
         let mut grid = Grid::new(
-            state.id,   
+            state.id,
             state.width,
             state.height,
             state.round,
@@ -41,115 +34,89 @@ impl Executor {
             &state.ships,
             &state.drops,
             &state.yards,
-            &mut self.reserved,
-            &mut self.routes,
         );
 
-        grid.clear_round(state.round);
+        info!("{}", state.round);
 
-        let yard = state.yards[state.id as usize];
-        let mut ships = state.ships.iter()
-            .filter(|ship| ship.owner == state.id)
-            .cloned()
-            .collect::<Vec<_>>();
+        let yard = state.yards[state.id];
+        let remaining = state.halite.iter().sum::<usize>();
 
-        // Repath less often by putting stuck ships first
-        ships.sort_by_key(|ship|
-            if ship.halite < state.halite[grid.idx(ship.into())] / 10 {
-                1
-            } else {
-                0
-            }
-        );
+        let mut allies = state.allies().collect::<Vec<_>>();
+        allies.sort_by_key(|ship| constants.MAX_ENERGY - ship.halite);
 
-        let mut costs = Vec::with_capacity(
-            ships.len() * (state.width as usize) * (state.height as usize)
-        );
+        let mut incoming = Vec::new();
+        let mut outgoing = Vec::new();
 
-        // Returning and crashing logic
-        for ship in &ships {
-            if grid.dist_from_yard(ship) as Time + state.round + 10 >= constants.MAX_TURNS as Time {
+        for ship in &allies {
+            if grid.distance_from_yard(ship) + state.round + 10 >= constants.MAX_TURNS {
                 self.crashing.insert(ship.id);
-                grid.clear_route(ship.id); 
-            } else if ship.halite > 950 {
-                self.returning.insert(ship.id);
-                grid.clear_route(ship.id); 
-            } else if Pos(ship.x, ship.y) == Pos(yard.x, yard.y) {
+                incoming.push(ship);
+            } else if ship.x == yard.x && ship.y == yard.y {
                 self.returning.remove(&ship.id);
+                outgoing.push(ship);
+            } else if ship.halite >= 1000 {
+                self.returning.insert(ship.id);
+                incoming.push(ship);
+            } else if self.returning.contains(&ship.id) {
+                incoming.push(ship);
+            } else {
+                outgoing.push(ship);
             }
         }
 
-        let mut outgoing = FnvHashMap::default();
-        let mut idx = 0;
-
-        for ship in &ships {
-            if self.returning.contains(&ship.id) || self.crashing.contains(&ship.id) { continue }
-            outgoing.insert(ship.id, idx);
-            idx += 1;
+        let mut costs = Vec::with_capacity(outgoing.len() * state.width * state.height);
+        for ship in &outgoing {
             grid.fill_cost(&mut costs, |grid, pos, halite| {
-                let cost = (constants.MAX_CELL_PRODUCTION as Halite - Halite::min(halite, constants.MAX_CELL_PRODUCTION as Halite)) / 200
-                        + grid.dist(pos, Pos(yard.x, yard.y)) as Halite
-                        + (grid.dist(Pos(ship.x, ship.y), pos) as Halite * 2);
+                let cost = (constants.MAX_CELL_PRODUCTION - usize::min(halite, constants.MAX_CELL_PRODUCTION)) / 200
+                         + grid.dist(pos, Pos(yard.x, yard.y))
+                         + grid.dist(Pos(ship.x, ship.y), pos);
+
                 if pos == Pos(yard.x, yard.y) {
-                    Halite::max_value()
-                } else if halite >= 100 && grid.enemies_around(pos, 2) == 0 {
+                    usize::max_value()
+                } else if halite >= 100 && !grid.is_stuck(pos) && !(grid.enemies_around(pos, 2) > 0)  {
                     cost
                 } else if halite >= 12 && halite < 100 {
                     cost + 100000
                 } else {
-                    Halite::max_value()
+                    usize::max_value()
                 }
             });
         }
 
-        let assignment = minimize(&costs, outgoing.len(), state.width as usize * state.height as usize)
+        let assignment = minimize(&costs, outgoing.len(), state.width * state.height)
             .into_iter()
-            .map(|dest| dest.expect("[INTERNAL ERROR]: all ships should have assignment"))
-            .map(|dest| grid.inv_idx(dest))
-            .collect::<Vec<_>>();
+            .enumerate();
 
-        let mut commands = vec![Command::Spawn; ships.len()];
-        let mut repath = ships.iter()
-            .enumerate()
-            .collect::<IndexSet<_>>();
-
-        while let Some((idx, ship)) = repath.pop() {
-
-            let crash = self.crashing.contains(&ship.id);
-            let destination = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {
-                Pos(yard.x, yard.y)
-            } else {
-                assignment[outgoing[&ship.id]]
-            };
-
-            let depth = if self.crashing.contains(&ship.id) || self.returning.contains(&ship.id) {
-                24
-            } else {
-                let dist = grid.dist(ship.into(), destination) as Time;
-                if dist <= 8 { 1 } else { Time::min(8, dist - 8) }
-            };
-
-            let (invalidated, command) = grid.navigate(ship, destination, depth, crash);
-
-            if let Some(id) = invalidated {
-                // warn!("Ship {}'s route invalidated", id);
-                grid.clear_route(id);
-                repath.insert( 
-                    ships.iter()
-                        .enumerate()
-                        .find(|(_, ship)| id == ship.id)
-                        .expect("[INTERNAL ERROR]: missing ship")
-                );
+        for (id, dest) in assignment {
+            if let Some(dest) = dest {
+                let ship = outgoing[id];
+                let dest = Pos(dest % state.width, dest / state.width);
+                grid.plan_route(ship, dest, false);
             }
-            
-            commands[idx] = command;
         }
 
-        if grid.can_spawn()
-        && state.halite.iter().sum::<Halite>() * 2 > self.total
-        && state.scores[state.id as usize] >= constants.NEW_ENTITY_ENERGY_COST as Halite
-        && state.round <= (constants.MAX_TURNS / state.scores.len()) as Time {
-            commands.push(Command::Spawn)
+        for ship in incoming {
+            if self.crashing.contains(&ship.id) {
+                grid.plan_route(ship, Pos(yard.x, yard.y), true);
+            } else if self.returning.contains(&ship.id) {
+                let crowd = grid.allies_around(Pos(yard.x, yard.y), 1);
+                let distance = grid.distance_from_yard(ship);
+
+                if crowd >= 6 && distance <= 5 && distance >= 2 {
+                    grid.plan_route(ship, Pos(ship.x, ship.y), false);
+                } else {
+                    grid.plan_route(ship, Pos(yard.x, yard.y), false);
+                }
+            }
+        }
+
+        let (spawnable, mut commands) = grid.resolve_routes();
+
+        if state.halite() >= constants.NEW_ENTITY_ENERGY_COST
+        && remaining >= self.total / 2
+        && state.round <= constants.MAX_TURNS / 2
+        && spawnable {
+            commands.push(Command::Spawn);
         }
 
         commands

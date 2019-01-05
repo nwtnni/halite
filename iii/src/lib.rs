@@ -1,4 +1,3 @@
-extern crate indexmap;
 extern crate fixedbitset;
 extern crate fnv;
 #[macro_use]
